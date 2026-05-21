@@ -129,7 +129,7 @@ function Onboarding({ onDone }) {
   const isLast = step === steps.length - 1;
   const { Icon, title, body } = steps[step];
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen bg-white flex flex-col items-center justify-center px-8 pb-16">
       {/* Skip */}
       <button onClick={onDone}
@@ -172,7 +172,7 @@ function HelpModal({ onClose }) {
     { Icon: RefreshCw, label: "Conclua todos os cards para ganhar XP e ver seu resultado" },
   ];
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="fixed inset-0 z-50 flex items-end justify-center"
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
       onClick={onClose}>
@@ -218,7 +218,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
     { label: "Streak atual",    value: streak,           Icon: Flame    },
   ];
   return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
       className="min-h-screen bg-white">
       <NavBar title="Estatísticas"
         left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><ChevronLeft className="w-4 h-4" /> Voltar</button>} />
@@ -313,7 +313,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
   const favCount   = Object.keys(favorites).length;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen bg-white">
       <NavBar title="LinguaFlash"
         right={
@@ -430,7 +430,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
   const totalCount = Object.keys(favorites).length;
 
   return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
       className="min-h-screen bg-white">
       <NavBar title="Palavras Favoritas"
         left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><ChevronLeft className="w-4 h-4" /> Voltar</button>} />
@@ -497,7 +497,7 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
   const doneCount = DECK_KEYS.filter(k => completedDecks[k]?.includes(langCode)).length;
 
   return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
       className="min-h-screen" style={{ backgroundColor: lang.accent }}>
       <NavBar title={lang.name}
         bgColor={lang.accent} textColor="#ffffff" borderColor="rgba(255,255,255,0.2)"
@@ -673,7 +673,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 // ─── MASTERED SCREEN ─────────────────────────────────────────────────────────
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col bg-white">
       <NavBar title={deckLabel} bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
         left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><X className="w-4 h-4" /> Sair</button>} />
@@ -829,7 +829,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const navSubtitle = isReview ? "Revisão" : undefined;
 
   return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
       className="min-h-screen flex flex-col bg-white">
       <Confetti active={showConfetti} accentColor={accentColor} />
       <NavBar
@@ -1004,7 +1004,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
     : `${pick.sub}`;
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
       className="min-h-screen flex flex-col bg-white">
       <NavBar title="Resultado" bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB" />
       <div className="flex-1 max-w-md mx-auto w-full px-4 pt-8 pb-16 flex flex-col">
@@ -1178,7 +1178,7 @@ export default function App() {
     <ErrorBoundary>
       <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Inter', sans-serif; } body { background: #fff; }`}</style>
-        <AnimatePresence mode="wait">
+        <div>
           {screen === "onboard" && (
             <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
           )}
@@ -1237,12 +1237,10 @@ export default function App() {
               onHome={homeFromResult}
               onNextDeck={(nextKey) => goStudy(selectedLang, nextKey, false)}
               onNextLang={(nextLang, firstDeck) => {
-                setSelectedLang(nextLang);
-                setSelectedDeck(firstDeck);
                 goStudy(nextLang, firstDeck, false, false);
               }} />
           )}
-        </AnimatePresence>
+        </div>
       </div>
     </ErrorBoundary>
   );
