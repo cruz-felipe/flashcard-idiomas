@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, Component } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import {
   Flame, Zap, Check, X, ChevronRight, RotateCcw, BarChart2,
   Home, ChevronLeft, Target, ArrowRight, Bookmark, BookMarked, Sparkles,
   BookOpen, Utensils, Plane, MessageCircle, Hash, Palette, Users, Heart,
-  Smile, Globe, Volume2, Search, TrendingUp, Award
+  Smile, Globe, Volume2, Search, Award, HelpCircle, RefreshCw
 } from "lucide-react";
 import { LANG_META, DECKS, DECK_KEYS, VOCAB } from "./data.js";
 
@@ -19,6 +19,38 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// ─── TTS ─────────────────────────────────────────────────────────────────────
+function speak(text, langCode) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const map = { es: "es-ES", it: "it-IT", ru: "ru-RU", fr: "fr-FR", de: "de-DE", en: "en-US" };
+  u.lang = map[langCode] || "en-US";
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+
+// ─── ERROR BOUNDARY ───────────────────────────────────────────────────────────
+class ErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
+        <X size={40} strokeWidth={1.5} className="text-gray-300" />
+        <p className="font-bold text-gray-800">Algo deu errado.</p>
+        <p className="text-sm text-gray-500">{this.state.error.message}</p>
+        <button onClick={() => this.setState({ error: null })}
+          className="px-6 py-3 bg-gray-900 text-white font-bold text-sm"
+          style={{ borderRadius: 999 }}>
+          Tentar novamente
+        </button>
+      </div>
+    );
+    return this.props.children;
+  }
 }
 
 // ─── CONFETTI ─────────────────────────────────────────────────────────────────
@@ -36,34 +68,13 @@ function Particle({ color }) {
   );
 }
 function Confetti({ active }) {
-  const colors = ["#E63329","#1B4FD8","#1A7A4A","#C8850A","#1251A3","#9B59B6"];
+  const colors = ["#E63329","#1B4FD8","#1A7A4A","#B45309","#1251A3","#9B59B6"];
   if (!active) return null;
   return (
     <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
       {Array.from({ length: 48 }).map((_, i) => <Particle key={i} color={colors[i % colors.length]} />)}
     </div>
   );
-}
-
-// ─── ERROR BOUNDARY ───────────────────────────────────────────────────────────
-import { Component } from "react";
-class ErrorBoundary extends Component {
-  state = { error: null };
-  static getDerivedStateFromError(e) { return { error: e }; }
-  render() {
-    if (this.state.error) return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
-        <div className="text-4xl">⚠️</div>
-        <p className="font-bold text-gray-800">Algo deu errado.</p>
-        <p className="text-sm text-gray-500">{this.state.error.message}</p>
-        <button onClick={() => this.setState({ error: null })}
-          className="px-6 py-3 bg-gray-900 text-white rounded-full font-bold text-sm">
-          Tentar novamente
-        </button>
-      </div>
-    );
-    return this.props.children;
-  }
 }
 
 // ─── NAV BAR ─────────────────────────────────────────────────────────────────
@@ -94,10 +105,10 @@ function PillButton({ onClick, children, style, className = "" }) {
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const steps = [
-    { Icon: Globe,      title: "Bem-vindo ao LinguaFlash", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados." },
-    { Icon: RotateCcw,  title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
-    { Icon: Bookmark,   title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
-    { Icon: Flame,      title: "Mantenha seu streak",      body: "Estude todos os dias para acumular XP e manter sua sequência ativa." },
+    { Icon: Globe,     title: "Bem-vindo ao LinguaFlash", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros." },
+    { Icon: RotateCcw, title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
+    { Icon: Bookmark,  title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
+    { Icon: Flame,     title: "Mantenha seu streak",      body: "Estude todos os dias para acumular XP e manter sua sequência ativa." },
   ];
   const [step, setStep] = useState(0);
   const isLast = step === steps.length - 1;
@@ -107,7 +118,8 @@ function Onboarding({ onDone }) {
       className="min-h-screen bg-white flex flex-col items-center justify-center px-8 pb-16">
       <motion.div key={step} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="text-center max-w-xs">
-        <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-8">
+        <div className="w-20 h-20 bg-gray-100 flex items-center justify-center mx-auto mb-8"
+          style={{ borderRadius: 2 }}>
           <Icon size={36} strokeWidth={1.5} className="text-gray-700" />
         </div>
         <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">{title}</h2>
@@ -127,6 +139,48 @@ function Onboarding({ onDone }) {
   );
 }
 
+// ─── HELP MODAL ───────────────────────────────────────────────────────────────
+function HelpModal({ onClose }) {
+  const items = [
+    { Icon: RotateCcw, label: "Toque no card para revelar a tradução" },
+    { Icon: Check,     label: '"Eu Conheço!" remove o card da fila' },
+    { Icon: X,         label: '"Ainda Aprendendo" recicla o card para mais tarde' },
+    { Icon: Bookmark,  label: "Salve palavras tocando no ícone de favorito" },
+    { Icon: Volume2,   label: "Toque no ícone de som para ouvir a pronúncia" },
+    { Icon: Flame,     label: "Estude diariamente para manter seu streak" },
+    { Icon: RefreshCw, label: "Conclua todos os cards para ganhar XP e ver seu resultado" },
+  ];
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+      onClick={onClose}>
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-md bg-white pb-8 px-6 pt-6"
+        style={{ borderRadius: "2px 2px 0 0" }}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-black text-gray-900">Como funciona</h2>
+          <button onClick={onClose} className="p-1 hover:opacity-60 transition-opacity">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="space-y-4">
+          {items.map(({ Icon, label }, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-gray-100 flex items-center justify-center shrink-0" style={{ borderRadius: 2 }}>
+                <Icon size={16} strokeWidth={1.5} className="text-gray-600" />
+              </div>
+              <p className="text-sm text-gray-600 pt-1.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ─── STATS SCREEN ─────────────────────────────────────────────────────────────
 function StatsScreen({ stats, xp, streak, onBack }) {
   const totalStudied  = Object.values(stats.studied || {}).reduce((a, b) => a + b, 0);
@@ -134,9 +188,9 @@ function StatsScreen({ stats, xp, streak, onBack }) {
   const totalAttempts = stats.totalAttempts || 0;
   const overallAcc    = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : 0;
   const statCards = [
-    { label: "Total estudadas", value: totalStudied,   Icon: BookOpen    },
-    { label: "Precisão geral",  value: `${overallAcc}%`, Icon: Target    },
-    { label: "Streak atual",    value: streak,          Icon: Flame      },
+    { label: "Total estudadas", value: totalStudied,     Icon: BookOpen },
+    { label: "Precisão geral",  value: `${overallAcc}%`, Icon: Target   },
+    { label: "Streak atual",    value: streak,           Icon: Flame    },
   ];
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
@@ -173,10 +227,11 @@ function StatsScreen({ stats, xp, streak, onBack }) {
                       <DeckIcon size={14} strokeWidth={1.5} className="text-gray-400" />
                       <span className="text-sm font-semibold text-gray-700">{DECKS[key]?.label}</span>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap justify-end">
                       {langs.map(l => (
-                        <span key={l} className="text-xs font-bold px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: LANG_META[l]?.accent + "18", color: LANG_META[l]?.accent, border: `1px solid ${LANG_META[l]?.accent}40` }}>
+                        <span key={l} className="text-xs font-bold px-2 py-0.5"
+                          style={{ backgroundColor: LANG_META[l]?.accent + "18", color: LANG_META[l]?.accent,
+                            border: `1px solid ${LANG_META[l]?.accent}40`, borderRadius: 999 }}>
                           {LANG_META[l]?.name}
                         </span>
                       ))}
@@ -192,13 +247,41 @@ function StatsScreen({ stats, xp, streak, onBack }) {
   );
 }
 
+// ─── FLAG STRIPE helper — top border using flag colors ───────────────────────
+// Each country gets a multi-color top border representing its flag
+const FLAG_STRIPES = {
+  es: ["#AA151B", "#F1BF00", "#AA151B"],       // red / yellow / red
+  it: ["#009246", "#ffffff", "#CE2B37"],        // green / white / red
+  ru: ["#ffffff", "#0039A6", "#D52B1E"],        // white / blue / red
+  fr: ["#002395", "#ffffff", "#ED2939"],        // blue / white / red
+  de: ["#000000", "#DD0000", "#FFCE00"],        // black / red / gold
+  en: ["#012169", "#C8102E", "#ffffff"],        // union jack simplified
+};
+
+function FlagStripe({ langCode, height = 4 }) {
+  const stripes = FLAG_STRIPES[langCode] || ["#E5E7EB"];
+  return (
+    <div style={{ display: "flex", height, width: "100%" }}>
+      {stripes.map((c, i) => (
+        <div key={i} style={{ flex: 1, backgroundColor: c }} />
+      ))}
+    </div>
+  );
+}
+
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, onHelp }) {
   const favCount = Object.keys(favorites).length;
+  const [showHelp, setShowHelp] = useState(false);
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="min-h-screen bg-white">
       <NavBar title="LinguaFlash"
+        left={
+          <button onClick={() => setShowHelp(true)} className="flex items-center gap-1 text-gray-400 hover:text-gray-700 transition-colors">
+            <HelpCircle size={20} strokeWidth={1.5} />
+          </button>
+        }
         right={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid #FED7AA", borderRadius: 999 }}>
@@ -212,6 +295,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </div>
         }
       />
+      <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
       <div className="max-w-md mx-auto px-4 pt-8 pb-16">
         <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">Aprenda com flashcards</p>
         <h1 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-8">Qual idioma hoje?</h1>
@@ -229,30 +313,33 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </div>
         </div>
 
-        {/* Languages */}
+        {/* Languages — flag stripe replaces flag emoji */}
         <div className="space-y-3 mb-4">
           {Object.entries(LANG_META).map(([code, lang], i) => {
             const doneCount = Object.values(stats.completedDecks || {}).filter(ls => ls.includes(code)).length;
+            const total = DECK_KEYS.length;
             return (
               <motion.button key={code} onClick={() => onSelectLang(code)}
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
+                className="w-full text-left overflow-hidden hover:bg-gray-50 transition-colors"
                 style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                <span className="shrink-0 text-3xl leading-none">{lang.flag}</span>
-                <div className="flex-1">
-                  <div className="font-bold text-gray-900">{lang.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    {DECK_KEYS.length} categorias · {Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras
+                <FlagStripe langCode={code} height={4} />
+                <div className="flex items-center gap-3 p-4">
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900">{lang.name}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {total} categorias · {Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras
+                    </div>
                   </div>
+                  {doneCount > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 shrink-0"
+                      style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0", borderRadius: 999 }}>
+                      <Check size={10} strokeWidth={3} />{doneCount}/{total}
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
                 </div>
-                {doneCount > 0 && (
-                  <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
-                    style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0" }}>
-                    <Check size={10} strokeWidth={3} />{doneCount}/{DECK_KEYS.length}
-                  </span>
-                )}
-                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </motion.button>
             );
           })}
@@ -263,7 +350,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           <motion.button onClick={onOpenFavorites} whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
             className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
             style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-            <BookMarked size={28} strokeWidth={1.5} className="text-gray-500 shrink-0" />
+            <BookMarked size={22} strokeWidth={1.5} className="text-gray-500 shrink-0" />
             <div className="flex-1">
               <div className="font-bold text-gray-900">Palavras Favoritas</div>
               <div className="text-xs text-gray-400 mt-0.5">{favCount} {favCount === 1 ? "palavra salva" : "palavras salvas"}</div>
@@ -273,7 +360,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           <motion.button onClick={onOpenStats} whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
             className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
             style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-            <BarChart2 size={28} strokeWidth={1.5} className="text-gray-500 shrink-0" />
+            <BarChart2 size={22} strokeWidth={1.5} className="text-gray-500 shrink-0" />
             <div className="flex-1">
               <div className="font-bold text-gray-900">Estatísticas</div>
               <div className="text-xs text-gray-400 mt-0.5">XP, precisão, categorias concluídas</div>
@@ -324,7 +411,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
                 whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
                 className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
                 style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                <BookMarked size={28} strokeWidth={1.5} className="text-gray-700 shrink-0" />
+                <BookMarked size={22} strokeWidth={1.5} className="text-gray-700 shrink-0" />
                 <div className="flex-1">
                   <div className="font-bold text-gray-900">Todas as palavras</div>
                   <div className="text-xs text-gray-400 mt-0.5">{totalCount} {totalCount === 1 ? "palavra" : "palavras"} · todos os idiomas</div>
@@ -334,14 +421,16 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
               {favByLang.map(({ code, lang, count }) => (
                 <motion.button key={code} onClick={() => onStudyFavs(code, "__favorites__")}
                   whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
+                  className="w-full text-left overflow-hidden hover:bg-gray-50 transition-colors"
                   style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                  <span className="text-3xl leading-none shrink-0">{lang.flag}</span>
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900">{lang.name}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
+                  <FlagStripe langCode={code} height={4} />
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-900">{lang.name}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
                 </motion.button>
               ))}
             </div>
@@ -353,12 +442,17 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 }
 
 // ─── DECK SELECTOR ───────────────────────────────────────────────────────────
+// Deck status: "done" = completed, "started" = in completedDecks but not all, "new" = never touched
+// We use completedDecks[deckKey].includes(langCode) for done
+// "started" isn't tracked separately — we only know done/not-done per deck per lang
 function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }) {
   const lang = LANG_META[langCode];
   const [query, setQuery] = useState("");
   const filtered = DECK_KEYS.filter(k =>
     DECKS[k].label.toLowerCase().includes(query.toLowerCase())
   );
+  const doneCount = DECK_KEYS.filter(k => completedDecks[k]?.includes(langCode)).length;
+
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
       className="min-h-screen" style={{ backgroundColor: lang.accent }}>
@@ -377,19 +471,21 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
         }
       />
       <div className="max-w-md mx-auto px-4 pt-6 pb-16">
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="text-3xl font-black tracking-tight text-white">{lang.name}</h2>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>Escolha uma categoria</p>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+            {doneCount}/{DECK_KEYS.length} categorias concluídas
+          </p>
         </div>
         {/* Search */}
         <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.5)" }} />
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: "rgba(255,255,255,0.5)" }} />
+          <input value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Buscar categoria..."
-            className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold placeholder-white/40 outline-none"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)", borderRadius: 999, color: "#ffffff" }}
+            className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold outline-none"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)",
+              borderRadius: 999, color: "#ffffff" }}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -397,22 +493,27 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
             const deck = DECKS[key];
             const Icon = deck.icon;
             const done = completedDecks[key]?.includes(langCode);
+            // Visual states: done = faint green tint + check; not done = plain white
             return (
               <motion.button key={key} onClick={() => onSelectDeck(key)}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="relative flex flex-col items-start gap-3 p-4 text-left hover:opacity-90 transition-opacity"
-                style={{ border: "2px solid rgba(255,255,255,0.25)", borderRadius: 2, backgroundColor: "#ffffff" }}>
+                style={{
+                  border: done ? "2px solid #BBF7D0" : "2px solid rgba(255,255,255,0.25)",
+                  borderRadius: 2,
+                  backgroundColor: done ? "#F0FDF4" : "#ffffff",
+                }}>
                 {done && (
-                  <span className="absolute top-2 right-2 flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0" }}>
+                  <span className="absolute top-2 right-2 flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5"
+                    style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0", borderRadius: 999 }}>
                     <Check size={10} strokeWidth={3} />
                   </span>
                 )}
-                <Icon size={40} strokeWidth={1.5} style={{ color: lang.accent }} />
+                <Icon size={36} strokeWidth={1.5} style={{ color: done ? "#16A34A" : lang.accent }} />
                 <div>
-                  <div className="font-bold text-sm leading-tight" style={{ color: lang.textPrimary }}>{deck.label}</div>
-                  <div className="text-xs mt-0.5" style={{ color: lang.textSecondary }}>{VOCAB[langCode][key].length} cards</div>
+                  <div className="font-bold text-sm leading-tight" style={{ color: done ? "#15803D" : lang.textPrimary }}>{deck.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: done ? "#4ADE80" : lang.textSecondary }}>{VOCAB[langCode][key].length} cards</div>
                 </div>
               </motion.button>
             );
@@ -429,19 +530,16 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
   );
 }
 
-// ─── TTS ─────────────────────────────────────────────────────────────────────
-function speak(text, lang) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  const map = { es: "es-ES", it: "it-IT", ru: "ru-RU", fr: "fr-FR", de: "de-DE" };
-  u.lang = map[lang] || "en-US";
-  u.rate = 0.85;
-  window.speechSynthesis.speak(u);
-}
-
 // ─── FLASH CARD ───────────────────────────────────────────────────────────────
 function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFav, showLangBadge }) {
+  const [ttsUnsupported, setTtsUnsupported] = useState(false);
+
+  const handleTTS = (e) => {
+    e.stopPropagation();
+    if (!window.speechSynthesis) { setTtsUnsupported(true); return; }
+    speak(card.target, langCode);
+  };
+
   return (
     <div className="w-full" style={{ perspective: 1400, height: 240 }}>
       <motion.div key={card.pt + card.target}
@@ -452,7 +550,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
         onClick={onClick}
       >
         {/* FRONT */}
-        <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6"
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
             backgroundColor: "#ffffff", border: "2px solid #E5E7EB", borderRadius: 2 }}>
           {showLangBadge && (
@@ -469,25 +567,30 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
         </div>
 
         {/* BACK */}
-        <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6"
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)", backgroundColor: lang.accent,
             border: `2px solid ${lang.accent}`, borderRadius: 2 }}>
-          {/* Fav */}
+          {/* Fav button */}
           <button onClick={e => { e.stopPropagation(); onToggleFav(card); }}
             className="absolute top-3 right-3 p-2 hover:opacity-70 transition-opacity">
             {isFav
               ? <BookMarked size={20} style={{ color: "#ffffff" }} />
               : <Bookmark size={20} style={{ color: "rgba(255,255,255,0.5)" }} />}
           </button>
-          {/* TTS */}
-          <button onClick={e => { e.stopPropagation(); speak(card.target, langCode); }}
+          {/* TTS button — shows muted icon if unsupported */}
+          <button onClick={handleTTS}
             className="absolute top-3 left-3 p-2 hover:opacity-70 transition-opacity">
-            <Volume2 size={20} style={{ color: "rgba(255,255,255,0.7)" }} />
+            <Volume2 size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }} />
           </button>
-          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>{lang.name}</p>
-          <p className="text-3xl font-black text-center leading-tight text-white">{card.target}</p>
-          {card.phonetic && <p className="mt-2 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>{card.phonetic}</p>}
+          <p className="text-xs font-semibold tracking-widest uppercase mb-3"
+            style={{ color: "rgba(255,255,255,0.7)" }}>{lang.name}</p>
+          <p className="text-3xl font-black text-center leading-tight text-white break-words max-w-full px-8">
+            {card.target}
+          </p>
+          {card.phonetic && (
+            <p className="mt-2 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>{card.phonetic}</p>
+          )}
           <p className="mt-3 text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{card.pt}</p>
         </div>
       </motion.div>
@@ -495,24 +598,59 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
   );
 }
 
+// ─── MASTERED CELEBRATION ────────────────────────────────────────────────────
+// Shown when user revisits an already-completed deck (perfect score last time)
+function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="min-h-screen flex flex-col bg-white">
+      <NavBar title={deckLabel} bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
+        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><X className="w-4 h-4" /> Sair</button>} />
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6 max-w-md mx-auto">
+        <div className="w-20 h-20 flex items-center justify-center"
+          style={{ backgroundColor: lang.accent, borderRadius: 2 }}>
+          <Check size={36} strokeWidth={2} className="text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">Categoria dominada!</h2>
+          <p className="text-gray-500 text-sm">Você já concluiu <strong>{deckLabel}</strong>. Quer revisar de novo ou escolher outra categoria?</p>
+        </div>
+        <div className="flex flex-col gap-3 w-full">
+          <PillButton onClick={onReview} className="w-full gap-2"
+            style={{ backgroundColor: lang.accent, color: "#fff", border: `2px solid ${lang.accent}` }}>
+            <RefreshCw size={16} /> Revisar novamente
+          </PillButton>
+          <PillButton onClick={onBack} className="w-full gap-2"
+            style={{ backgroundColor: "transparent", border: "2px solid #E5E7EB", color: "#374151" }}>
+            <ChevronLeft size={16} /> Escolher outra
+          </PillButton>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── STUDY SCREEN ─────────────────────────────────────────────────────────────
-function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav }) {
+function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav, isReview }) {
   const isFavAll  = deckKey === "__favorites_all__";
   const isFavDeck = deckKey === "__favorites__" || isFavAll;
   const deckLabel = isFavAll ? "Todas as Favoritas" : isFavDeck ? "Favoritas" : DECKS[deckKey]?.label;
 
-  const neutralLang = { name: "Favoritas", accent: "#374151", bg: "#F9FAFB", textPrimary: "#111827", textSecondary: "#6B7280", borderColor: "#D1D5DB" };
+  const neutralLang = { name: "Favoritas", accent: "#374151", textPrimary: "#111827", textSecondary: "#6B7280" };
 
-  // Build original cards with _lang tag for cross-language favs
-  const originalCards = isFavAll
-    ? shuffle(Object.entries(LANG_META).flatMap(([code]) =>
+  // useMemo prevents reshuffling on parent re-renders
+  const originalCards = useMemo(() => {
+    if (isFavAll)
+      return shuffle(Object.entries(LANG_META).flatMap(([code]) =>
         Object.values(VOCAB[code]).flat()
           .filter(c => favorites[`${code}:${c.pt}`])
           .map(c => ({ ...c, _lang: code }))
-      ))
-    : isFavDeck
-      ? shuffle(Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`]))
-      : shuffle([...VOCAB[langCode][deckKey]]);
+      ));
+    if (isFavDeck)
+      return shuffle(Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`]));
+    return shuffle([...VOCAB[langCode][deckKey]]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // intentionally empty — we want a stable shuffle per mount
 
   const [queue,        setQueue]        = useState(originalCards);
   const [currentIdx,   setCurrentIdx]   = useState(0);
@@ -528,14 +666,14 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const progress = total > 0 ? Math.min(correct / total, 1) : 0;
   const card     = queue[currentIdx];
 
-  // Graceful empty state
+  // Handle mid-session favorites drain (unsave last word while studying)
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen flex flex-col bg-white">
-      <NavBar title={deckLabel}
+      <NavBar title={deckLabel} bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
         left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><X className="w-4 h-4" /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
         <Bookmark size={40} strokeWidth={1.5} className="text-gray-200" />
-        <p className="font-bold text-gray-400">Nenhuma palavra encontrada.</p>
+        <p className="font-bold text-gray-400">Sem palavras na fila.</p>
         <PillButton onClick={onBack} style={{ backgroundColor: "#111111", color: "#fff", border: "2px solid #111111" }}>Voltar</PillButton>
       </div>
     </motion.div>
@@ -545,6 +683,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const cardLangMeta = isFavAll ? (LANG_META[card._lang] || neutralLang) : (LANG_META[langCode] || neutralLang);
   const favKey       = `${cardLang}:${card.pt}`;
   const isFav        = !!favorites[favKey];
+  const progressAccent = isFavAll ? cardLangMeta.accent : (LANG_META[langCode]?.accent || "#374151");
 
   const handleFlip = () => { if (!isFlipped) setIsFlipped(true); };
 
@@ -581,14 +720,12 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     setAnswered(false);
   };
 
-  // Progress bar accent: for all-favs use the current card's lang color
-  const progressAccent = isFavAll ? cardLangMeta.accent : (LANG_META[langCode]?.accent || "#374151");
-
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
       className="min-h-screen flex flex-col bg-white">
       <Confetti active={showConfetti} />
-      <NavBar title={deckLabel} bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
+      <NavBar title={isReview ? `Revisão · ${deckLabel}` : deckLabel}
+        bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
         left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-gray-900"><X className="w-4 h-4" /> Sair</button>}
         right={<span className="text-sm font-semibold text-gray-400">{queue.length} restantes</span>}
       />
@@ -605,8 +742,8 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
           </div>
         </div>
 
-        {/* Card + actions */}
         <div className="flex flex-col gap-4 flex-1 justify-center">
+          {/* Card */}
           <div className="relative" style={{ height: 240 }}>
             <AnimatePresence>
               {flashColor && (
@@ -623,7 +760,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             </motion.div>
           </div>
 
-          {/* Fixed-height hint slot */}
+          {/* Hint — fixed height slot */}
           <div style={{ height: 20 }} className="flex items-center justify-center">
             {!isFlipped && (
               <p className="text-center text-xs font-medium" style={{ color: "#6B7280" }}>
@@ -632,8 +769,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             )}
           </div>
 
-          {/* Action pills — always in DOM, opacity toggle = no layout shift */}
-          <div className="flex gap-3" style={{ opacity: isFlipped ? 1 : 0, pointerEvents: isFlipped ? "auto" : "none", transition: "opacity 0.2s" }}>
+          {/* Action pills */}
+          <div className="flex gap-3"
+            style={{ opacity: isFlipped ? 1 : 0, pointerEvents: isFlipped ? "auto" : "none", transition: "opacity 0.2s" }}>
             <PillButton onClick={() => handleAnswer(false)} className="flex-1 gap-2 py-3.5 min-w-0"
               style={{ backgroundColor: "#ffffff", border: "2px solid #E5E7EB", color: "#DC2626" }}>
               <X size={18} strokeWidth={2} className="shrink-0" />
@@ -649,7 +787,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
         {/* Stats footer */}
         <div className="flex justify-center gap-8 mt-8 pt-4 border-t border-gray-100">
-          {[{ label: "Acertou", val: correct, color: "#16A34A" }, { label: "Errou", val: incorrect, color: "#DC2626" }, { label: "Total", val: total, color: "#6B7280" }].map(s => (
+          {[{ label: "Acertou", val: correct, color: "#16A34A" },
+            { label: "Errou",   val: incorrect, color: "#DC2626" },
+            { label: "Total",   val: total,     color: "#6B7280" }].map(s => (
             <div key={s.label} className="text-center">
               <div className="text-lg font-black" style={{ color: s.color }}>{s.val}</div>
               <div className="text-xs text-gray-400">{s.label}</div>
@@ -673,10 +813,10 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
   const nextLang         = nextLangCode ? LANG_META[nextLangCode] : null;
   const homeLabel        = fromFavorites ? "Favoritas" : "Início";
 
-  const msg = accuracy === 100 ? { emoji: "🏆", text: "Perfeito!", sub: "Você acertou todas!" }
-    : accuracy >= 80 ? { emoji: "🎉", text: "Muito bem!", sub: "Quase perfeito, continue assim!" }
-    : accuracy >= 60 ? { emoji: "💪", text: "Bom trabalho!", sub: "Continue praticando!" }
-    : { emoji: "📚", text: "Continue tentando!", sub: "A prática leva à perfeição." };
+  const msg = accuracy === 100 ? { Icon: Check,  text: "Perfeito!", sub: "Você acertou todas!" }
+    : accuracy >= 80           ? { Icon: Target, text: "Muito bem!", sub: "Quase perfeito, continue assim!" }
+    : accuracy >= 60           ? { Icon: Zap,    text: "Bom trabalho!", sub: "Continue praticando!" }
+    :                            { Icon: RotateCcw, text: "Continue tentando!", sub: "A prática leva à perfeição." };
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
@@ -686,20 +826,23 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
         <div className="text-center mb-10">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.15 }}
-            className="text-7xl mb-4">{msg.emoji}</motion.div>
+            className="w-20 h-20 flex items-center justify-center mx-auto mb-6"
+            style={{ backgroundColor: lang.accent, borderRadius: 2 }}>
+            <msg.Icon size={36} strokeWidth={2} className="text-white" />
+          </motion.div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">{msg.text}</h2>
           <p className="text-sm mt-2 text-gray-500">{msg.sub}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-10">
           {[
-            { icon: Target, label: "Precisão", value: `${accuracy}%` },
-            { icon: Zap,    label: "XP Ganho", value: `+${result.xpGained}` },
-            { icon: Check,  label: "Acertos",  value: `${result.correct}/${result.total}` },
+            { Icon: Target, label: "Precisão", value: `${accuracy}%`             },
+            { Icon: Zap,    label: "XP Ganho", value: `+${result.xpGained}`      },
+            { Icon: Check,  label: "Acertos",  value: `${result.correct}/${result.total}` },
           ].map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.08 }}
               className="p-4 text-center" style={{ borderRadius: 2, backgroundColor: lang.accent }}>
-              <s.icon size={16} className="mx-auto mb-2" style={{ color: "rgba(255,255,255,0.75)" }} />
+              <s.Icon size={16} className="mx-auto mb-2" style={{ color: "rgba(255,255,255,0.75)" }} />
               <div className="text-xl font-black text-white">{s.value}</div>
               <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{s.label}</div>
             </motion.div>
@@ -721,7 +864,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
               whileTap={{ scale: 0.97 }} onClick={() => onNextLang(nextLangCode)}
               className="w-full flex items-center justify-between px-6 py-4 font-bold"
               style={{ backgroundColor: "#111827", color: "#ffffff", borderRadius: 999, border: "2px solid #111827" }}>
-              <span>Começar {nextLang.flag} {nextLang.name}</span>
+              <span>Começar: {nextLang.name}</span>
               <ArrowRight className="w-5 h-5" />
             </motion.button>
           )}
@@ -748,6 +891,7 @@ export default function App() {
   const [selectedDeck,  setSelectedDeck]  = useState(null);
   const [result,        setResult]        = useState(null);
   const [fromFavorites, setFromFavorites] = useState(false);
+  const [isReview,      setIsReview]      = useState(false);
 
   const [xp,        setXP]        = useState(() => getStorage("lf_xp", 0));
   const [favorites, setFavorites] = useState(() => getStorage("lf_favorites", {}));
@@ -757,10 +901,8 @@ export default function App() {
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     return (saved.lastDate === today || saved.lastDate === yesterday) ? saved.count : 0;
   });
-  // stats: { totalCorrect, totalAttempts, completedDecks: {deckKey: [langCode,...]}, studied: {langCode: count} }
   const [stats, setStats] = useState(() => getStorage("lf_stats", { totalCorrect: 0, totalAttempts: 0, completedDecks: {}, studied: {} }));
 
-  // Streak: increment on first activity of each day
   const bumpStreak = useCallback(() => {
     const today = new Date().toDateString();
     const saved = getStorage("lf_streak", { count: 0, lastDate: null });
@@ -789,12 +931,12 @@ export default function App() {
 
   const updateStats = useCallback((correct, total, deckKey, langCode) => {
     setStats(prev => {
-      const next = { ...prev,
-        totalCorrect:   (prev.totalCorrect  || 0) + correct,
-        totalAttempts:  (prev.totalAttempts || 0) + total,
+      const next = {
+        ...prev,
+        totalCorrect:  (prev.totalCorrect  || 0) + correct,
+        totalAttempts: (prev.totalAttempts || 0) + total,
         studied: { ...prev.studied, [langCode]: ((prev.studied || {})[langCode] || 0) + total },
       };
-      // mark deck complete for this lang (perfect round not required — just finishing)
       const existing = (prev.completedDecks || {})[deckKey] || [];
       if (!existing.includes(langCode)) {
         next.completedDecks = { ...prev.completedDecks, [deckKey]: [...existing, langCode] };
@@ -804,10 +946,24 @@ export default function App() {
     });
   }, []);
 
-  const goStudy = (lang, deck, fromFavs = false) => {
+  const goStudy = (lang, deck, fromFavs = false, review = false) => {
     setSelectedLang(lang); setSelectedDeck(deck);
     setFromFavorites(fromFavs);
+    setIsReview(review);
     setScreen("study");
+  };
+
+  // Check if deck already completed → show mastered screen instead
+  const handleSelectDeck = (langCode, deckKey) => {
+    const isFavDeck = deckKey.startsWith("__");
+    const isDone = !isFavDeck && stats.completedDecks?.[deckKey]?.includes(langCode);
+    if (isDone) {
+      setSelectedLang(langCode);
+      setSelectedDeck(deckKey);
+      setScreen("mastered");
+    } else {
+      goStudy(langCode, deckKey, false, false);
+    }
   };
 
   const backFromStudy  = () => setScreen(fromFavorites ? "favorites" : "decks");
@@ -839,13 +995,21 @@ export default function App() {
           {screen === "decks" && (
             <DeckSelector key="decks" langCode={selectedLang} streak={streak}
               completedDecks={stats.completedDecks || {}}
-              onSelectDeck={(key) => goStudy(selectedLang, key, false)}
+              onSelectDeck={(key) => handleSelectDeck(selectedLang, key)}
               onBack={() => setScreen("dashboard")} />
           )}
+          {screen === "mastered" && (
+            <MasteredScreen key="mastered"
+              deckLabel={DECKS[selectedDeck]?.label}
+              lang={LANG_META[selectedLang]}
+              onReview={() => goStudy(selectedLang, selectedDeck, false, true)}
+              onBack={() => setScreen("decks")} />
+          )}
           {screen === "study" && (
-            <StudyScreen key={`study-${selectedLang}-${selectedDeck}`}
+            <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${isReview}`}
               langCode={selectedLang} deckKey={selectedDeck}
               favorites={favorites} onToggleFav={handleToggleFav}
+              isReview={isReview}
               onFinish={(res) => {
                 updateStats(res.correct, res.total, res.deckKey, res.langCode);
                 setResult(res);
