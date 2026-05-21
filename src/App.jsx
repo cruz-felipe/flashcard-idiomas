@@ -105,7 +105,7 @@ function PillButton({ onClick, children, style, className = "" }) {
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const steps = [
-    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards. Feito para brasileiros (e um pouquinho pra gringo)." },
+    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros (e um pouquinho pra gringo)." },
     { Icon: RotateCcw, title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
     { Icon: Bookmark,  title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
     { Icon: Flame,     title: "Mantenha seu molejo",      body: "Estude todos os dias para acumular XP e manter sua sequência ativa." },
@@ -557,7 +557,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
           <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">{langCode === "en" ? "English" : "Português"}</p>
           <p className="text-3xl font-black text-gray-900 text-center leading-tight">{card.pt}</p>
           <p className="mt-6 text-xs font-medium flex items-center gap-1.5" style={{ color: "#6B7280" }}>
-            <RotateCcw className="w-3 h-3" /> toque para revelar
+            <RotateCcw className="w-3 h-3" /> {langCode === "en" ? "tap to reveal" : "toque para revelar"}
           </p>
         </div>
 
@@ -723,8 +723,8 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       <Confetti active={showConfetti} />
       <NavBar title={isReview ? `Revisão · ${deckLabel}` : deckLabel}
         bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
-        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-gray-900"><X className="w-4 h-4" /> Sair</button>}
-        right={<span className="text-sm font-semibold text-gray-400">{queue.length} restantes</span>}
+        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-gray-900"><X className="w-4 h-4" /> {langCode === "en" ? "Exit" : "Sair"}</button>}
+        right={<span className="text-sm font-semibold text-gray-400">{queue.length} {langCode === "en" ? "remaining" : "restantes"}</span>}
       />
       <div className="flex-1 max-w-md mx-auto w-full px-4 pt-6 pb-10 flex flex-col">
         {/* Progress */}
@@ -734,7 +734,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
               animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-500">{correct} acertadas</span>
+            <span className="text-xs text-gray-500">{correct} {langCode === "en" ? "correct" : "acertadas"}</span>
             <span className="text-xs font-semibold text-gray-500">{Math.round(progress * 100)}%</span>
           </div>
         </div>
@@ -761,7 +761,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
           <div className="min-h-[20px]">
             {!isFlipped ? (
               <p className="text-center text-xs font-medium" style={{ color: "#6B7280" }}>
-                Toque no card para ver a tradução
+                {langCode === "en" ? "Tap the card to see the translation" : "Toque no card para ver a tradução"}
               </p>
             ) : (card.example || card.tip) ? (
               <div className="rounded-sm border border-gray-100 bg-gray-50 px-4 py-3 space-y-1.5" style={{ borderRadius: 2 }}>
@@ -783,21 +783,21 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             <PillButton onClick={() => handleAnswer(false)} className="flex-1 gap-2 py-3.5 min-w-0"
               style={{ backgroundColor: "#ffffff", border: "2px solid #E5E7EB", color: "#DC2626" }}>
               <X size={18} strokeWidth={2} className="shrink-0" />
-              <span className="text-sm font-bold text-center leading-tight">Ainda Aprendendo</span>
+              <span className="text-sm font-bold text-center leading-tight">{langCode === "en" ? "Still Learning" : "Ainda Aprendendo"}</span>
             </PillButton>
             <PillButton onClick={() => handleAnswer(true)} className="flex-1 gap-2 py-3.5 min-w-0"
               style={{ backgroundColor: "#16A34A", border: "2px solid #16A34A", color: "#ffffff" }}>
               <Check size={18} strokeWidth={2} className="shrink-0" />
-              <span className="text-sm font-bold text-center leading-tight">Eu Conheço!</span>
+              <span className="text-sm font-bold text-center leading-tight">{langCode === "en" ? "I Know It!" : "Eu Conheço!"}</span>
             </PillButton>
           </div>
         </div>
 
         {/* Stats footer */}
         <div className="flex justify-center gap-8 mt-8 pt-4 border-t border-gray-100">
-          {[{ label: "Acertou", val: correct, color: "#16A34A" },
-            { label: "Errou",   val: incorrect, color: "#DC2626" },
-            { label: "Total",   val: total,     color: "#6B7280" }].map(s => (
+          {[{ label: langCode === "en" ? "Correct" : "Acertou", val: correct, color: "#16A34A" },
+            { label: langCode === "en" ? "Wrong"   : "Errou",   val: incorrect, color: "#DC2626" },
+            { label: "Total",                                    val: total,     color: "#6B7280" }].map(s => (
             <div key={s.label} className="text-center">
               <div className="text-lg font-black" style={{ color: s.color }}>{s.val}</div>
               <div className="text-xs text-gray-400">{s.label}</div>
