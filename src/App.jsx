@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, Component } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, Component } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import {
   Flame, Zap, Check, X, ChevronRight, RotateCcw, BarChart2,
@@ -120,10 +120,10 @@ function PillButton({ onClick, children, style, className = "" }) {
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const steps = [
-    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros." },
+    { Icon: Globe,     title: "Bem-vindo ao LinguaFlash", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros." },
     { Icon: RotateCcw, title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
     { Icon: Bookmark,  title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
-    { Icon: Flame,     title: "Mantenha seu molejo",      body: "Estude todos os dias para acumular XP, subir de nível e manter sua sequência ativa." },
+    { Icon: Flame,     title: "Mantenha seu streak",      body: "Estude todos os dias para acumular XP, subir de nível e manter sua sequência ativa." },
   ];
   const [step, setStep] = useState(0);
   const isLast = step === steps.length - 1;
@@ -709,6 +709,13 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const neutralLang = { name: "Favoritas", accent: "#374151", textPrimary: "#111827", textSecondary: "#6B7280" };
   const lang = LANG_META[langCode] || neutralLang;
 
+  // ── Mounted guard — prevents setState after unmount (causes blank screen) ──
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
   const originalCards = useMemo(() => {
     if (isFavAll)
       return shuffle(Object.entries(LANG_META).flatMap(([code]) =>
@@ -742,7 +749,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const handleFlip = () => {
     if (!isFlipped) {
       setIsFlipped(true);
-      setTimeout(() => setButtonsVisible(true), 630);
+      setTimeout(() => { if (mounted.current) setButtonsVisible(true); }, 630);
     }
   };
 
@@ -782,6 +789,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     setAnswered(true);
     setFlashColor(knew ? "green" : "red");
     await controls.start({ x: knew ? 100 : -100, opacity: 0, rotate: knew ? 6 : -6, transition: { duration: 0.26, ease: "easeIn" } });
+    if (!mounted.current) return; // user exited during animation — bail out
     setFlashColor(null);
     controls.set({ x: 0, opacity: 1, rotate: 0 });
     if (knew) {
@@ -793,7 +801,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
         const xpGained = Math.round(newCorrect / totalAnswered * 50) + 10;
         onXP(xpGained);
         setShowConfetti(true);
-        setTimeout(() => onFinish({ correct: newCorrect, total: totalAnswered, xpGained, deckKey, langCode }), 800);
+        setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAnswered, xpGained, deckKey, langCode }); }, 800);
         return;
       }
       setQueue(newQueue);
@@ -878,7 +886,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
               <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
                 lang={cardLangMeta} langCode={cardLang} isFav={isFav}
                 onToggleFav={(c) => onToggleFav(cardLang, c)}
-                onFavSaved={() => { setFavToast(true); setTimeout(() => setFavToast(false), 1800); }}
+                onFavSaved={() => { setFavToast(true); setTimeout(() => { if (mounted.current) setFavToast(false); }, 1800); }}
                 showLangBadge={isFavAll} />
             </motion.div>
           </div>
