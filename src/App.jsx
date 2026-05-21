@@ -2,8 +2,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import {
   Flame, Zap, Check, X, ChevronRight, RotateCcw, BarChart2,
-  Home, ChevronLeft, Target, ArrowRight, Shuffle,
-  Bookmark, BookMarked, Sparkles
+  Home, ChevronLeft, Target, ArrowRight, Bookmark, BookMarked, Sparkles,
+  BookOpen, Utensils, Plane, MessageCircle, Hash, Palette, Users, Heart,
+  Smile, Globe, Volume2, Search, TrendingUp, Award
 } from "lucide-react";
 import { LANG_META, DECKS, DECK_KEYS, VOCAB } from "./data.js";
 
@@ -93,24 +94,25 @@ function PillButton({ onClick, children, style, className = "" }) {
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const steps = [
-    { emoji: "🌍", title: "Bem-vindo ao LinguaFlash", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados." },
-    { emoji: "🃏", title: "Como funciona", body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
-    { emoji: "🔖", title: "Salve favoritas", body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
-    { emoji: "🔥", title: "Mantenha seu streak", body: "Estude todos os dias para acumular XP e manter sua sequência ativa." },
+    { Icon: Globe,      title: "Bem-vindo ao LinguaFlash", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados." },
+    { Icon: RotateCcw,  title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
+    { Icon: Bookmark,   title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
+    { Icon: Flame,      title: "Mantenha seu streak",      body: "Estude todos os dias para acumular XP e manter sua sequência ativa." },
   ];
   const [step, setStep] = useState(0);
   const isLast = step === steps.length - 1;
-  const s = steps[step];
+  const { Icon, title, body } = steps[step];
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="min-h-screen bg-white flex flex-col items-center justify-center px-8 pb-16">
       <motion.div key={step} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="text-center max-w-xs">
-        <div className="text-7xl mb-8">{s.emoji}</div>
-        <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">{s.title}</h2>
-        <p className="text-gray-500 text-sm leading-relaxed">{s.body}</p>
+        <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-8">
+          <Icon size={36} strokeWidth={1.5} className="text-gray-700" />
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">{title}</h2>
+        <p className="text-gray-500 text-sm leading-relaxed">{body}</p>
       </motion.div>
-      {/* dots */}
       <div className="flex gap-2 mt-12 mb-8">
         {steps.map((_, i) => (
           <div key={i} className="rounded-full transition-all"
@@ -127,45 +129,61 @@ function Onboarding({ onDone }) {
 
 // ─── STATS SCREEN ─────────────────────────────────────────────────────────────
 function StatsScreen({ stats, xp, streak, onBack }) {
-  const totalStudied = Object.values(stats.studied || {}).reduce((a, b) => a + b, 0);
-  const totalCorrect = stats.totalCorrect || 0;
+  const totalStudied  = Object.values(stats.studied || {}).reduce((a, b) => a + b, 0);
+  const totalCorrect  = stats.totalCorrect || 0;
   const totalAttempts = stats.totalAttempts || 0;
-  const overallAcc = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : 0;
+  const overallAcc    = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : 0;
+  const statCards = [
+    { label: "Total estudadas", value: totalStudied,   Icon: BookOpen    },
+    { label: "Precisão geral",  value: `${overallAcc}%`, Icon: Target    },
+    { label: "Streak atual",    value: streak,          Icon: Flame      },
+  ];
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
       className="min-h-screen bg-white">
-      <NavBar title="Minhas Estatísticas"
+      <NavBar title="Estatísticas"
         left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><ChevronLeft className="w-4 h-4" /> Voltar</button>} />
       <div className="max-w-md mx-auto px-4 pt-8 pb-16 space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Total estudadas", value: totalStudied, icon: "📚" },
-            { label: "Precisão geral",  value: `${overallAcc}%`, icon: "🎯" },
-            { label: "Streak atual",    value: streak, icon: "🔥" },
-          ].map((s, i) => (
-            <div key={i} className="bg-gray-50 rounded-sm border border-gray-100 p-4 text-center" style={{ borderRadius: 2 }}>
-              <div className="text-2xl mb-1">{s.icon}</div>
-              <div className="text-xl font-black text-gray-900">{s.value}</div>
-              <div className="text-xs text-gray-400 mt-0.5 leading-tight">{s.label}</div>
+          {statCards.map(({ label, value, Icon }, i) => (
+            <div key={i} className="bg-gray-50 border border-gray-100 p-4 text-center" style={{ borderRadius: 2 }}>
+              <Icon size={20} strokeWidth={1.5} className="mx-auto mb-2 text-gray-400" />
+              <div className="text-xl font-black text-gray-900">{value}</div>
+              <div className="text-xs text-gray-400 mt-0.5 leading-tight">{label}</div>
             </div>
           ))}
         </div>
-        <div className="bg-gray-50 rounded-sm border border-gray-100 p-4" style={{ borderRadius: 2 }}>
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">XP Total</p>
+        <div className="bg-gray-50 border border-gray-100 p-4" style={{ borderRadius: 2 }}>
+          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2 flex items-center gap-2">
+            <Zap size={14} className="text-gray-400" /> XP Total
+          </p>
           <p className="text-3xl font-black text-gray-900">{xp} <span className="text-base font-semibold text-gray-400">XP</span></p>
         </div>
         {Object.keys(stats.completedDecks || {}).length > 0 && (
-          <div className="bg-gray-50 rounded-sm border border-gray-100 p-4" style={{ borderRadius: 2 }}>
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">Categorias concluídas</p>
+          <div className="bg-gray-50 border border-gray-100 p-4" style={{ borderRadius: 2 }}>
+            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3 flex items-center gap-2">
+              <Award size={14} className="text-gray-400" /> Categorias concluídas
+            </p>
             <div className="space-y-2">
-              {Object.entries(stats.completedDecks || {}).map(([key, langs]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-700">{DECKS[key]?.label}</span>
-                  <div className="flex gap-1">
-                    {langs.map(l => <span key={l} className="text-xs">{LANG_META[l]?.flag}</span>)}
+              {Object.entries(stats.completedDecks || {}).map(([key, langs]) => {
+                const DeckIcon = DECKS[key]?.icon || BookOpen;
+                return (
+                  <div key={key} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DeckIcon size={14} strokeWidth={1.5} className="text-gray-400" />
+                      <span className="text-sm font-semibold text-gray-700">{DECKS[key]?.label}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {langs.map(l => (
+                        <span key={l} className="text-xs font-bold px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: LANG_META[l]?.accent + "18", color: LANG_META[l]?.accent, border: `1px solid ${LANG_META[l]?.accent}40` }}>
+                          {LANG_META[l]?.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -229,8 +247,9 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
                   </div>
                 </div>
                 {doneCount > 0 && (
-                  <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                    {doneCount}/{DECK_KEYS.length} ✓
+                  <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
+                    style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0" }}>
+                    <Check size={10} strokeWidth={3} />{doneCount}/{DECK_KEYS.length}
                   </span>
                 )}
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
@@ -336,6 +355,10 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 // ─── DECK SELECTOR ───────────────────────────────────────────────────────────
 function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }) {
   const lang = LANG_META[langCode];
+  const [query, setQuery] = useState("");
+  const filtered = DECK_KEYS.filter(k =>
+    DECKS[k].label.toLowerCase().includes(query.toLowerCase())
+  );
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
       className="min-h-screen" style={{ backgroundColor: lang.accent }}>
@@ -354,23 +377,37 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
         }
       />
       <div className="max-w-md mx-auto px-4 pt-6 pb-16">
-        <div className="mb-8">
+        <div className="mb-6">
           <h2 className="text-3xl font-black tracking-tight text-white">{lang.name}</h2>
           <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>Escolha uma categoria</p>
         </div>
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.5)" }} />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Buscar categoria..."
+            className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold placeholder-white/40 outline-none"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)", borderRadius: 999, color: "#ffffff" }}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3">
-          {DECK_KEYS.map((key, i) => {
+          {filtered.map((key, i) => {
             const deck = DECKS[key];
             const Icon = deck.icon;
             const done = completedDecks[key]?.includes(langCode);
             return (
               <motion.button key={key} onClick={() => onSelectDeck(key)}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="relative flex flex-col items-start gap-3 p-4 text-left transition-opacity hover:opacity-90"
+                className="relative flex flex-col items-start gap-3 p-4 text-left hover:opacity-90 transition-opacity"
                 style={{ border: "2px solid rgba(255,255,255,0.25)", borderRadius: 2, backgroundColor: "#ffffff" }}>
                 {done && (
-                  <span className="absolute top-2 right-2 text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full border border-green-200">✓</span>
+                  <span className="absolute top-2 right-2 flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0" }}>
+                    <Check size={10} strokeWidth={3} />
+                  </span>
                 )}
                 <Icon size={40} strokeWidth={1.5} style={{ color: lang.accent }} />
                 <div>
@@ -380,19 +417,36 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
               </motion.button>
             );
           })}
+          {filtered.length === 0 && (
+            <div className="col-span-2 text-center py-8" style={{ color: "rgba(255,255,255,0.6)" }}>
+              <Search size={24} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm font-semibold">Nenhuma categoria encontrada</p>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
   );
 }
 
+// ─── TTS ─────────────────────────────────────────────────────────────────────
+function speak(text, lang) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const map = { es: "es-ES", it: "it-IT", ru: "ru-RU", fr: "fr-FR", de: "de-DE" };
+  u.lang = map[lang] || "en-US";
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+
 // ─── FLASH CARD ───────────────────────────────────────────────────────────────
-function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav, showLangBadge }) {
+function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFav, showLangBadge }) {
   return (
-    <div className="w-full h-full" style={{ perspective: 1400 }}>
+    <div className="w-full" style={{ perspective: 1400, height: 240 }}>
       <motion.div key={card.pt + card.target}
-        className="relative w-full h-full cursor-pointer"
-        style={{ transformStyle: "preserve-3d" }}
+        className="relative w-full cursor-pointer"
+        style={{ transformStyle: "preserve-3d", height: "100%" }}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.48, ease: [0.4, 0, 0.2, 1] }}
         onClick={onClick}
@@ -419,11 +473,17 @@ function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav, showLan
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)", backgroundColor: lang.accent,
             border: `2px solid ${lang.accent}`, borderRadius: 2 }}>
+          {/* Fav */}
           <button onClick={e => { e.stopPropagation(); onToggleFav(card); }}
             className="absolute top-3 right-3 p-2 hover:opacity-70 transition-opacity">
             {isFav
               ? <BookMarked size={20} style={{ color: "#ffffff" }} />
               : <Bookmark size={20} style={{ color: "rgba(255,255,255,0.5)" }} />}
+          </button>
+          {/* TTS */}
+          <button onClick={e => { e.stopPropagation(); speak(card.target, langCode); }}
+            className="absolute top-3 left-3 p-2 hover:opacity-70 transition-opacity">
+            <Volume2 size={20} style={{ color: "rgba(255,255,255,0.7)" }} />
           </button>
           <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>{lang.name}</p>
           <p className="text-3xl font-black text-center leading-tight text-white">{card.target}</p>
@@ -545,9 +605,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
           </div>
         </div>
 
-        {/* Card — auto height with min, grows for long content */}
+        {/* Card + actions */}
         <div className="flex flex-col gap-4 flex-1 justify-center">
-          <div className="relative" style={{ minHeight: 200 }}>
+          <div className="relative" style={{ height: 240 }}>
             <AnimatePresence>
               {flashColor && (
                 <motion.div className="absolute inset-0 z-10 pointer-events-none"
@@ -555,9 +615,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
               )}
             </AnimatePresence>
-            <motion.div animate={controls} style={{ minHeight: 200 }}>
+            <motion.div animate={controls} style={{ height: "100%" }}>
               <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
-                lang={cardLangMeta} isFav={isFav}
+                lang={cardLangMeta} langCode={cardLang} isFav={isFav}
                 onToggleFav={(c) => onToggleFav(cardLang, c)}
                 showLangBadge={isFavAll} />
             </motion.div>
