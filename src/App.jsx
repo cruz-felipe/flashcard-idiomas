@@ -10,9 +10,9 @@ import {
 // ─── TOKENS ──────────────────────────────────────────────────────────────────
 
 const LANG_META = {
-  es: { name: "Espanhol", accent: "#E63329", bg: "#FFF1F0", textPrimary: "#1A0A09", textSecondary: "#7A3530", borderColor: "#F4A9A6" },
-  it: { name: "Italiano", accent: "#1A7A4A", bg: "#F0FAF4", textPrimary: "#071A0E", textSecondary: "#2D6647", borderColor: "#90CFA9" },
-  ru: { name: "Russo",    accent: "#1B4FD8", bg: "#EEF3FF", textPrimary: "#060D2A", textSecondary: "#2D4799", borderColor: "#93ACEE" },
+  es: { name: "Espanhol", flag: "🇪🇸", accent: "#E63329", bg: "#FFCFCC", textPrimary: "#1A0A09", textSecondary: "#7A3530", borderColor: "#F4A9A6" },
+  it: { name: "Italiano", flag: "🇮🇹", accent: "#1A7A4A", bg: "#C2EDD4", textPrimary: "#071A0E", textSecondary: "#1E5233", borderColor: "#90CFA9" },
+  ru: { name: "Russo",    flag: "🇷🇺", accent: "#1B4FD8", bg: "#C7D7FA", textPrimary: "#060D2A", textSecondary: "#1A3BA8", borderColor: "#93ACEE" },
 };
 
 const DECKS = {
@@ -495,11 +495,7 @@ function Dashboard({ xp, streak, favorites, onSelectLang, onOpenFavorites }) {
               whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
               className="w-full flex items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50"
               style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-              <div className="shrink-0" style={{ width: 40, height: 40 }}>
-                {code === "es" && <MessageCircle size={40} strokeWidth={1.5} style={{ color: lang.accent }} />}
-                {code === "it" && <BookOpen size={40} strokeWidth={1.5} style={{ color: lang.accent }} />}
-                {code === "ru" && <Globe40 color={lang.accent} />}
-              </div>
+              <span className="shrink-0 text-4xl leading-none">{lang.flag}</span>
               <div className="flex-1">
                 <div className="font-bold text-gray-900">{lang.name}</div>
                 <div className="text-xs text-gray-400 mt-0.5">{DECK_KEYS.length} categorias · {Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras</div>
@@ -526,15 +522,7 @@ function Dashboard({ xp, streak, favorites, onSelectLang, onOpenFavorites }) {
   );
 }
 
-// small inline svg globe for Russian (avoids importing Globe which is ambiguous)
-function Globe40({ color }) {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-    </svg>
-  );
-}
+
 
 // ─── FAVORITES SCREEN (language picker) ──────────────────────────────────────
 function FavoritesScreen({ favorites, onStudyFavs, onBack }) {
@@ -542,6 +530,8 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack }) {
     const count = Object.keys(favorites).filter(k => k.startsWith(code + ":")).length;
     return { code, lang, count };
   }).filter(x => x.count > 0);
+
+  const totalCount = Object.keys(favorites).length;
 
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
@@ -565,12 +555,25 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack }) {
           <>
             <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-6">Escolha o idioma para revisar</p>
             <div className="space-y-3">
+              {/* All words row — only shown when favs exist in multiple languages or as a convenience */}
+              <motion.button onClick={() => onStudyFavs("es", "__favorites_all__")}
+                whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
+                style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
+                <BookMarked size={40} strokeWidth={1.5} className="text-gray-700 shrink-0" />
+                <div className="flex-1">
+                  <div className="font-bold text-gray-900">Todas as palavras</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{totalCount} {totalCount === 1 ? "palavra" : "palavras"} · todos os idiomas</div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300" />
+              </motion.button>
+
               {favByLang.map(({ code, lang, count }) => (
-                <motion.button key={code} onClick={() => onStudyFavs(code)}
+                <motion.button key={code} onClick={() => onStudyFavs(code, "__favorites__")}
                   whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
                   className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
                   style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                  <BookMarked size={40} strokeWidth={1.5} style={{ color: lang.accent }} className="shrink-0" />
+                  <span className="text-4xl leading-none shrink-0">{lang.flag}</span>
                   <div className="flex-1">
                     <div className="font-bold text-gray-900">{lang.name}</div>
                     <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
@@ -591,25 +594,25 @@ function DeckSelector({ langCode, onSelectDeck, onBack, xp, streak }) {
   const lang = LANG_META[langCode];
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen" style={{ backgroundColor: lang.bg }}>
+      className="min-h-screen" style={{ backgroundColor: lang.accent }}>
       <NavBar title={lang.name}
-        bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor}
+        bgColor={lang.accent} textColor="#ffffff" borderColor="rgba(255,255,255,0.2)"
         left={
-          <button onClick={onBack} className="flex items-center gap-1 transition-colors text-sm font-semibold" style={{ color: lang.textSecondary }}>
+          <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>
             <ChevronLeft className="w-4 h-4" /> Início
           </button>
         }
         right={
-          <div className="flex items-center gap-1 px-2 py-1" style={{ border: `2px solid ${lang.borderColor}`, borderRadius: 999 }}>
-            <Flame size={14} style={{ color: lang.accent }} />
-            <span className="font-bold text-xs" style={{ color: lang.accent }}>{streak}</span>
+          <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid rgba(255,255,255,0.4)", borderRadius: 999 }}>
+            <Flame size={14} style={{ color: "#ffffff" }} />
+            <span className="font-bold text-xs text-white">{streak}</span>
           </div>
         }
       />
       <div className="max-w-md mx-auto px-4 pt-6 pb-16">
         <div className="mb-8">
-          <h2 className="text-3xl font-black tracking-tight" style={{ color: lang.textPrimary }}>{lang.name}</h2>
-          <p className="text-sm mt-1" style={{ color: lang.textSecondary }}>Escolha uma categoria</p>
+          <h2 className="text-3xl font-black tracking-tight text-white">{lang.name}</h2>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>Escolha uma categoria</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {DECK_KEYS.map((key, i) => {
@@ -619,8 +622,8 @@ function DeckSelector({ langCode, onSelectDeck, onBack, xp, streak }) {
               <motion.button key={key} onClick={() => onSelectDeck(key)}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 whileTap={{ scale: 0.97 }}
-                className="flex flex-col items-start gap-3 p-4 text-left transition-colors"
-                style={{ border: `2px solid ${lang.borderColor}`, borderRadius: 2, backgroundColor: "#ffffff30" }}
+                className="flex flex-col items-start gap-3 p-4 text-left transition-opacity hover:opacity-90"
+                style={{ border: "2px solid rgba(255,255,255,0.25)", borderRadius: 2, backgroundColor: "#ffffff" }}
               >
                 <Icon size={40} strokeWidth={1.5} style={{ color: lang.accent }} />
                 <div>
@@ -637,12 +640,12 @@ function DeckSelector({ langCode, onSelectDeck, onBack, xp, streak }) {
 }
 
 // ─── FLASH CARD ───────────────────────────────────────────────────────────────
-function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav }) {
+function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav, showLangBadge }) {
   return (
-    <div className="w-full" style={{ perspective: 1400 }}>
+    <div className="w-full h-full" style={{ perspective: 1400 }}>
       <motion.div key={card.pt + card.target}
-        className="relative w-full cursor-pointer"
-        style={{ transformStyle: "preserve-3d", minHeight: 220 }}
+        className="relative w-full h-full cursor-pointer"
+        style={{ transformStyle: "preserve-3d" }}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.48, ease: [0.4, 0, 0.2, 1] }}
         onClick={onClick}
@@ -650,9 +653,16 @@ function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav }) {
         {/* FRONT */}
         <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-8"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", backgroundColor: "#ffffff", border: "2px solid #E5E7EB", borderRadius: 2 }}>
-          <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-6">Português</p>
+          {/* language badge — visible in all-favs mode so user knows what they're translating to */}
+          {showLangBadge && (
+            <span className="absolute top-4 left-4 text-xs font-bold px-2 py-1 rounded-sm" style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: 999 }}>
+              {lang.name}
+            </span>
+          )}
+          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-6">Português</p>
           <p className="text-4xl font-black text-gray-900 text-center leading-tight">{card.pt}</p>
-          <p className="mt-8 text-xs text-gray-300 flex items-center gap-1.5">
+          {/* #6B7280 on white = 4.61:1 — passes WCAG AA */}
+          <p className="mt-8 text-xs font-medium flex items-center gap-1.5" style={{ color: "#6B7280" }}>
             <RotateCcw className="w-3 h-3" /> toque para revelar
           </p>
         </div>
@@ -660,17 +670,17 @@ function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav }) {
         {/* BACK */}
         <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-8"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)",
-            backgroundColor: lang.bg, border: `2px solid ${lang.borderColor}`, borderRadius: 2 }}>
+            backgroundColor: lang.accent, border: `2px solid ${lang.accent}`, borderRadius: 2 }}>
           <button onClick={e => { e.stopPropagation(); onToggleFav(card); }}
             className="absolute top-4 right-4 p-2 transition-colors hover:opacity-70">
             {isFav
-              ? <BookMarked size={20} style={{ color: lang.accent }} />
-              : <Bookmark size={20} style={{ color: lang.borderColor }} />}
+              ? <BookMarked size={20} style={{ color: "#ffffff" }} />
+              : <Bookmark size={20} style={{ color: "rgba(255,255,255,0.5)" }} />}
           </button>
-          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: lang.textSecondary }}>{lang.name}</p>
-          <p className="text-4xl font-black text-center leading-tight" style={{ color: lang.textPrimary }}>{card.target}</p>
-          {card.phonetic && <p className="mt-2 text-base font-semibold" style={{ color: lang.textSecondary }}>{card.phonetic}</p>}
-          <p className="mt-3 text-sm" style={{ color: lang.textSecondary }}>{card.pt}</p>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: "rgba(255,255,255,0.7)" }}>{lang.name}</p>
+          <p className="text-4xl font-black text-center leading-tight" style={{ color: "#ffffff" }}>{card.target}</p>
+          {card.phonetic && <p className="mt-2 text-base font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>{card.phonetic}</p>}
+          <p className="mt-3 text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{card.pt}</p>
         </div>
       </motion.div>
     </div>
@@ -679,13 +689,23 @@ function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav }) {
 
 // ─── STUDY SCREEN ─────────────────────────────────────────────────────────────
 function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav }) {
-  const lang          = LANG_META[langCode];
-  const isFavDeck     = deckKey === "__favorites__";
-  const deckLabel     = isFavDeck ? "Favoritas" : DECKS[deckKey]?.label;
-  const DeckIcon      = isFavDeck ? BookMarked : DECKS[deckKey]?.icon;
-  const originalCards = isFavDeck
-    ? Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`])
-    : VOCAB[langCode][deckKey];
+  const isFavAll   = deckKey === "__favorites_all__";
+  const isFavDeck  = deckKey === "__favorites__" || isFavAll;
+  const deckLabel  = isFavAll ? "Todas as Favoritas" : isFavDeck ? "Favoritas" : DECKS[deckKey]?.label;
+
+  // For "all favorites" we mix every language — use a neutral gray theme
+  const lang = isFavAll
+    ? { name: "Favoritas", accent: "#374151", bg: "#F9FAFB", textPrimary: "#111827", textSecondary: "#6B7280", borderColor: "#D1D5DB" }
+    : LANG_META[langCode];
+
+  const originalCards = isFavAll
+    ? Object.entries(LANG_META).flatMap(([code]) =>
+        Object.values(VOCAB[code]).flat().filter(c => favorites[`${code}:${c.pt}`])
+          .map(c => ({ ...c, _lang: code }))
+      )
+    : isFavDeck
+      ? Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`])
+      : VOCAB[langCode][deckKey];
 
   const [queue,        setQueue]        = useState([...originalCards]);
   const [currentIdx,   setCurrentIdx]   = useState(0);
@@ -746,86 +766,81 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     setAnswered(false);
   };
 
-  const favKey = `${langCode}:${card.pt}`;
-  const isFav  = !!favorites[favKey];
+  const cardLang = isFavAll ? (card._lang || langCode) : langCode;
+  const favKey   = `${cardLang}:${card.pt}`;
+  const isFav    = !!favorites[favKey];
+  const cardLangMeta = isFavAll ? LANG_META[card._lang || langCode] : lang;
 
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: lang.bg }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: "#ffffff" }}>
       <Confetti active={showConfetti} />
       <NavBar title={deckLabel}
-        bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor}
+        bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
         left={
-          <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold transition-colors" style={{ color: lang.textSecondary }}>
+          <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors">
             <X className="w-4 h-4" /> Sair
           </button>
         }
-        right={<span className="text-sm font-semibold" style={{ color: lang.textSecondary }}>{queue.length} restantes</span>}
+        right={<span className="text-sm font-semibold text-gray-400">{queue.length} restantes</span>}
       />
       <div className="flex-1 max-w-md mx-auto w-full px-4 pt-6 pb-10 flex flex-col">
-        {/* Progress */}
+        {/* Progress — accent color bar on gray track */}
         <div className="mb-8">
-          <div className="h-1.5 overflow-hidden" style={{ backgroundColor: lang.borderColor, borderRadius: 2 }}>
-            <motion.div className="h-full" style={{ backgroundColor: lang.accent, borderRadius: 2 }}
+          <div className="h-1.5 overflow-hidden bg-gray-100" style={{ borderRadius: 2 }}>
+            <motion.div className="h-full" style={{ backgroundColor: cardLangMeta.accent, borderRadius: 2 }}
               animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-xs" style={{ color: lang.textSecondary }}>{correct} acertadas</span>
-            <span className="text-xs font-semibold" style={{ color: lang.textSecondary }}>{Math.round(progress * 100)}%</span>
+            <span className="text-xs text-gray-500">{correct} acertadas</span>
+            <span className="text-xs font-semibold text-gray-500">{Math.round(progress * 100)}%</span>
           </div>
         </div>
 
-        {/* Card */}
-        <div className="flex-1 flex flex-col justify-center">
-          <div className="relative mb-6" style={{ minHeight: 220 }}>
+        {/* Card + actions */}
+        <div className="flex flex-col gap-4">
+          <div className="relative" style={{ height: 220 }}>
             <AnimatePresence>
               {flashColor && (
                 <motion.div className="absolute inset-0 z-10 pointer-events-none"
-                  style={{ backgroundColor: flashColor === "green" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", borderRadius: 2 }}
+                  style={{ backgroundColor: flashColor === "green" ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)", borderRadius: 2 }}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
               )}
             </AnimatePresence>
-            <motion.div animate={controls}>
-              <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip} lang={lang} isFav={isFav}
-                onToggleFav={(c) => onToggleFav(langCode, c)} />
+            <motion.div animate={controls} style={{ height: "100%" }}>
+              <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip} lang={cardLangMeta} isFav={isFav}
+                onToggleFav={(c) => onToggleFav(cardLang, c)} showLangBadge={isFavAll} />
             </motion.div>
           </div>
 
-          <AnimatePresence>
+          {/* Hint — WCAG AA contrast: #6B7280 on white = 4.61:1 */}
+          <div style={{ height: 20 }} className="flex items-center justify-center">
             {!isFlipped && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="text-center text-xs mb-6" style={{ color: lang.borderColor }}>
+              <p className="text-center text-xs font-medium" style={{ color: "#6B7280" }}>
                 Toque no card para ver a tradução
-              </motion.p>
+              </p>
             )}
-          </AnimatePresence>
+          </div>
 
-          {/* Action pills — consistent colors regardless of language */}
-          <AnimatePresence>
-            {isFlipped && (
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
-                className="flex gap-3">
-                <PillButton onClick={() => handleAnswer(false)} className="flex-1 flex-col gap-1 py-4"
-                  style={{ backgroundColor: "#FEF2F2", border: "2px solid #FECACA", color: "#DC2626" }}>
-                  <X size={20} strokeWidth={2} />
-                  <span className="text-xs font-bold">Ainda Aprendendo</span>
-                </PillButton>
-                <PillButton onClick={() => handleAnswer(true)} className="flex-1 flex-col gap-1 py-4"
-                  style={{ backgroundColor: "#F0FDF4", border: "2px solid #BBF7D0", color: "#16A34A" }}>
-                  <Check size={20} strokeWidth={2} />
-                  <span className="text-xs font-bold">Eu Conheço!</span>
-                </PillButton>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Action pills */}
+          <div className="flex gap-3" style={{ opacity: isFlipped ? 1 : 0, pointerEvents: isFlipped ? "auto" : "none", transition: "opacity 0.2s" }}>
+            <PillButton onClick={() => handleAnswer(false)} className="flex-1 gap-2 py-3.5"
+              style={{ backgroundColor: "#ffffff", border: "2px solid #E5E7EB", color: "#DC2626" }}>
+              <X size={18} strokeWidth={2} /><span className="text-sm font-bold whitespace-nowrap">Ainda Aprendendo</span>
+            </PillButton>
+            <PillButton onClick={() => handleAnswer(true)} className="flex-1 gap-2 py-3.5"
+              style={{ backgroundColor: "#16A34A", border: "2px solid #16A34A", color: "#ffffff" }}>
+              <Check size={18} strokeWidth={2} /><span className="text-sm font-bold whitespace-nowrap">Eu Conheço!</span>
+            </PillButton>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="flex justify-center gap-8 mt-8 pt-4" style={{ borderTop: `2px solid ${lang.borderColor}` }}>
-          {[{ label: "Acertou", val: correct, color: "#16A34A" }, { label: "Errou", val: incorrect, color: "#DC2626" }, { label: "Total", val: total, color: lang.textSecondary }].map(s => (
+        <div className="flex justify-center gap-8 mt-8 pt-4 border-t border-gray-100">
+          {[{ label: "Acertou", val: correct, color: "#16A34A" }, { label: "Errou", val: incorrect, color: "#DC2626" }, { label: "Total", val: total, color: "#6B7280" }].map(s => (
             <div key={s.label} className="text-center">
               <div className="text-lg font-black" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-xs" style={{ color: lang.textSecondary }}>{s.label}</div>
+              <div className="text-xs text-gray-400">{s.label}</div>
             </div>
           ))}
         </div>
@@ -835,12 +850,13 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 }
 
 // ─── RESULT SCREEN ────────────────────────────────────────────────────────────
-function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck }) {
-  const lang             = LANG_META[langCode];
+function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck, fromFavorites }) {
+  const lang             = LANG_META[langCode] ?? { accent: "#374151", bg: "#F9FAFB", textPrimary: "#111827", textSecondary: "#6B7280", borderColor: "#D1D5DB" };
   const accuracy         = Math.round((result.correct / result.total) * 100);
   const currentDeckIndex = DECK_KEYS.indexOf(deckKey);
   const nextDeckKey      = DECK_KEYS[currentDeckIndex + 1] ?? null;
-  const nextDeck         = nextDeckKey ? DECKS[nextDeckKey] : null;
+  const nextDeck         = (!fromFavorites && nextDeckKey) ? DECKS[nextDeckKey] : null;
+  const homeLabel        = fromFavorites ? "Favoritas" : "Início";
 
   const msg = accuracy === 100 ? { emoji: "🏆", text: "Perfeito!", sub: "Você acertou todas as palavras!" }
     : accuracy >= 80 ? { emoji: "🎉", text: "Muito bem!", sub: "Quase perfeito, continue assim!" }
@@ -849,40 +865,31 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: lang.bg }}>
-      <NavBar title="Resultado" bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor} />
+      className="min-h-screen flex flex-col" style={{ backgroundColor: "#ffffff" }}>
+      <NavBar title="Resultado" bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB" />
       <div className="flex-1 max-w-md mx-auto w-full px-4 pt-8 pb-16 flex flex-col">
         <div className="text-center mb-10">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.15 }}
             className="text-7xl mb-4">{msg.emoji}</motion.div>
-          <h2 className="text-3xl font-black tracking-tight" style={{ color: lang.textPrimary }}>{msg.text}</h2>
-          <p className="text-sm mt-2" style={{ color: lang.textSecondary }}>{msg.sub}</p>
+          <h2 className="text-3xl font-black tracking-tight text-gray-900">{msg.text}</h2>
+          <p className="text-sm mt-2 text-gray-500">{msg.sub}</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
+        {/* Stats — accent bg, white text */}
+        <div className="grid grid-cols-3 gap-3 mb-10">
           {[
             { icon: Target, label: "Precisão", value: `${accuracy}%` },
             { icon: Zap,    label: "XP Ganho", value: `+${result.xpGained}` },
             { icon: Check,  label: "Acertos",  value: `${result.correct}/${result.total}` },
           ].map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.08 }}
-              className="p-4 text-center" style={{ border: `2px solid ${lang.borderColor}`, borderRadius: 2, backgroundColor: "#ffffff30" }}>
-              <s.icon size={16} style={{ color: lang.textSecondary }} className="mx-auto mb-2" />
-              <div className="text-xl font-black" style={{ color: lang.textPrimary }}>{s.value}</div>
-              <div className="text-xs mt-0.5" style={{ color: lang.textSecondary }}>{s.label}</div>
+              className="p-4 text-center" style={{ borderRadius: 2, backgroundColor: lang.accent }}>
+              <s.icon size={16} className="mx-auto mb-2" style={{ color: "rgba(255,255,255,0.75)" }} />
+              <div className="text-xl font-black text-white">{s.value}</div>
+              <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{s.label}</div>
             </motion.div>
           ))}
-        </div>
-
-        {/* Progress bar */}
-        <div className="mb-10">
-          <div className="h-1.5 overflow-hidden" style={{ backgroundColor: lang.borderColor, borderRadius: 2 }}>
-            <motion.div className="h-full" style={{ backgroundColor: lang.accent, borderRadius: 2 }}
-              initial={{ width: 0 }} animate={{ width: `${accuracy}%` }}
-              transition={{ duration: 1, ease: "easeOut", delay: 0.4 }} />
-          </div>
         </div>
 
         {/* CTAs */}
@@ -898,11 +905,11 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
           )}
           <div className="flex gap-3">
             <PillButton onClick={onHome} className="flex-1 gap-2"
-              style={{ backgroundColor: "transparent", border: `2px solid ${lang.borderColor}`, color: lang.textSecondary }}>
-              <Home size={16} /> Início
+              style={{ backgroundColor: "transparent", border: "2px solid #E5E7EB", color: "#374151" }}>
+              <Home size={16} /> {homeLabel}
             </PillButton>
             <PillButton onClick={onRestart} className="flex-1 gap-2"
-              style={{ backgroundColor: "transparent", border: `2px solid ${lang.borderColor}`, color: lang.textSecondary }}>
+              style={{ backgroundColor: "transparent", border: "2px solid #E5E7EB", color: "#374151" }}>
               <RotateCcw size={16} /> Repetir
             </PillButton>
           </div>
@@ -949,7 +956,16 @@ export default function App() {
     });
   }, []);
 
-  const goStudy = (lang, deck) => { setSelectedLang(lang); setSelectedDeck(deck); setScreen("study"); };
+  const [fromFavorites, setFromFavorites] = useState(false);
+
+  const goStudy = (lang, deck, fromFavs = false) => {
+    setSelectedLang(lang); setSelectedDeck(deck);
+    setFromFavorites(fromFavs);
+    setScreen("study");
+  };
+
+  const backFromStudy  = () => setScreen(fromFavorites ? "favorites" : "decks");
+  const homeFromResult = () => setScreen(fromFavorites ? "favorites" : "dashboard");
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
@@ -962,12 +978,12 @@ export default function App() {
         )}
         {screen === "favorites" && (
           <FavoritesScreen key="favorites" favorites={favorites}
-            onStudyFavs={(code) => goStudy(code, "__favorites__")}
+            onStudyFavs={(code, deck) => goStudy(code, deck, true)}
             onBack={() => setScreen("dashboard")} />
         )}
         {screen === "decks" && (
           <DeckSelector key="decks" langCode={selectedLang} xp={xp} streak={streak}
-            onSelectDeck={(key) => goStudy(selectedLang, key)}
+            onSelectDeck={(key) => goStudy(selectedLang, key, false)}
             onBack={() => setScreen("dashboard")} />
         )}
         {screen === "study" && (
@@ -975,14 +991,15 @@ export default function App() {
             langCode={selectedLang} deckKey={selectedDeck}
             favorites={favorites} onToggleFav={handleToggleFav}
             onFinish={(res) => { setResult(res); setScreen("result"); }}
-            onXP={addXP} onBack={() => setScreen("decks")} />
+            onXP={addXP} onBack={backFromStudy} />
         )}
         {screen === "result" && result && (
           <ResultScreen key="result" result={result}
             langCode={selectedLang} deckKey={selectedDeck}
+            fromFavorites={fromFavorites}
             onRestart={() => setScreen("study")}
-            onHome={() => setScreen("dashboard")}
-            onNextDeck={(nextKey) => goStudy(selectedLang, nextKey)} />
+            onHome={homeFromResult}
+            onNextDeck={(nextKey) => goStudy(selectedLang, nextKey, false)} />
         )}
       </AnimatePresence>
     </div>
