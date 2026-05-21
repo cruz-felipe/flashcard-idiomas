@@ -573,11 +573,13 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
               ? <BookMarked size={20} style={{ color: "#ffffff" }} />
               : <Bookmark size={20} style={{ color: "rgba(255,255,255,0.5)" }} />}
           </button>
-          {/* TTS button — shows muted icon if unsupported */}
-          <button onClick={handleTTS}
-            className="absolute top-3 left-3 p-2 hover:opacity-70 transition-opacity">
-            <Volume2 size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }} />
-          </button>
+          {/* TTS button — hidden for EN deck (PT target needs no TTS here) */}
+          {langCode !== "en" && (
+            <button onClick={handleTTS}
+              className="absolute top-3 left-3 p-2 hover:opacity-70 transition-opacity">
+              <Volume2 size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }} />
+            </button>
+          )}
           <p className="text-xs font-semibold tracking-widest uppercase mb-3"
             style={{ color: "rgba(255,255,255,0.7)" }}>{langCode === "en" ? "Português" : lang.name}</p>
           <p className="text-3xl font-black text-center leading-tight text-white break-words max-w-full px-8">
@@ -755,13 +757,24 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             </motion.div>
           </div>
 
-          {/* Hint — fixed height slot */}
-          <div style={{ height: 20 }} className="flex items-center justify-center">
-            {!isFlipped && (
+          {/* Hint / Tips slot — fixed space, no layout shift */}
+          <div className="min-h-[20px]">
+            {!isFlipped ? (
               <p className="text-center text-xs font-medium" style={{ color: "#6B7280" }}>
                 Toque no card para ver a tradução
               </p>
-            )}
+            ) : (card.example || card.tip) ? (
+              <div className="rounded-sm border border-gray-100 bg-gray-50 px-4 py-3 space-y-1.5" style={{ borderRadius: 2 }}>
+                {card.example && (
+                  <p className="text-xs font-semibold text-gray-700 leading-snug">
+                    <span className="text-gray-400 font-normal mr-1">ex.</span>{card.example}
+                  </p>
+                )}
+                {card.tip && (
+                  <p className="text-xs text-gray-500 leading-snug">{card.tip}</p>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Action pills */}
