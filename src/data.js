@@ -6,22 +6,29 @@ export const LANG_META = {
   ru: { name: "Russo",    flag: "🇷🇺", accent: "#1B4FD8", bg: "#C7D7FA", textPrimary: "#060D2A", textSecondary: "#1A3BA8", borderColor: "#93ACEE" },
   fr: { name: "Francês",  flag: "🇫🇷", accent: "#1251A3", bg: "#C8D9F5", textPrimary: "#050F24", textSecondary: "#1251A3", borderColor: "#93B4E8" },
   de: { name: "Alemão",   flag: "🇩🇪", accent: "#B45309", bg: "#FEF3C7", textPrimary: "#1C0F00", textSecondary: "#78350F", borderColor: "#FCD34D" },
-  en: { name: "Portuguese", flag: "🇧🇷", accent: "#1A6B3C", bg: "#D4EDDA", textPrimary: "#0A2E1A", textSecondary: "#1A6B3C", borderColor: "#74C494" },
+  en: { name: "Inglês → Português", flag: "🇧🇷", accent: "#1A6B3C", bg: "#D4EDDA", textPrimary: "#0A2E1A", textSecondary: "#1A6B3C", borderColor: "#74C494" },
 };
 
 export const DECKS = {
-  cumprimentos: { label: "Cumprimentos",       icon: MessageCircle },
-  alimentos:    { label: "Alimentos",          icon: Utensils      },
-  viagem:       { label: "Viagem",             icon: Plane         },
-  verbos:       { label: "Verbos",             icon: BookOpen      },
-  numeros:      { label: "Números",            icon: Hash          },
-  cores:        { label: "Cores",              icon: Palette       },
-  familia:      { label: "Família",            icon: Users         },
-  corpo:        { label: "Corpo Humano",       icon: Heart         },
-  casa:         { label: "Casa & Objetos",     icon: Home          },
-  adjetivos:    { label: "Adjetivos",          icon: Smile         },
-  frases:       { label: "Frases & Expressões",icon: Sparkles      },
+  cumprimentos: { label: "Cumprimentos",        labelEN: "Greetings",          icon: MessageCircle },
+  alimentos:    { label: "Alimentos",           labelEN: "Food",               icon: Utensils      },
+  viagem:       { label: "Viagem",              labelEN: "Travel",             icon: Plane         },
+  verbos:       { label: "Verbos",              labelEN: "Verbs",              icon: BookOpen      },
+  numeros:      { label: "Números",             labelEN: "Numbers",            icon: Hash          },
+  cores:        { label: "Cores",               labelEN: "Colors",             icon: Palette       },
+  familia:      { label: "Família",             labelEN: "Family",             icon: Users         },
+  corpo:        { label: "Corpo Humano",        labelEN: "Human Body",         icon: Heart         },
+  casa:         { label: "Casa & Objetos",      labelEN: "Home & Objects",     icon: Home          },
+  adjetivos:    { label: "Adjetivos",           labelEN: "Adjectives",         icon: Smile         },
+  frases:       { label: "Frases & Expressões", labelEN: "Phrases & Expressions", icon: Sparkles   },
 };
+
+// Helper: get deck label for current language context
+export function getDeckLabel(deckKey, langCode) {
+  const deck = DECKS[deckKey];
+  if (!deck) return deckKey;
+  return langCode === "en" && deck.labelEN ? deck.labelEN : deck.label;
+}
 
 export const DECK_KEYS = Object.keys(DECKS);
 
@@ -749,7 +756,6 @@ export const VOCAB = {
     ],
   },
   en: {
-    familia:[
       { pt: "Filho", target: "Sohn",      phonetic: null },
       { pt: "Filha", target: "Tochter",   phonetic: null },
       { pt: "Irmão", target: "Bruder",    phonetic: null },
