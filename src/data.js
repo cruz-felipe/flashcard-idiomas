@@ -747,6 +747,7 @@ export const VOCAB = {
     ],
   },
   en: {
+    familia: [
       { pt: "Filho", target: "Sohn",      phonetic: null },
       { pt: "Filha", target: "Tochter",   phonetic: null },
       { pt: "Irmão", target: "Bruder",    phonetic: null },
