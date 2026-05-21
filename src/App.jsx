@@ -120,7 +120,7 @@ function PillButton({ onClick, children, style, className = "" }) {
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const steps = [
-    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros (e um pouquinho pra gringo)." },
+    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros." },
     { Icon: RotateCcw, title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
     { Icon: Bookmark,  title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
     { Icon: Flame,     title: "Mantenha seu molejo",      body: "Estude todos os dias para acumular XP, subir de nível e manter sua sequência ativa." },
@@ -498,44 +498,39 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
 
   return (
     <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen bg-white">
-      {/* Accent header band — Work&Co restrained color use */}
-      <div style={{ backgroundColor: lang.accent }}>
-        <NavBar title={lang.name}
-          bgColor={lang.accent} textColor="#ffffff" borderColor="rgba(255,255,255,0.2)"
-          left={
-            <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>
-              <ChevronLeft className="w-4 h-4" /> Início
-            </button>
-          }
-          right={
-            <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid rgba(255,255,255,0.4)", borderRadius: R.pill }}>
-              <Flame size={14} className="text-white" />
-              <span className="font-bold text-xs text-white">{streak}</span>
-            </div>
-          }
-        />
-        <div className="max-w-md mx-auto px-4 pt-4 pb-6">
+      className="min-h-screen" style={{ backgroundColor: lang.accent }}>
+      <NavBar title={lang.name}
+        bgColor={lang.accent} textColor="#ffffff" borderColor="rgba(255,255,255,0.2)"
+        left={
+          <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>
+            <ChevronLeft className="w-4 h-4" /> Início
+          </button>
+        }
+        right={
+          <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid rgba(255,255,255,0.4)", borderRadius: R.pill }}>
+            <Flame size={14} className="text-white" />
+            <span className="font-bold text-xs text-white">{streak}</span>
+          </div>
+        }
+      />
+      <div className="max-w-md mx-auto px-4 pt-6 pb-16">
+        <div className="mb-5">
           <h2 className="text-3xl font-black tracking-tight text-white">{lang.name}</h2>
           <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
             {doneCount}/{DECK_KEYS.length} categorias concluídas
           </p>
-          {/* Search inside accent band */}
-          <div className="relative mt-4">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: "rgba(255,255,255,0.5)" }} />
-            <input value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Buscar categoria..."
-              className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold outline-none"
-              style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)",
-                borderRadius: R.pill, color: "#ffffff" }}
-            />
-          </div>
         </div>
-      </div>
-
-      {/* White deck grid */}
-      <div className="max-w-md mx-auto px-4 pt-5 pb-16">
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: "rgba(255,255,255,0.5)" }} />
+          <input value={query} onChange={e => setQuery(e.target.value)}
+            placeholder="Buscar categoria..."
+            className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold outline-none"
+            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)",
+              borderRadius: R.pill, color: "#ffffff" }}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {filtered.map((key, i) => {
             const deck = DECKS[key];
@@ -547,7 +542,7 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
                 whileTap={{ scale: 0.97 }}
                 className="relative flex flex-col items-start gap-3 p-4 text-left hover:opacity-90 transition-opacity"
                 style={{
-                  border: done ? "2px solid #BBF7D0" : "2px solid #E5E7EB",
+                  border: done ? "2px solid #BBF7D0" : "2px solid rgba(255,255,255,0.25)",
                   borderRadius: R.card,
                   backgroundColor: done ? "#F0FDF4" : "#ffffff",
                 }}>
@@ -566,7 +561,7 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
             );
           })}
           {filtered.length === 0 && (
-            <div className="col-span-2 text-center py-8 text-gray-400">
+            <div className="col-span-2 text-center py-8" style={{ color: "rgba(255,255,255,0.6)" }}>
               <Search size={24} className="mx-auto mb-2 opacity-50" />
               <p className="text-sm font-semibold">Nenhuma categoria encontrada</p>
             </div>
@@ -1068,13 +1063,14 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [screen,        setScreen]        = useState(() => getStorage("lf_seen_onboard", false) ? "dashboard" : "onboard");
-  const [selectedLang,  setSelectedLang]  = useState(null);
-  const [selectedDeck,  setSelectedDeck]  = useState(null);
-  const [result,        setResult]        = useState(null);
-  const [fromFavorites, setFromFavorites] = useState(false);
-  const [isReview,      setIsReview]      = useState(false);
-  const [lastStudied,   setLastStudied]   = useState(() => getStorage("lf_last_studied", null));
+  const [screen,          setScreen]          = useState(() => getStorage("lf_seen_onboard", false) ? "dashboard" : "onboard");
+  const [selectedLang,    setSelectedLang]    = useState(null);
+  const [selectedDeck,    setSelectedDeck]    = useState(null);
+  const [result,          setResult]          = useState(null);
+  const [fromFavorites,   setFromFavorites]   = useState(false);
+  const [isReview,        setIsReview]        = useState(false);
+  const [lastStudied,     setLastStudied]     = useState(() => getStorage("lf_last_studied", null));
+  const [studySessionId,  setStudySessionId]  = useState(0); // increment to force fresh StudyScreen mount
 
   const [xp,        setXP]        = useState(() => getStorage("lf_xp", 0));
   const [favorites, setFavorites] = useState(() => getStorage("lf_favorites", {}));
@@ -1133,7 +1129,7 @@ export default function App() {
     setSelectedLang(lang); setSelectedDeck(deck);
     setFromFavorites(fromFavs);
     setIsReview(review);
-    // Track last studied language
+    setStudySessionId(id => id + 1); // new id → fresh StudyScreen mount
     if (!fromFavs && lang) {
       setLastStudied(lang);
       setStorage("lf_last_studied", lang);
@@ -1211,7 +1207,7 @@ export default function App() {
               onBack={() => setScreen("decks")} />
           )}
           {screen === "study" && (
-            <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${isReview}-${Date.now()}`}
+            <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${studySessionId}`}
               langCode={selectedLang} deckKey={selectedDeck}
               favorites={favorites} onToggleFav={handleToggleFav}
               isReview={isReview}
