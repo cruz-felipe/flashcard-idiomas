@@ -6,7 +6,7 @@ export const LANG_META = {
   ru: { name: "Russo",    flag: "🇷🇺", accent: "#1B4FD8", bg: "#C7D7FA", textPrimary: "#060D2A", textSecondary: "#1A3BA8", borderColor: "#93ACEE" },
   fr: { name: "Francês",  flag: "🇫🇷", accent: "#1251A3", bg: "#C8D9F5", textPrimary: "#050F24", textSecondary: "#1251A3", borderColor: "#93B4E8" },
   de: { name: "Alemão",   flag: "🇩🇪", accent: "#B45309", bg: "#FEF3C7", textPrimary: "#1C0F00", textSecondary: "#78350F", borderColor: "#FCD34D" },
-  en: { name: "Inglês → Português", flag: "🇧🇷", accent: "#1A6B3C", bg: "#D4EDDA", textPrimary: "#0A2E1A", textSecondary: "#1A6B3C", borderColor: "#74C494" },
+  en: { name: "Portuguese", flag: "🇧🇷", accent: "#1A6B3C", bg: "#D4EDDA", textPrimary: "#0A2E1A", textSecondary: "#1A6B3C", borderColor: "#74C494" },
 };
 
 export const DECKS = {
