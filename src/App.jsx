@@ -120,10 +120,10 @@ function PillButton({ onClick, children, style, className = "" }) {
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
 function Onboarding({ onDone }) {
   const steps = [
-    { Icon: Globe,     title: "Bem-vindo ao LinguaFlash", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros." },
+    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros (e um pouquinho pra gringo)." },
     { Icon: RotateCcw, title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
     { Icon: Bookmark,  title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
-    { Icon: Flame,     title: "Mantenha seu streak",      body: "Estude todos os dias para acumular XP, subir de nível e manter sua sequência ativa." },
+    { Icon: Flame,     title: "Mantenha seu molejo",      body: "Estude todos os dias para acumular XP, subir de nível e manter sua sequência ativa." },
   ];
   const [step, setStep] = useState(0);
   const isLast = step === steps.length - 1;
