@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import {
-  Flame, Zap, Check, X, ChevronRight,
+  Flame, Zap, Check, X, ChevronRight, RotateCcw,
   BookOpen, Utensils, Plane, MessageCircle, Hash, Palette,
-  Users, Heart, Home, ChevronLeft, Award,
-  Smile, Bookmark, Sparkles
+  Users, Heart, Home, ChevronLeft, Target, ArrowRight,
+  Smile, Bookmark, BookMarked
 } from "lucide-react";
 
-// ─── LINGUISTIC STYLE TOKENS ────────────────────────────────────────────────
+// ─── TOKENS ──────────────────────────────────────────────────────────────────
+
 const LANG_META = {
-  es: { name: "Espanhol", accent: "#E63329", bg: "#FFF1F0", textPrimary: "#111111" },
-  it: { name: "Italiano", accent: "#1A7A4A", bg: "#F0FAF4", textPrimary: "#111111" },
-  ru: { name: "Russo",    accent: "#1B4FD8", bg: "#EEF3FF", textPrimary: "#111111" },
+  es: { name: "Espanhol", accent: "#E63329", bg: "#FFF1F0", textPrimary: "#1A0A09", textSecondary: "#7A3530", borderColor: "#F4A9A6" },
+  it: { name: "Italiano", accent: "#1A7A4A", bg: "#F0FAF4", textPrimary: "#071A0E", textSecondary: "#2D6647", borderColor: "#90CFA9" },
+  ru: { name: "Russo",    accent: "#1B4FD8", bg: "#EEF3FF", textPrimary: "#060D2A", textSecondary: "#2D4799", borderColor: "#93ACEE" },
 };
 
 const DECKS = {
@@ -26,307 +27,10 @@ const DECKS = {
   casa:         { label: "Casa & Objetos", icon: Home          },
   adjetivos:    { label: "Adjetivos",      icon: Smile         },
 };
+const DECK_KEYS = Object.keys(DECKS);
 
-export default function App() {
-  const [currentScreen, setCurrentScreen] = useState("dashboard"); // dashboard, session, favorites, results
-  const [selectedLanguage, setSelectedLanguage] = useState("es");
-  const [selectedDeck, setSelectedDeck] = useState(null);
-  
-  // Storage Metrics
-  const [xp, setXp] = useState(() => parseInt(localStorage.getItem("lf_xp") || "0"));
-  const [streak, setStreak] = useState(() => parseInt(localStorage.getItem("lf_streak") || "3"));
-  const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem("lf_favs") || "{}"));
+// ─── VOCAB ────────────────────────────────────────────────────────────────────
 
-  // Engine States
-  const [deckCards, setDeckCards] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [score, setScore] = useState(0);
-  const [incorrectCards, setIncorrectCards] = useState([]);
-
-  useEffect(() => { localStorage.setItem("lf_xp", xp); }, [xp]);
-  useEffect(() => { localStorage.setItem("lf_favs", JSON.stringify(favorites)); }, [favorites]);
-
-  const initSession = (langCode, deckKey) => {
-    setSelectedLanguage(langCode);
-    setSelectedDeck(deckKey);
-    const sourceCards = VOCAB[langCode]?.[deckKey] || [];
-    if (sourceCards.length === 0) return;
-    
-    setDeckCards(sourceCards.map((c, idx) => ({ ...c, nativeId: `${langCode}_${deckKey}_${idx}` })));
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setScore(0);
-    setIncorrectCards([]);
-    setCurrentScreen("session");
-  };
-
-  const handleCardEvaluation = (known) => {
-    setIsFlipped(false);
-    setTimeout(() => {
-      if (known) {
-        setScore(prev => prev + 1);
-        setXp(prev => prev + 10);
-      } else {
-        setIncorrectCards(prev => [...prev, deckCards[currentIndex]]);
-      }
-
-      if (currentIndex + 1 < deckCards.length) {
-        setCurrentIndex(prev => prev + 1);
-      } else if (incorrectCards.length > 0 || (!known && incorrectCards.length === 0)) {
-        const remaining = [...incorrectCards];
-        if (!known) remaining.push(deckCards[currentIndex]);
-        setDeckCards(remaining);
-        setIncorrectCards([]);
-        setCurrentIndex(0);
-      } else {
-        setCurrentScreen("results");
-      }
-    }, 240);
-  };
-
-  const toggleFavorite = (card) => {
-    const key = card.nativeId;
-    setFavorites(prev => {
-      const updated = { ...prev };
-      if (updated[key]) delete updated[key];
-      else updated[key] = { ...card, lang: selectedLanguage, deck: selectedDeck };
-      return updated;
-    });
-  };
-
-  return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#111111] font-sans antialiased flex flex-col items-center justify-start w-full">
-      <div className="w-full max-w-md min-h-screen flex flex-col justify-between relative bg-[#FFFFFF]">
-        <AnimatePresence mode="wait">
-          
-          {/* ─── DASHBOARD SCREEN ─── */}
-          {currentScreen === "dashboard" && (
-            <motion.div key="dash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col p-5 space-y-6">
-              
-              {/* Premium Geometric Header */}
-              <div className="flex items-center justify-between border-b-2 border-[#111111] pb-4 pt-2">
-                <div className="flex items-center gap-1.5 font-black uppercase tracking-wider text-md">
-                  <Sparkles className="w-5 h-5 text-[#111111]" />
-                  <span>linguaflash</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 text-sm font-bold">
-                    <Flame className="w-4 h-4 text-[#111111] fill-current" />
-                    <span>{streak}d</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm font-bold bg-[#111111] text-white px-2 py-0.5 rounded-md">
-                    <Zap className="w-3.5 h-3.5 fill-current" />
-                    <span>{xp} XP</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Language Selector Pivot */}
-              <div className="grid grid-cols-3 gap-2 p-1 bg-[#F5F5F5] rounded-xl">
-                {Object.keys(LANG_META).map(lang => (
-                  <button key={lang} onClick={() => setSelectedLanguage(lang)}
-                    className={`py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-150 ${selectedLanguage === lang ? "bg-[#111111] text-white shadow-sm" : "text-[#666666] hover:text-[#111111]"}`}>
-                    {LANG_META[lang].name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Modern Grid Categorization */}
-              <div className="flex-1 space-y-2.5 overflow-y-auto pr-0.5" style={{ maxHeight: "calc(100vh - 210px)" }}>
-                {Object.entries(DECKS).map(([key, item]) => {
-                  const IconComponent = item.icon;
-                  return (
-                    <button key={key} onClick={() => initSession(selectedLanguage, key)}
-                      className="w-full text-left p-4 rounded-xl border-2 border-[#E5E5E5] hover:border-[#111111] transition-all flex items-center justify-between group bg-[#FFFFFF]">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2.5 rounded-lg border border-[#E5E5E5] text-[#111111] group-hover:bg-[#111111] group-hover:text-white transition-all">
-                          <IconComponent className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-sm tracking-tight">{item.label}</h3>
-                          <p className="text-xs text-[#666666] mt-0.5">10 entradas base</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-[#CCCCCC] group-hover:text-[#111111] transition-colors" />
-                    </button>
-                  );
-                })}
-
-                {/* Secondary Favorites Accessor Row */}
-                <button onClick={() => setCurrentScreen("favorites")}
-                  className="w-full text-left p-4 rounded-xl border-2 border-[#E5E5E5] hover:border-[#111111] transition-all flex items-center justify-between bg-[#FBFBFB] group mt-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 rounded-lg border border-[#E5E5E5] text-[#666666]">
-                      <Bookmark className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm tracking-tight text-[#111111]">Termos Salvos</h3>
-                      <p className="text-xs text-[#666666] mt-0.5">{Object.keys(favorites).length} arquivados</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#CCCCCC]" />
-                </button>
-              </div>
-
-            </motion.div>
-          )}
-
-          {/* ─── INTERACTIVE FLASHCARD SESSION ─── */}
-          {currentScreen === "session" && deckCards.length > 0 && (
-            <motion.div key="session" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col justify-between p-5 space-y-6">
-              
-              {/* Minimal Linear Progress Tracker */}
-              <div className="flex items-center justify-between gap-4 pt-2">
-                <button onClick={() => setCurrentScreen("dashboard")} className="text-[#666666] hover:text-[#111111] transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-                <div className="flex-1 h-1 bg-[#E5E5E5] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#111111] transition-all duration-300" style={{ width: `${((currentIndex) / deckCards.length) * 100}%` }} />
-                </div>
-                <span className="font-mono text-xs font-bold text-[#666666]">
-                  {currentIndex + 1}/{deckCards.length}
-                </span>
-              </div>
-
-              {/* Work & Co Styled Geometric Flip Card Core */}
-              <div className="flex-1 flex items-center justify-center py-6">
-                <div className="perspective-1000 w-full max-w-sm aspect-[4/5]" onClick={() => setIsFlipped(!isFlipped)}>
-                  <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer ${isFlipped ? "rotate-y-180" : ""}`}>
-                    
-                    {/* CARD SIDE: FRONT */}
-                    <div className="absolute inset-0 w-full h-full bg-[#FFFFFF] border-2 border-[#111111] rounded-2xl p-6 flex flex-col justify-between backface-hidden items-center shadow-sm">
-                      <div className="w-full flex justify-between text-[10px] font-bold tracking-widest text-[#A0A0A0] uppercase">
-                        <span>Origem</span>
-                        <span>PT-BR</span>
-                      </div>
-                      <div className="text-2xl font-black text-center text-[#111111] max-w-[90%]">
-                        {deckCards[currentIndex]?.pt}
-                      </div>
-                      <div className="text-[10px] font-bold tracking-wider text-[#666666] uppercase bg-[#F5F5F5] px-3 py-1 rounded-md">
-                        Toque para revelar
-                      </div>
-                    </div>
-
-                    {/* CARD SIDE: BACK */}
-                    <div className="absolute inset-0 w-full h-full bg-[#FFFFFF] border-2 border-[#111111] rounded-2xl p-6 flex flex-col justify-between backface-hidden rotate-y-180 items-center shadow-sm">
-                      <div className="w-full flex justify-between items-center text-[10px] font-bold tracking-widest uppercase">
-                        <span style={{ color: LANG_META[selectedLanguage].accent }}>Alvo ({LANG_META[selectedLanguage].name})</span>
-                        <button onClick={(e) => { e.stopPropagation(); toggleFavorite(deckCards[currentIndex]); }}>
-                          <Bookmark className={`w-4 h-4 ${favorites[deckCards[currentIndex]?.nativeId] ? "text-[#111111] fill-current" : "text-[#CCCCCC]"}`} />
-                        </button>
-                      </div>
-                      
-                      <div className="text-center space-y-3">
-                        <div className="text-3xl font-black tracking-wide" style={{ color: LANG_META[selectedLanguage].accent }}>
-                          {deckCards[currentIndex]?.target}
-                        </div>
-                        {deckCards[currentIndex]?.phonetic && (
-                          <div className="text-xs font-mono font-medium text-[#666666] bg-[#F5F5F5] px-2.5 py-1 rounded-md inline-block">
-                            {deckCards[currentIndex]?.phonetic}
-                          </div>
-                        )}
-                      </div>
-
-                      <span className="text-[10px] font-bold tracking-widest text-[#A0A0A0] uppercase">Verificado</span>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              {/* Dual Flat Control Deck Triggers */}
-              <div className="grid grid-cols-2 gap-3 pb-2">
-                <button onClick={() => handleCardEvaluation(false)} 
-                  className="w-full py-3.5 bg-[#FFFFFF] border-2 border-[#111111] text-[#111111] font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-[#F5F5F5] active:scale-[0.98] transition-all">
-                  Revisar
-                </button>
-                <button onClick={() => handleCardEvaluation(true)} 
-                  className="w-full py-3.5 bg-[#111111] text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-[#222222] active:scale-[0.98] transition-all">
-                  Domado
-                </button>
-              </div>
-
-            </motion.div>
-          )}
-
-          {/* ─── SUMMARY RESULTS SCREEN ─── */}
-          {currentScreen === "results" && (
-            <motion.div key="results" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col justify-center items-center p-6 text-center space-y-6">
-              <div className="w-16 h-16 bg-[#111111] text-white rounded-xl flex items-center justify-center shadow-sm">
-                <Award className="w-8 h-8" />
-              </div>
-
-              <div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Treino Encerrado</h2>
-                <p className="text-xs text-[#666666] mt-1.5 max-w-xs mx-auto">As conexões lexicais foram processadas com sucesso em seu banco de dados local.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-                <div className="border-2 border-[#111111] p-3.5 rounded-xl bg-[#FFFFFF]">
-                  <div className="text-[10px] font-bold text-[#666666] uppercase tracking-wider">Desempenho</div>
-                  <div className="text-xl font-black mt-0.5">{score}/{deckCards.length}</div>
-                </div>
-                <div className="border-2 border-[#111111] p-3.5 rounded-xl bg-[#FFFFFF]">
-                  <div className="text-[10px] font-bold text-[#666666] uppercase tracking-wider">Rendimento</div>
-                  <div className="text-xl font-black text-[#111111] mt-0.5">+{score * 10} XP</div>
-                </div>
-              </div>
-
-              <button onClick={() => setCurrentScreen("dashboard")} 
-                className="w-full max-w-sm py-3.5 bg-[#111111] text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-[#222222] transition-colors">
-                Retornar ao Painel
-              </button>
-            </motion.div>
-          )}
-
-          {/* ─── FAVORITES MANAGEMENT LIST ─── */}
-          {currentScreen === "favorites" && (
-            <motion.div key="favs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col p-5 space-y-5">
-              <header className="flex justify-between items-center border-b-2 border-[#111111] pb-3 pt-2">
-                <div>
-                  <h2 className="text-md font-black uppercase tracking-wider">Termos Arquivados</h2>
-                  <p className="text-xs text-[#666666]">Revisão de marcações personalizadas.</p>
-                </div>
-                <button onClick={() => setCurrentScreen("dashboard")} className="text-xs font-bold uppercase tracking-wider border-2 border-[#111111] px-3 py-1 rounded-lg hover:bg-[#F5F5F5]">
-                  Fechar
-                </button>
-              </header>
-
-              {Object.keys(favorites).length === 0 ? (
-                <div className="text-center py-16 border-2 border-dashed border-[#E5E5E5] rounded-xl p-6">
-                  <h4 className="font-bold text-sm text-[#111111]">Nenhuma palavra salva</h4>
-                  <p className="text-xs text-[#666666] max-w-xs mx-auto mt-1">Acione o marcador de favoritos durante as rodadas ativas de aprendizado.</p>
-                </div>
-              ) : (
-                <div className="flex-1 space-y-2 overflow-y-auto" style={{ maxHeight: "calc(100vh - 140px)" }}>
-                  {Object.entries(favorites).map(([key, item]) => (
-                    <div key={key} className="bg-white border-2 border-[#E5E5E5] p-3.5 rounded-xl flex items-center justify-between">
-                      <div>
-                        <span className="text-[9px] font-mono font-bold uppercase text-[#666666] tracking-wider bg-[#F5F5F5] px-1.5 py-0.5 rounded">
-                          {item.lang.toUpperCase()} · {item.deck}
-                        </span>
-                        <div className="text-md font-bold text-[#111111] mt-1.5">
-                          {item.pt} &rarr; <span style={{ color: LANG_META[item.lang].accent }}>{item.target}</span>
-                        </div>
-                      </div>
-                      <button onClick={() => toggleFavorite(item)} className="p-1.5 text-[#CCCCCC] hover:text-[#111111] transition-colors">
-                        <X className="w-4 h-4 stroke-[2.5]" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-// ─── COMPLETE VOCABULARY INTERNAL DATABASE RECONSTRUCTION ──────────────────
 const VOCAB = {
   es: {
     cumprimentos: [
@@ -602,7 +306,7 @@ const VOCAB = {
       { pt: "Hotel",      target: "Отель",    phonetic: "[Otel']"    },
       { pt: "Bilhete",    target: "Билет",    phonetic: "[Bilét]"    },
       { pt: "Passaporte", target: "Паспорт",  phonetic: "[Páspurt]"  },
-      { pt: "Mala",       target: "Чемоdan",  phonetic: "[Chemodán]" },
+      { pt: "Mala",       target: "Чемодан",  phonetic: "[Chemodán]" },
       { pt: "Trem",       target: "Поезд",    phonetic: "[Póyezd]"   },
       { pt: "Ônibus",     target: "Автобус",  phonetic: "[Avtóbus]"  },
       { pt: "Táxi",       target: "Такси",    phonetic: "[Taksí]"    },
@@ -695,3 +399,592 @@ const VOCAB = {
     ],
   },
 };
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function getStorage(k, fb) { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } }
+function setStorage(k, v)  { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+// ─── CONFETTI ─────────────────────────────────────────────────────────────────
+function Particle({ color }) {
+  const angle = Math.random() * 360, dist = 100 + Math.random() * 140;
+  const x = Math.cos((angle * Math.PI) / 180) * dist, y = Math.sin((angle * Math.PI) / 180) * dist;
+  const size = 5 + Math.random() * 7;
+  return (
+    <motion.div className="absolute pointer-events-none" style={{ width: size, height: size, backgroundColor: color, borderRadius: 2, top: "50%", left: "50%" }}
+      initial={{ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 }}
+      animate={{ x, y, opacity: 0, scale: 0, rotate: 360 }}
+      transition={{ duration: 0.9 + Math.random() * 0.4, ease: "easeOut" }} />
+  );
+}
+function Confetti({ active }) {
+  const colors = ["#E63329","#1B4FD8","#1A7A4A","#F5A623","#9B59B6"];
+  if (!active) return null;
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+      {Array.from({ length: 48 }).map((_, i) => <Particle key={i} color={colors[i % colors.length]} />)}
+    </div>
+  );
+}
+
+// ─── NAV BAR ─────────────────────────────────────────────────────────────────
+// bg/text colors passed in so it adapts to each screen's background
+function NavBar({ title, left, right, bgColor = "#ffffff", textColor = "#111111", borderColor = "#e5e5e5" }) {
+  return (
+    <div className="sticky top-0 z-40 backdrop-blur-md" style={{ backgroundColor: bgColor + "E8", borderBottom: `2px solid ${borderColor}` }}>
+      <div className="max-w-md mx-auto h-14 flex items-center justify-between px-4">
+        <div className="w-24 flex justify-start">{left}</div>
+        <span className="text-sm font-bold tracking-tight truncate" style={{ color: textColor }}>{title}</span>
+        <div className="w-24 flex justify-end">{right}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PILL BUTTON ─────────────────────────────────────────────────────────────
+function PillButton({ onClick, children, style, className = "" }) {
+  return (
+    <motion.button whileTap={{ scale: 0.96 }} onClick={onClick}
+      className={`flex items-center justify-center gap-2 px-6 py-3 font-bold text-sm ${className}`}
+      style={{ borderRadius: 999, border: "2px solid transparent", ...style }}>
+      {children}
+    </motion.button>
+  );
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
+function Dashboard({ xp, streak, favorites, onSelectLang, onOpenFavorites }) {
+  const favCount = Object.keys(favorites).length;
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="min-h-screen" style={{ backgroundColor: "#ffffff" }}>
+      <NavBar title="LinguaFlash"
+        right={
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid #FED7AA", borderRadius: 999 }}>
+              <Flame className="text-orange-500 w-3.5 h-3.5" />
+              <span className="font-bold text-orange-600 text-xs">{streak}</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid #FDE68A", borderRadius: 999 }}>
+              <Zap className="text-yellow-500 w-3.5 h-3.5" />
+              <span className="font-bold text-yellow-600 text-xs">{xp}</span>
+            </div>
+          </div>
+        }
+      />
+      <div className="max-w-md mx-auto px-4 pt-8 pb-16">
+        <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">Aprenda com flashcards</p>
+        <h1 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-8">Qual idioma<br />hoje?</h1>
+
+        {/* XP bar */}
+        <div className="mb-8">
+          <div className="flex justify-between text-xs text-gray-400 mb-2">
+            <span className="font-semibold">Progresso geral</span><span>{xp} XP</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 overflow-hidden" style={{ borderRadius: 2 }}>
+            <motion.div className="h-full bg-gray-900" style={{ borderRadius: 2 }}
+              initial={{ width: 0 }} animate={{ width: `${Math.min((xp % 100), 100)}%` }}
+              transition={{ duration: 1, ease: "easeOut" }} />
+          </div>
+        </div>
+
+        {/* Language rows */}
+        <div className="space-y-3 mb-6">
+          {Object.entries(LANG_META).map(([code, lang], i) => (
+            <motion.button key={code} onClick={() => onSelectLang(code)}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+              whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50"
+              style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
+              <div className="shrink-0" style={{ width: 40, height: 40 }}>
+                {code === "es" && <MessageCircle size={40} strokeWidth={1.5} style={{ color: lang.accent }} />}
+                {code === "it" && <BookOpen size={40} strokeWidth={1.5} style={{ color: lang.accent }} />}
+                {code === "ru" && <Globe40 color={lang.accent} />}
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-900">{lang.name}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{DECK_KEYS.length} categorias · {Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras</div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Favorites access from home */}
+        <motion.button onClick={onOpenFavorites}
+          whileTap={{ scale: 0.97 }} whileHover={{ x: 3 }}
+          className="w-full flex items-center gap-4 p-4 text-left transition-colors hover:bg-gray-50"
+          style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
+          <BookMarked size={40} strokeWidth={1.5} className="text-gray-500 shrink-0" />
+          <div className="flex-1">
+            <div className="font-bold text-gray-900">Palavras Favoritas</div>
+            <div className="text-xs text-gray-400 mt-0.5">{favCount} {favCount === 1 ? "palavra salva" : "palavras salvas"}</div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-300" />
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+// small inline svg globe for Russian (avoids importing Globe which is ambiguous)
+function Globe40({ color }) {
+  return (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  );
+}
+
+// ─── FAVORITES SCREEN (language picker) ──────────────────────────────────────
+function FavoritesScreen({ favorites, onStudyFavs, onBack }) {
+  const favByLang = Object.entries(LANG_META).map(([code, lang]) => {
+    const count = Object.keys(favorites).filter(k => k.startsWith(code + ":")).length;
+    return { code, lang, count };
+  }).filter(x => x.count > 0);
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+      className="min-h-screen" style={{ backgroundColor: "#ffffff" }}>
+      <NavBar title="Palavras Favoritas"
+        left={
+          <button onClick={onBack} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 transition-colors text-sm font-semibold">
+            <ChevronLeft className="w-4 h-4" /> Início
+          </button>
+        }
+      />
+      <div className="max-w-md mx-auto px-4 pt-8 pb-16">
+        {favByLang.length === 0 ? (
+          <div className="flex flex-col items-center justify-center pt-24 gap-4 text-center">
+            <BookMarked size={40} strokeWidth={1.5} className="text-gray-200" />
+            <p className="font-bold text-gray-400">Nenhuma palavra favorita ainda.</p>
+            <p className="text-sm text-gray-400">Salve palavras tocando no ícone 🔖 durante os estudos.</p>
+            <PillButton onClick={onBack} style={{ backgroundColor: "#111111", color: "#fff", border: "2px solid #111111" }}>Voltar</PillButton>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-6">Escolha o idioma para revisar</p>
+            <div className="space-y-3">
+              {favByLang.map(({ code, lang, count }) => (
+                <motion.button key={code} onClick={() => onStudyFavs(code)}
+                  whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
+                  style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
+                  <BookMarked size={40} strokeWidth={1.5} style={{ color: lang.accent }} className="shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900">{lang.name}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                </motion.button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── DECK SELECTOR ───────────────────────────────────────────────────────────
+function DeckSelector({ langCode, onSelectDeck, onBack, xp, streak }) {
+  const lang = LANG_META[langCode];
+  return (
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+      className="min-h-screen" style={{ backgroundColor: lang.bg }}>
+      <NavBar title={lang.name}
+        bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor}
+        left={
+          <button onClick={onBack} className="flex items-center gap-1 transition-colors text-sm font-semibold" style={{ color: lang.textSecondary }}>
+            <ChevronLeft className="w-4 h-4" /> Início
+          </button>
+        }
+        right={
+          <div className="flex items-center gap-1 px-2 py-1" style={{ border: `2px solid ${lang.borderColor}`, borderRadius: 999 }}>
+            <Flame size={14} style={{ color: lang.accent }} />
+            <span className="font-bold text-xs" style={{ color: lang.accent }}>{streak}</span>
+          </div>
+        }
+      />
+      <div className="max-w-md mx-auto px-4 pt-6 pb-16">
+        <div className="mb-8">
+          <h2 className="text-3xl font-black tracking-tight" style={{ color: lang.textPrimary }}>{lang.name}</h2>
+          <p className="text-sm mt-1" style={{ color: lang.textSecondary }}>Escolha uma categoria</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {DECK_KEYS.map((key, i) => {
+            const deck = DECKS[key];
+            const Icon = deck.icon;
+            return (
+              <motion.button key={key} onClick={() => onSelectDeck(key)}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex flex-col items-start gap-3 p-4 text-left transition-colors"
+                style={{ border: `2px solid ${lang.borderColor}`, borderRadius: 2, backgroundColor: "#ffffff30" }}
+              >
+                <Icon size={40} strokeWidth={1.5} style={{ color: lang.accent }} />
+                <div>
+                  <div className="font-bold text-sm leading-tight" style={{ color: lang.textPrimary }}>{deck.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: lang.textSecondary }}>{VOCAB[langCode][key].length} cards</div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── FLASH CARD ───────────────────────────────────────────────────────────────
+function FlashCard({ card, isFlipped, onClick, lang, isFav, onToggleFav }) {
+  return (
+    <div className="w-full" style={{ perspective: 1400 }}>
+      <motion.div key={card.pt + card.target}
+        className="relative w-full cursor-pointer"
+        style={{ transformStyle: "preserve-3d", minHeight: 220 }}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.48, ease: [0.4, 0, 0.2, 1] }}
+        onClick={onClick}
+      >
+        {/* FRONT */}
+        <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-8"
+          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", backgroundColor: "#ffffff", border: "2px solid #E5E7EB", borderRadius: 2 }}>
+          <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-6">Português</p>
+          <p className="text-4xl font-black text-gray-900 text-center leading-tight">{card.pt}</p>
+          <p className="mt-8 text-xs text-gray-300 flex items-center gap-1.5">
+            <RotateCcw className="w-3 h-3" /> toque para revelar
+          </p>
+        </div>
+
+        {/* BACK */}
+        <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-8"
+          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)",
+            backgroundColor: lang.bg, border: `2px solid ${lang.borderColor}`, borderRadius: 2 }}>
+          <button onClick={e => { e.stopPropagation(); onToggleFav(card); }}
+            className="absolute top-4 right-4 p-2 transition-colors hover:opacity-70">
+            {isFav
+              ? <BookMarked size={20} style={{ color: lang.accent }} />
+              : <Bookmark size={20} style={{ color: lang.borderColor }} />}
+          </button>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: lang.textSecondary }}>{lang.name}</p>
+          <p className="text-4xl font-black text-center leading-tight" style={{ color: lang.textPrimary }}>{card.target}</p>
+          {card.phonetic && <p className="mt-2 text-base font-semibold" style={{ color: lang.textSecondary }}>{card.phonetic}</p>}
+          <p className="mt-3 text-sm" style={{ color: lang.textSecondary }}>{card.pt}</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── STUDY SCREEN ─────────────────────────────────────────────────────────────
+function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav }) {
+  const lang          = LANG_META[langCode];
+  const isFavDeck     = deckKey === "__favorites__";
+  const deckLabel     = isFavDeck ? "Favoritas" : DECKS[deckKey]?.label;
+  const DeckIcon      = isFavDeck ? BookMarked : DECKS[deckKey]?.icon;
+  const originalCards = isFavDeck
+    ? Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`])
+    : VOCAB[langCode][deckKey];
+
+  const [queue,        setQueue]        = useState([...originalCards]);
+  const [currentIdx,   setCurrentIdx]   = useState(0);
+  const [isFlipped,    setIsFlipped]    = useState(false);
+  const [correct,      setCorrect]      = useState(0);
+  const [incorrect,    setIncorrect]    = useState(0);
+  const [answered,     setAnswered]     = useState(false);
+  const [flashColor,   setFlashColor]   = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const controls = useAnimation();
+  const total    = originalCards.length;
+  const progress = total > 0 ? Math.min(correct / total, 1) : 0;
+  const card     = queue[currentIdx];
+
+  if (!card) return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen flex flex-col" style={{ backgroundColor: lang.bg }}>
+      <NavBar title="Favoritas" bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor}
+        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold" style={{ color: lang.textSecondary }}><ChevronLeft className="w-4 h-4" /> Voltar</button>} />
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
+        <BookMarked size={40} strokeWidth={1.5} style={{ color: lang.borderColor }} />
+        <p className="font-bold" style={{ color: lang.textSecondary }}>Nenhuma palavra favorita ainda.</p>
+        <PillButton onClick={onBack} style={{ backgroundColor: lang.accent, color: "#fff", border: `2px solid ${lang.accent}` }}>Voltar</PillButton>
+      </div>
+    </motion.div>
+  );
+
+  const handleFlip = () => { if (!isFlipped) setIsFlipped(true); };
+
+  const handleAnswer = async (knew) => {
+    if (!isFlipped || answered) return;
+    setAnswered(true);
+    setFlashColor(knew ? "green" : "red");
+    await controls.start({ x: knew ? 100 : -100, opacity: 0, rotate: knew ? 6 : -6, transition: { duration: 0.26, ease: "easeIn" } });
+    setFlashColor(null);
+    controls.set({ x: 0, opacity: 1, rotate: 0 });
+    if (knew) {
+      const newCorrect = correct + 1;
+      setCorrect(newCorrect);
+      const newQueue = queue.filter((_, i) => i !== currentIdx);
+      if (newQueue.length === 0) {
+        const xpGained = Math.round(newCorrect / total * 50) + 10;
+        onXP(xpGained);
+        setShowConfetti(true);
+        setTimeout(() => onFinish({ correct: newCorrect, total, xpGained }), 800);
+        return;
+      }
+      setQueue(newQueue);
+      setCurrentIdx(Math.min(currentIdx, newQueue.length - 1));
+    } else {
+      setIncorrect(inc => inc + 1);
+      const newQueue = [...queue];
+      const [removed] = newQueue.splice(currentIdx, 1);
+      newQueue.splice(Math.min(currentIdx + 2, newQueue.length), 0, removed);
+      setQueue(newQueue);
+      setCurrentIdx(Math.min(currentIdx, newQueue.length - 1));
+    }
+    setIsFlipped(false);
+    setAnswered(false);
+  };
+
+  const favKey = `${langCode}:${card.pt}`;
+  const isFav  = !!favorites[favKey];
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+      className="min-h-screen flex flex-col" style={{ backgroundColor: lang.bg }}>
+      <Confetti active={showConfetti} />
+      <NavBar title={deckLabel}
+        bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor}
+        left={
+          <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold transition-colors" style={{ color: lang.textSecondary }}>
+            <X className="w-4 h-4" /> Sair
+          </button>
+        }
+        right={<span className="text-sm font-semibold" style={{ color: lang.textSecondary }}>{queue.length} restantes</span>}
+      />
+      <div className="flex-1 max-w-md mx-auto w-full px-4 pt-6 pb-10 flex flex-col">
+        {/* Progress */}
+        <div className="mb-8">
+          <div className="h-1.5 overflow-hidden" style={{ backgroundColor: lang.borderColor, borderRadius: 2 }}>
+            <motion.div className="h-full" style={{ backgroundColor: lang.accent, borderRadius: 2 }}
+              animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-xs" style={{ color: lang.textSecondary }}>{correct} acertadas</span>
+            <span className="text-xs font-semibold" style={{ color: lang.textSecondary }}>{Math.round(progress * 100)}%</span>
+          </div>
+        </div>
+
+        {/* Card */}
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="relative mb-6" style={{ minHeight: 220 }}>
+            <AnimatePresence>
+              {flashColor && (
+                <motion.div className="absolute inset-0 z-10 pointer-events-none"
+                  style={{ backgroundColor: flashColor === "green" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", borderRadius: 2 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+              )}
+            </AnimatePresence>
+            <motion.div animate={controls}>
+              <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip} lang={lang} isFav={isFav}
+                onToggleFav={(c) => onToggleFav(langCode, c)} />
+            </motion.div>
+          </div>
+
+          <AnimatePresence>
+            {!isFlipped && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="text-center text-xs mb-6" style={{ color: lang.borderColor }}>
+                Toque no card para ver a tradução
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          {/* Action pills — consistent colors regardless of language */}
+          <AnimatePresence>
+            {isFlipped && (
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
+                className="flex gap-3">
+                <PillButton onClick={() => handleAnswer(false)} className="flex-1 flex-col gap-1 py-4"
+                  style={{ backgroundColor: "#FEF2F2", border: "2px solid #FECACA", color: "#DC2626" }}>
+                  <X size={20} strokeWidth={2} />
+                  <span className="text-xs font-bold">Ainda Aprendendo</span>
+                </PillButton>
+                <PillButton onClick={() => handleAnswer(true)} className="flex-1 flex-col gap-1 py-4"
+                  style={{ backgroundColor: "#F0FDF4", border: "2px solid #BBF7D0", color: "#16A34A" }}>
+                  <Check size={20} strokeWidth={2} />
+                  <span className="text-xs font-bold">Eu Conheço!</span>
+                </PillButton>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Stats */}
+        <div className="flex justify-center gap-8 mt-8 pt-4" style={{ borderTop: `2px solid ${lang.borderColor}` }}>
+          {[{ label: "Acertou", val: correct, color: "#16A34A" }, { label: "Errou", val: incorrect, color: "#DC2626" }, { label: "Total", val: total, color: lang.textSecondary }].map(s => (
+            <div key={s.label} className="text-center">
+              <div className="text-lg font-black" style={{ color: s.color }}>{s.val}</div>
+              <div className="text-xs" style={{ color: lang.textSecondary }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── RESULT SCREEN ────────────────────────────────────────────────────────────
+function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck }) {
+  const lang             = LANG_META[langCode];
+  const accuracy         = Math.round((result.correct / result.total) * 100);
+  const currentDeckIndex = DECK_KEYS.indexOf(deckKey);
+  const nextDeckKey      = DECK_KEYS[currentDeckIndex + 1] ?? null;
+  const nextDeck         = nextDeckKey ? DECKS[nextDeckKey] : null;
+
+  const msg = accuracy === 100 ? { emoji: "🏆", text: "Perfeito!", sub: "Você acertou todas as palavras!" }
+    : accuracy >= 80 ? { emoji: "🎉", text: "Muito bem!", sub: "Quase perfeito, continue assim!" }
+    : accuracy >= 60 ? { emoji: "💪", text: "Bom trabalho!", sub: "Continue praticando!" }
+    : { emoji: "📚", text: "Continue tentando!", sub: "A prática leva à perfeição." };
+
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+      className="min-h-screen flex flex-col" style={{ backgroundColor: lang.bg }}>
+      <NavBar title="Resultado" bgColor={lang.bg} textColor={lang.textPrimary} borderColor={lang.borderColor} />
+      <div className="flex-1 max-w-md mx-auto w-full px-4 pt-8 pb-16 flex flex-col">
+        <div className="text-center mb-10">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.15 }}
+            className="text-7xl mb-4">{msg.emoji}</motion.div>
+          <h2 className="text-3xl font-black tracking-tight" style={{ color: lang.textPrimary }}>{msg.text}</h2>
+          <p className="text-sm mt-2" style={{ color: lang.textSecondary }}>{msg.sub}</p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[
+            { icon: Target, label: "Precisão", value: `${accuracy}%` },
+            { icon: Zap,    label: "XP Ganho", value: `+${result.xpGained}` },
+            { icon: Check,  label: "Acertos",  value: `${result.correct}/${result.total}` },
+          ].map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.08 }}
+              className="p-4 text-center" style={{ border: `2px solid ${lang.borderColor}`, borderRadius: 2, backgroundColor: "#ffffff30" }}>
+              <s.icon size={16} style={{ color: lang.textSecondary }} className="mx-auto mb-2" />
+              <div className="text-xl font-black" style={{ color: lang.textPrimary }}>{s.value}</div>
+              <div className="text-xs mt-0.5" style={{ color: lang.textSecondary }}>{s.label}</div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-10">
+          <div className="h-1.5 overflow-hidden" style={{ backgroundColor: lang.borderColor, borderRadius: 2 }}>
+            <motion.div className="h-full" style={{ backgroundColor: lang.accent, borderRadius: 2 }}
+              initial={{ width: 0 }} animate={{ width: `${accuracy}%` }}
+              transition={{ duration: 1, ease: "easeOut", delay: 0.4 }} />
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-col gap-3 mt-auto">
+          {nextDeck && (
+            <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+              whileTap={{ scale: 0.97 }} onClick={() => onNextDeck(nextDeckKey)}
+              className="w-full flex items-center justify-between px-6 py-4 font-bold"
+              style={{ backgroundColor: lang.accent, color: "#ffffff", borderRadius: 999, border: `2px solid ${lang.accent}` }}>
+              <span>Próxima: {nextDeck.label}</span>
+              <ArrowRight className="w-5 h-5" />
+            </motion.button>
+          )}
+          <div className="flex gap-3">
+            <PillButton onClick={onHome} className="flex-1 gap-2"
+              style={{ backgroundColor: "transparent", border: `2px solid ${lang.borderColor}`, color: lang.textSecondary }}>
+              <Home size={16} /> Início
+            </PillButton>
+            <PillButton onClick={onRestart} className="flex-1 gap-2"
+              style={{ backgroundColor: "transparent", border: `2px solid ${lang.borderColor}`, color: lang.textSecondary }}>
+              <RotateCcw size={16} /> Repetir
+            </PillButton>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [screen,       setScreen]       = useState("dashboard");
+  const [selectedLang, setSelectedLang] = useState(null);
+  const [selectedDeck, setSelectedDeck] = useState(null);
+  const [result,       setResult]       = useState(null);
+  const [xp,           setXP]           = useState(() => getStorage("lf_xp", 0));
+  const [favorites,    setFavorites]    = useState(() => getStorage("lf_favorites", {}));
+  const [streak,       setStreak]       = useState(() => {
+    const today = new Date().toDateString();
+    const saved = getStorage("lf_streak", { count: 0, lastDate: null });
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    return (saved.lastDate === today || saved.lastDate === yesterday) ? saved.count : 0;
+  });
+
+  const addXP = useCallback((amount) => {
+    setXP(prev => { const n = prev + amount; setStorage("lf_xp", n); return n; });
+    const today = new Date().toDateString();
+    const saved = getStorage("lf_streak", { count: 0, lastDate: null });
+    if (saved.lastDate !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      const newCount  = saved.lastDate === yesterday ? saved.count + 1 : 1;
+      setStreak(newCount);
+      setStorage("lf_streak", { count: newCount, lastDate: today });
+    }
+  }, []);
+
+  const handleToggleFav = useCallback((langCode, card) => {
+    const key = `${langCode}:${card.pt}`;
+    setFavorites(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (!next[key]) delete next[key];
+      setStorage("lf_favorites", next);
+      return next;
+    });
+  }, []);
+
+  const goStudy = (lang, deck) => { setSelectedLang(lang); setSelectedDeck(deck); setScreen("study"); };
+
+  return (
+    <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Inter', sans-serif; }`}</style>
+      <AnimatePresence mode="wait">
+        {screen === "dashboard" && (
+          <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites}
+            onSelectLang={(code) => { setSelectedLang(code); setScreen("decks"); }}
+            onOpenFavorites={() => setScreen("favorites")} />
+        )}
+        {screen === "favorites" && (
+          <FavoritesScreen key="favorites" favorites={favorites}
+            onStudyFavs={(code) => goStudy(code, "__favorites__")}
+            onBack={() => setScreen("dashboard")} />
+        )}
+        {screen === "decks" && (
+          <DeckSelector key="decks" langCode={selectedLang} xp={xp} streak={streak}
+            onSelectDeck={(key) => goStudy(selectedLang, key)}
+            onBack={() => setScreen("dashboard")} />
+        )}
+        {screen === "study" && (
+          <StudyScreen key={`study-${selectedLang}-${selectedDeck}`}
+            langCode={selectedLang} deckKey={selectedDeck}
+            favorites={favorites} onToggleFav={handleToggleFav}
+            onFinish={(res) => { setResult(res); setScreen("result"); }}
+            onXP={addXP} onBack={() => setScreen("decks")} />
+        )}
+        {screen === "result" && result && (
+          <ResultScreen key="result" result={result}
+            langCode={selectedLang} deckKey={selectedDeck}
+            onRestart={() => setScreen("study")}
+            onHome={() => setScreen("dashboard")}
+            onNextDeck={(nextKey) => goStudy(selectedLang, nextKey)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
