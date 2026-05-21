@@ -473,7 +473,7 @@ function Dashboard({ xp, streak, favorites, onSelectLang, onOpenFavorites }) {
       />
       <div className="max-w-md mx-auto px-4 pt-8 pb-16">
         <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">Aprenda com flashcards</p>
-        <h1 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-8">Qual idioma<br />hoje?</h1>
+          <h1 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-8">Qual idioma hoje?</h1>
 
         {/* XP bar */}
         <div className="mb-8">
@@ -525,7 +525,7 @@ function Dashboard({ xp, streak, favorites, onSelectLang, onOpenFavorites }) {
 
 
 // ─── FAVORITES SCREEN (language picker) ──────────────────────────────────────
-function FavoritesScreen({ favorites, onStudyFavs, onBack }) {
+function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
   const favByLang = Object.entries(LANG_META).map(([code, lang]) => {
     const count = Object.keys(favorites).filter(k => k.startsWith(code + ":")).length;
     return { code, lang, count };
@@ -546,14 +546,21 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack }) {
       <div className="max-w-md mx-auto px-4 pt-8 pb-16">
         {favByLang.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-24 gap-4 text-center">
-            <BookMarked size={40} strokeWidth={1.5} className="text-gray-200" />
+            <Bookmark size={40} strokeWidth={1.5} className="text-gray-200" />
             <p className="font-bold text-gray-400">Nenhuma palavra favorita ainda.</p>
-            <p className="text-sm text-gray-400">Salve palavras tocando no ícone 🔖 durante os estudos.</p>
+            <p className="text-sm text-gray-400">Salve palavras tocando no ícone <Bookmark size={13} strokeWidth={2} className="inline-block align-middle -mt-0.5" /> durante os estudos.</p>
             <PillButton onClick={onBack} style={{ backgroundColor: "#111111", color: "#fff", border: "2px solid #111111" }}>Voltar</PillButton>
           </div>
         ) : (
           <>
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-6">Escolha o idioma para revisar</p>
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Escolha o idioma para revisar</p>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={onClearAll}
+                className="flex items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors px-2 py-1"
+                style={{ border: "2px solid #FECACA", borderRadius: 999, backgroundColor: "#FEF2F2" }}>
+                <X size={12} /> Limpar tudo
+              </motion.button>
+            </div>
             <div className="space-y-3">
               {/* All words row — only shown when favs exist in multiple languages or as a convenience */}
               <motion.button onClick={() => onStudyFavs("es", "__favorites_all__")}
@@ -824,13 +831,13 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
           {/* Action pills */}
           <div className="flex gap-3" style={{ opacity: isFlipped ? 1 : 0, pointerEvents: isFlipped ? "auto" : "none", transition: "opacity 0.2s" }}>
-            <PillButton onClick={() => handleAnswer(false)} className="flex-1 gap-2 py-3.5"
+            <PillButton onClick={() => handleAnswer(false)} className="flex-1 gap-2 py-3.5 min-w-0"
               style={{ backgroundColor: "#ffffff", border: "2px solid #E5E7EB", color: "#DC2626" }}>
-              <X size={18} strokeWidth={2} /><span className="text-sm font-bold whitespace-nowrap">Ainda Aprendendo</span>
+              <X size={18} strokeWidth={2} className="shrink-0" /><span className="text-sm font-bold text-center leading-tight">Ainda Aprendendo</span>
             </PillButton>
-            <PillButton onClick={() => handleAnswer(true)} className="flex-1 gap-2 py-3.5"
+            <PillButton onClick={() => handleAnswer(true)} className="flex-1 gap-2 py-3.5 min-w-0"
               style={{ backgroundColor: "#16A34A", border: "2px solid #16A34A", color: "#ffffff" }}>
-              <Check size={18} strokeWidth={2} /><span className="text-sm font-bold whitespace-nowrap">Eu Conheço!</span>
+              <Check size={18} strokeWidth={2} className="shrink-0" /><span className="text-sm font-bold text-center leading-tight">Eu Conheço!</span>
             </PillButton>
           </div>
         </div>
@@ -979,7 +986,11 @@ export default function App() {
         {screen === "favorites" && (
           <FavoritesScreen key="favorites" favorites={favorites}
             onStudyFavs={(code, deck) => goStudy(code, deck, true)}
-            onBack={() => setScreen("dashboard")} />
+            onBack={() => setScreen("dashboard")}
+            onClearAll={() => {
+              setFavorites({});
+              setStorage("lf_favorites", {});
+            }} />
         )}
         {screen === "decks" && (
           <DeckSelector key="decks" langCode={selectedLang} xp={xp} streak={streak}
