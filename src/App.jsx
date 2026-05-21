@@ -247,25 +247,22 @@ function StatsScreen({ stats, xp, streak, onBack }) {
   );
 }
 
-// ─── FLAG STRIPE helper — top border using flag colors ───────────────────────
-// Each country gets a multi-color top border representing its flag
-const FLAG_STRIPES = {
-  es: ["#AA151B", "#F1BF00", "#AA151B"],       // red / yellow / red
-  it: ["#009246", "#ffffff", "#CE2B37"],        // green / white / red
-  ru: ["#ffffff", "#0039A6", "#D52B1E"],        // white / blue / red
-  fr: ["#002395", "#ffffff", "#ED2939"],        // blue / white / red
-  de: ["#000000", "#DD0000", "#FFCE00"],        // black / red / gold
-  en: ["#012169", "#C8102E", "#ffffff"],        // union jack simplified
+// ─── FLAG ICON — circular flag images per language ───────────────────────────
+const FLAG_ICONS = {
+  es: "/espanha.png",
+  it: "/italia.png",
+  ru: "/russia.png",
+  fr: "/franca.png",
+  de: "/alemanha.png",
+  en: "/brasil.png",   // English→Portuguese deck uses Brazilian flag
 };
 
-function FlagStripe({ langCode, height = 4 }) {
-  const stripes = FLAG_STRIPES[langCode] || ["#E5E7EB"];
+function FlagIcon({ langCode, size = 40 }) {
+  const src = FLAG_ICONS[langCode];
+  if (!src) return null;
   return (
-    <div style={{ display: "flex", height, width: "100%" }}>
-      {stripes.map((c, i) => (
-        <div key={i} style={{ flex: 1, backgroundColor: c }} />
-      ))}
-    </div>
+    <img src={src} alt={langCode} width={size} height={size}
+      style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0, display: "block" }} />
   );
 }
 
@@ -313,7 +310,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </div>
         </div>
 
-        {/* Languages — flag stripe replaces flag emoji */}
+        {/* Languages */}
         <div className="space-y-3 mb-4">
           {Object.entries(LANG_META).map(([code, lang], i) => {
             const doneCount = Object.values(stats.completedDecks || {}).filter(ls => ls.includes(code)).length;
@@ -322,10 +319,10 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
               <motion.button key={code} onClick={() => onSelectLang(code)}
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                className="w-full text-left overflow-hidden hover:bg-gray-50 transition-colors"
+                className="w-full text-left hover:bg-gray-50 transition-colors"
                 style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                <FlagStripe langCode={code} height={4} />
                 <div className="flex items-center gap-3 p-4">
+                  <FlagIcon langCode={code} size={40} />
                   <div className="flex-1">
                     <div className="font-bold text-gray-900">{lang.name}</div>
                     <div className="text-xs text-gray-400 mt-0.5">
@@ -421,16 +418,14 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
               {favByLang.map(({ code, lang, count }) => (
                 <motion.button key={code} onClick={() => onStudyFavs(code, "__favorites__")}
                   whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                  className="w-full text-left overflow-hidden hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
                   style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                  <FlagStripe langCode={code} height={4} />
-                  <div className="flex items-center gap-4 p-4">
-                    <div className="flex-1">
-                      <div className="font-bold text-gray-900">{lang.name}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <FlagIcon langCode={code} size={36} />
+                  <div className="flex-1">
+                    <div className="font-bold text-gray-900">{lang.name}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
                 </motion.button>
               ))}
             </div>
@@ -559,7 +554,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
               {lang.name}
             </span>
           )}
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">Português</p>
+          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">{langCode === "en" ? "English" : "Português"}</p>
           <p className="text-3xl font-black text-gray-900 text-center leading-tight">{card.pt}</p>
           <p className="mt-6 text-xs font-medium flex items-center gap-1.5" style={{ color: "#6B7280" }}>
             <RotateCcw className="w-3 h-3" /> toque para revelar
@@ -584,7 +579,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
             <Volume2 size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }} />
           </button>
           <p className="text-xs font-semibold tracking-widest uppercase mb-3"
-            style={{ color: "rgba(255,255,255,0.7)" }}>{lang.name}</p>
+            style={{ color: "rgba(255,255,255,0.7)" }}>{langCode === "en" ? "Português" : lang.name}</p>
           <p className="text-3xl font-black text-center leading-tight text-white break-words max-w-full px-8">
             {card.target}
           </p>
