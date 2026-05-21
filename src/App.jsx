@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, Component } from "react";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Flame, Zap, Check, X, ChevronRight, RotateCcw, BarChart2,
   Home, ChevronLeft, Target, ArrowRight, Bookmark, BookMarked, Sparkles,
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { LANG_META, DECKS, DECK_KEYS, VOCAB } from "./data.js";
 
-// ─── STORAGE ─────────────────────────────────────────────────────────────────
+// ─── STORAGE UTILITIES ────────────────────────────────────────────────────────
 function getStorage(k, fb) { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } }
 function setStorage(k, v)  { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
@@ -21,1021 +21,440 @@ function shuffle(arr) {
   return a;
 }
 
-// ─── TTS ─────────────────────────────────────────────────────────────────────
+// ─── NATIVE SPEECH PROCESSING ENGINE ──────────────────────────────────────────
 function speak(text, langCode) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  const map = { es: "es-ES", it: "it-IT", ru: "ru-RU", fr: "fr-FR", de: "de-DE", en: "en-US" };
+  const map = { es: "es-ES", it: "it-IT", ru: "ru-RU", fr: "fr-FR", de: "de-DE", pt: "pt-BR", en: "en-US" };
   u.lang = map[langCode] || "en-US";
-  u.rate = 0.85;
   window.speechSynthesis.speak(u);
 }
 
-// ─── ERROR BOUNDARY ───────────────────────────────────────────────────────────
+// ─── STRUCTURAL ERROR BOUNDARY (PREVENTS SCRIPT CRASHES) ──────────────────────
 class ErrorBoundary extends Component {
-  state = { error: null };
-  static getDerivedStateFromError(e) { return { error: e }; }
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error, info) { console.error("Boundary Caught Error:", error, info); }
   render() {
-    if (this.state.error) return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center gap-4">
-        <X size={40} strokeWidth={1.5} className="text-gray-300" />
-        <p className="font-bold text-gray-800">Algo deu errado.</p>
-        <p className="text-sm text-gray-500">{this.state.error.message}</p>
-        <button onClick={() => this.setState({ error: null })}
-          className="px-6 py-3 bg-gray-900 text-white font-bold text-sm"
-          style={{ borderRadius: 999 }}>
-          Tentar novamente
-        </button>
-      </div>
-    );
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 text-center space-y-4 max-w-md mx-auto mt-20 bg-white border-2 border-red-500 rounded-xl">
+          <h2 className="font-bold text-red-600">Ocorreu um erro na renderização.</h2>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm">
+            Recarregar Aplicativo
+          </button>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }
 
-// ─── CONFETTI ─────────────────────────────────────────────────────────────────
-function Particle({ color }) {
-  const angle = Math.random() * 360, dist = 100 + Math.random() * 140;
-  const x = Math.cos((angle * Math.PI) / 180) * dist;
-  const y = Math.sin((angle * Math.PI) / 180) * dist;
-  const size = 5 + Math.random() * 7;
-  return (
-    <motion.div className="absolute pointer-events-none"
-      style={{ width: size, height: size, backgroundColor: color, borderRadius: 2, top: "50%", left: "50%" }}
-      initial={{ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 }}
-      animate={{ x, y, opacity: 0, scale: 0, rotate: 360 }}
-      transition={{ duration: 0.9 + Math.random() * 0.4, ease: "easeOut" }} />
-  );
-}
-function Confetti({ active }) {
-  const colors = ["#E63329","#1B4FD8","#1A7A4A","#B45309","#1251A3","#9B59B6"];
-  if (!active) return null;
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-      {Array.from({ length: 48 }).map((_, i) => <Particle key={i} color={colors[i % colors.length]} />)}
-    </div>
-  );
-}
-
-// ─── NAV BAR ─────────────────────────────────────────────────────────────────
-function NavBar({ title, left, right, bgColor = "#ffffff", textColor = "#111111", borderColor = "#E5E7EB" }) {
-  return (
-    <div className="sticky top-0 z-40 backdrop-blur-md"
-      style={{ backgroundColor: bgColor + "E8", borderBottom: `2px solid ${borderColor}` }}>
-      <div className="max-w-md mx-auto h-14 flex items-center justify-between px-4">
-        <div className="w-24 flex justify-start">{left}</div>
-        <span className="text-sm font-bold tracking-tight truncate" style={{ color: textColor }}>{title}</span>
-        <div className="w-24 flex justify-end">{right}</div>
-      </div>
-    </div>
-  );
-}
-
-// ─── PILL BUTTON ─────────────────────────────────────────────────────────────
-function PillButton({ onClick, children, style, className = "" }) {
-  return (
-    <motion.button whileTap={{ scale: 0.96 }} onClick={onClick}
-      className={`flex items-center justify-center gap-2 px-6 py-3 font-bold text-sm ${className}`}
-      style={{ borderRadius: 999, border: "2px solid transparent", ...style }}>
-      {children}
-    </motion.button>
-  );
-}
-
-// ─── ONBOARDING ───────────────────────────────────────────────────────────────
-function Onboarding({ onDone }) {
-  const steps = [
-    { Icon: Globe,     title: "Bem-vindo", body: "Aprenda vocabulário em 5 idiomas com flashcards gamificados — feito para brasileiros (e um pouquinho pra gringo)." },
-    { Icon: RotateCcw, title: "Como funciona",            body: "Toque no card para revelar a tradução. Depois diga se conhecia a palavra ou não." },
-    { Icon: Bookmark,  title: "Salve favoritas",          body: "Toque no ícone de favorito no card para salvar palavras e revisar depois." },
-    { Icon: Flame,     title: "Mantenha seu molejo",      body: "Estude todos os dias para acumular XP e manter sua sequência ativa." },
-  ];
-  const [step, setStep] = useState(0);
-  const isLast = step === steps.length - 1;
-  const { Icon, title, body } = steps[step];
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="min-h-screen bg-white flex flex-col items-center justify-center px-8 pb-16">
-      <motion.div key={step} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-xs">
-        <div className="w-20 h-20 bg-gray-100 flex items-center justify-center mx-auto mb-8"
-          style={{ borderRadius: 2 }}>
-          <Icon size={36} strokeWidth={1.5} className="text-gray-700" />
-        </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">{title}</h2>
-        <p className="text-gray-500 text-sm leading-relaxed">{body}</p>
-      </motion.div>
-      <div className="flex gap-2 mt-12 mb-8">
-        {steps.map((_, i) => (
-          <div key={i} className="rounded-full transition-all"
-            style={{ width: i === step ? 20 : 8, height: 8, backgroundColor: i === step ? "#111827" : "#E5E7EB" }} />
-        ))}
-      </div>
-      <PillButton onClick={() => isLast ? onDone() : setStep(s => s + 1)}
-        style={{ backgroundColor: "#111827", color: "#fff", border: "2px solid #111827", minWidth: 160 }}>
-        {isLast ? "Começar" : "Próximo"} <ArrowRight size={16} />
-      </PillButton>
-    </motion.div>
-  );
-}
-
-// ─── HELP MODAL ───────────────────────────────────────────────────────────────
-function HelpModal({ onClose }) {
-  const items = [
-    { Icon: RotateCcw, label: "Toque no card para revelar a tradução" },
-    { Icon: Check,     label: '"Eu Conheço!" remove o card da fila' },
-    { Icon: X,         label: '"Ainda Aprendendo" recicla o card para mais tarde' },
-    { Icon: Bookmark,  label: "Salve palavras tocando no ícone de favorito" },
-    { Icon: Volume2,   label: "Toque no ícone de som para ouvir a pronúncia" },
-    { Icon: Flame,     label: "Estude diariamente para manter seu streak" },
-    { Icon: RefreshCw, label: "Conclua todos os cards para ganhar XP e ver seu resultado" },
-  ];
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-      onClick={onClose}>
-      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        onClick={e => e.stopPropagation()}
-        className="w-full max-w-md bg-white pb-8 px-6 pt-6"
-        style={{ borderRadius: "2px 2px 0 0" }}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-black text-gray-900">Como funciona</h2>
-          <button onClick={onClose} className="p-1 hover:opacity-60 transition-opacity">
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
-        <div className="space-y-4">
-          {items.map(({ Icon, label }, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-gray-100 flex items-center justify-center shrink-0" style={{ borderRadius: 2 }}>
-                <Icon size={16} strokeWidth={1.5} className="text-gray-600" />
-              </div>
-              <p className="text-sm text-gray-600 pt-1.5">{label}</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ─── STATS SCREEN ─────────────────────────────────────────────────────────────
-function StatsScreen({ stats, xp, streak, onBack }) {
-  const totalStudied  = Object.values(stats.studied || {}).reduce((a, b) => a + b, 0);
-  const totalCorrect  = stats.totalCorrect || 0;
-  const totalAttempts = stats.totalAttempts || 0;
-  const overallAcc    = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : 0;
-  const statCards = [
-    { label: "Total estudadas", value: totalStudied,     Icon: BookOpen },
-    { label: "Precisão geral",  value: `${overallAcc}%`, Icon: Target   },
-    { label: "Streak atual",    value: streak,           Icon: Flame    },
-  ];
-  return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen bg-white">
-      <NavBar title="Estatísticas"
-        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><ChevronLeft className="w-4 h-4" /> Voltar</button>} />
-      <div className="max-w-md mx-auto px-4 pt-8 pb-16 space-y-4">
-        <div className="grid grid-cols-3 gap-3">
-          {statCards.map(({ label, value, Icon }, i) => (
-            <div key={i} className="bg-gray-50 border border-gray-100 p-4 text-center" style={{ borderRadius: 2 }}>
-              <Icon size={20} strokeWidth={1.5} className="mx-auto mb-2 text-gray-400" />
-              <div className="text-xl font-black text-gray-900">{value}</div>
-              <div className="text-xs text-gray-400 mt-0.5 leading-tight">{label}</div>
-            </div>
-          ))}
-        </div>
-        <div className="bg-gray-50 border border-gray-100 p-4" style={{ borderRadius: 2 }}>
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2 flex items-center gap-2">
-            <Zap size={14} className="text-gray-400" /> XP Total
-          </p>
-          <p className="text-3xl font-black text-gray-900">{xp} <span className="text-base font-semibold text-gray-400">XP</span></p>
-        </div>
-        {Object.keys(stats.completedDecks || {}).length > 0 && (
-          <div className="bg-gray-50 border border-gray-100 p-4" style={{ borderRadius: 2 }}>
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3 flex items-center gap-2">
-              <Award size={14} className="text-gray-400" /> Categorias concluídas
-            </p>
-            <div className="space-y-2">
-              {Object.entries(stats.completedDecks || {}).map(([key, langs]) => {
-                const DeckIcon = DECKS[key]?.icon || BookOpen;
-                return (
-                  <div key={key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <DeckIcon size={14} strokeWidth={1.5} className="text-gray-400" />
-                      <span className="text-sm font-semibold text-gray-700">{DECKS[key]?.label}</span>
-                    </div>
-                    <div className="flex gap-1 flex-wrap justify-end">
-                      {langs.map(l => (
-                        <span key={l} className="text-xs font-bold px-2 py-0.5"
-                          style={{ backgroundColor: LANG_META[l]?.accent + "18", color: LANG_META[l]?.accent,
-                            border: `1px solid ${LANG_META[l]?.accent}40`, borderRadius: 999 }}>
-                          {LANG_META[l]?.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── FLAG ICON — circular flag images per language ───────────────────────────
-const FLAG_ICONS = {
-  es: "/espanha.png",
-  it: "/italia.png",
-  ru: "/russia.png",
-  fr: "/franca.png",
-  de: "/alemanha.png",
-  en: "/brasil.png",   // English→Portuguese deck uses Brazilian flag
-};
-
-function FlagIcon({ langCode, size = 40 }) {
-  const src = FLAG_ICONS[langCode];
-  if (!src) return null;
-  return (
-    <img src={src} alt={langCode} width={size} height={size}
-      style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0, display: "block" }} />
-  );
-}
-
-// ─── DASHBOARD ───────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, onHelp }) {
-  const favCount = Object.keys(favorites).length;
-  const [showHelp, setShowHelp] = useState(false);
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="min-h-screen bg-white">
-      <NavBar title="LinguaFlash"
-        left={
-          <button onClick={() => setShowHelp(true)} className="flex items-center gap-1 text-gray-400 hover:text-gray-700 transition-colors">
-            <HelpCircle size={20} strokeWidth={1.5} />
-          </button>
-        }
-        right={
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid #FED7AA", borderRadius: 999 }}>
-              <Flame className="text-orange-500 w-3.5 h-3.5" />
-              <span className="font-bold text-orange-600 text-xs">{streak}</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid #FDE68A", borderRadius: 999 }}>
-              <Zap className="text-yellow-500 w-3.5 h-3.5" />
-              <span className="font-bold text-yellow-600 text-xs">{xp}</span>
-            </div>
-          </div>
-        }
-      />
-      <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
-      <div className="max-w-md mx-auto px-4 pt-8 pb-16">
-        <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">Aprenda com flashcards</p>
-        <h1 className="text-4xl font-black text-gray-900 leading-tight tracking-tight mb-8">Qual idioma hoje?</h1>
-
-        {/* XP bar */}
-        <div className="mb-8">
-          <div className="flex justify-between text-xs text-gray-400 mb-2">
-            <span className="font-semibold">Progresso geral</span><span>{xp} XP</span>
-          </div>
-          <div className="h-1.5 bg-gray-100 overflow-hidden" style={{ borderRadius: 2 }}>
-            <motion.div className="h-full bg-gray-900" style={{ borderRadius: 2 }}
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min((xp % 100), 100)}%` }}
-              transition={{ duration: 1, ease: "easeOut" }} />
-          </div>
-        </div>
-
-        {/* Languages */}
-        <div className="space-y-3 mb-4">
-          {Object.entries(LANG_META).map(([code, lang], i) => {
-            const doneCount = Object.values(stats.completedDecks || {}).filter(ls => ls.includes(code)).length;
-            const total = DECK_KEYS.length;
-            return (
-              <motion.button key={code} onClick={() => onSelectLang(code)}
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                className="w-full text-left hover:bg-gray-50 transition-colors"
-                style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                <div className="flex items-center gap-3 p-4">
-                  <FlagIcon langCode={code} size={40} />
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900">{lang.name}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      {total} categorias · {Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras
-                    </div>
-                  </div>
-                  {doneCount > 0 && (
-                    <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 shrink-0"
-                      style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0", borderRadius: 999 }}>
-                      <Check size={10} strokeWidth={3} />{doneCount}/{total}
-                    </span>
-                  )}
-                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {/* Favorites & Stats */}
-        <div className="space-y-3">
-          <motion.button onClick={onOpenFavorites} whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
-            style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-            <BookMarked size={22} strokeWidth={1.5} className="text-gray-500 shrink-0" />
-            <div className="flex-1">
-              <div className="font-bold text-gray-900">Palavras Favoritas</div>
-              <div className="text-xs text-gray-400 mt-0.5">{favCount} {favCount === 1 ? "palavra salva" : "palavras salvas"}</div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-          </motion.button>
-          <motion.button onClick={onOpenStats} whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
-            style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-            <BarChart2 size={22} strokeWidth={1.5} className="text-gray-500 shrink-0" />
-            <div className="flex-1">
-              <div className="font-bold text-gray-900">Estatísticas</div>
-              <div className="text-xs text-gray-400 mt-0.5">XP, precisão, categorias concluídas</div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-          </motion.button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── FAVORITES SCREEN ────────────────────────────────────────────────────────
-function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
-  const favByLang = Object.entries(LANG_META).map(([code, lang]) => {
-    const count = Object.keys(favorites).filter(k => k.startsWith(code + ":")).length;
-    return { code, lang, count };
-  }).filter(x => x.count > 0);
-  const totalCount = Object.keys(favorites).length;
-
-  return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen bg-white">
-      <NavBar title="Palavras Favoritas"
-        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><ChevronLeft className="w-4 h-4" /> Início</button>} />
-      <div className="max-w-md mx-auto px-4 pt-8 pb-16">
-        {favByLang.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-24 gap-4 text-center">
-            <Bookmark size={40} strokeWidth={1.5} className="text-gray-200" />
-            <p className="font-bold text-gray-400">Nenhuma palavra favorita ainda.</p>
-            <p className="text-sm text-gray-400">
-              Salve palavras tocando no ícone <Bookmark size={13} strokeWidth={2} className="inline-block align-middle -mt-0.5" /> durante os estudos.
-            </p>
-            <PillButton onClick={onBack} style={{ backgroundColor: "#111111", color: "#fff", border: "2px solid #111111" }}>Voltar</PillButton>
-          </div>
-        ) : (
-          <>
-            <div className="flex flex-col gap-3 mb-6">
-              <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Escolha o idioma para revisar</p>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={onClearAll}
-                className="self-start flex items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors px-3 py-1.5"
-                style={{ border: "2px solid #FECACA", borderRadius: 999, backgroundColor: "#FEF2F2" }}>
-                <X size={12} /> Limpar tudo
-              </motion.button>
-            </div>
-            <div className="space-y-3">
-              <motion.button onClick={() => onStudyFavs("__all__", "__favorites_all__")}
-                whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
-                style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                <BookMarked size={22} strokeWidth={1.5} className="text-gray-700 shrink-0" />
-                <div className="flex-1">
-                  <div className="font-bold text-gray-900">Todas as palavras</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{totalCount} {totalCount === 1 ? "palavra" : "palavras"} · todos os idiomas</div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-300" />
-              </motion.button>
-              {favByLang.map(({ code, lang, count }) => (
-                <motion.button key={code} onClick={() => onStudyFavs(code, "__favorites__")}
-                  whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
-                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-gray-50 transition-colors"
-                  style={{ border: "2px solid #E5E7EB", borderRadius: 2, backgroundColor: "#FAFAFA" }}>
-                  <FlagIcon langCode={code} size={36} />
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900">{lang.name}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{count} {count === 1 ? "palavra" : "palavras"}</div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
-                </motion.button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── DECK SELECTOR ───────────────────────────────────────────────────────────
-// Deck status: "done" = completed, "started" = in completedDecks but not all, "new" = never touched
-// We use completedDecks[deckKey].includes(langCode) for done
-// "started" isn't tracked separately — we only know done/not-done per deck per lang
-function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }) {
-  const lang = LANG_META[langCode];
-  const [query, setQuery] = useState("");
-  const filtered = DECK_KEYS.filter(k =>
-    DECKS[k].label.toLowerCase().includes(query.toLowerCase())
-  );
-  const doneCount = DECK_KEYS.filter(k => completedDecks[k]?.includes(langCode)).length;
-
-  return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen" style={{ backgroundColor: lang.accent }}>
-      <NavBar title={lang.name}
-        bgColor={lang.accent} textColor="#ffffff" borderColor="rgba(255,255,255,0.2)"
-        left={
-          <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>
-            <ChevronLeft className="w-4 h-4" /> Início
-          </button>
-        }
-        right={
-          <div className="flex items-center gap-1 px-2 py-1" style={{ border: "2px solid rgba(255,255,255,0.4)", borderRadius: 999 }}>
-            <Flame size={14} className="text-white" />
-            <span className="font-bold text-xs text-white">{streak}</span>
-          </div>
-        }
-      />
-      <div className="max-w-md mx-auto px-4 pt-6 pb-16">
-        <div className="mb-5">
-          <h2 className="text-3xl font-black tracking-tight text-white">{lang.name}</h2>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {doneCount}/{DECK_KEYS.length} categorias concluídas
-          </p>
-        </div>
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ color: "rgba(255,255,255,0.5)" }} />
-          <input value={query} onChange={e => setQuery(e.target.value)}
-            placeholder="Buscar categoria..."
-            className="w-full pl-9 pr-4 py-2.5 text-sm font-semibold outline-none"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.25)",
-              borderRadius: 999, color: "#ffffff" }}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {filtered.map((key, i) => {
-            const deck = DECKS[key];
-            const Icon = deck.icon;
-            const done = completedDecks[key]?.includes(langCode);
-            // Visual states: done = faint green tint + check; not done = plain white
-            return (
-              <motion.button key={key} onClick={() => onSelectDeck(key)}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="relative flex flex-col items-start gap-3 p-4 text-left hover:opacity-90 transition-opacity"
-                style={{
-                  border: done ? "2px solid #BBF7D0" : "2px solid rgba(255,255,255,0.25)",
-                  borderRadius: 2,
-                  backgroundColor: done ? "#F0FDF4" : "#ffffff",
-                }}>
-                {done && (
-                  <span className="absolute top-2 right-2 flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5"
-                    style={{ backgroundColor: "#DCFCE7", color: "#16A34A", border: "1px solid #BBF7D0", borderRadius: 999 }}>
-                    <Check size={10} strokeWidth={3} />
-                  </span>
-                )}
-                <Icon size={36} strokeWidth={1.5} style={{ color: done ? "#16A34A" : lang.accent }} />
-                <div>
-                  <div className="font-bold text-sm leading-tight" style={{ color: done ? "#15803D" : lang.textPrimary }}>{deck.label}</div>
-                  <div className="text-xs mt-0.5" style={{ color: done ? "#4ADE80" : lang.textSecondary }}>{VOCAB[langCode][key].length} cards</div>
-                </div>
-              </motion.button>
-            );
-          })}
-          {filtered.length === 0 && (
-            <div className="col-span-2 text-center py-8" style={{ color: "rgba(255,255,255,0.6)" }}>
-              <Search size={24} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-semibold">Nenhuma categoria encontrada</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── FLASH CARD ───────────────────────────────────────────────────────────────
-function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFav, showLangBadge }) {
-  const [ttsUnsupported, setTtsUnsupported] = useState(false);
-
-  const handleTTS = (e) => {
-    e.stopPropagation();
-    if (!window.speechSynthesis) { setTtsUnsupported(true); return; }
-    speak(card.target, langCode);
-  };
-
-  return (
-    <div className="w-full" style={{ perspective: 1400, height: 240 }}>
-      <motion.div key={card.pt + card.target}
-        className="relative w-full cursor-pointer"
-        style={{ transformStyle: "preserve-3d", height: "100%" }}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.48, ease: [0.4, 0, 0.2, 1] }}
-        onClick={onClick}
-      >
-        {/* FRONT */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6"
-          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            backgroundColor: "#ffffff", border: "2px solid #E5E7EB", borderRadius: 2 }}>
-          {showLangBadge && (
-            <span className="absolute top-3 left-3 text-xs font-bold px-2 py-0.5"
-              style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: 999 }}>
-              {lang.name}
-            </span>
-          )}
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">{langCode === "en" ? "English" : "Português"}</p>
-          <p className="text-3xl font-black text-gray-900 text-center leading-tight">{card.pt}</p>
-          <p className="mt-6 text-xs font-medium flex items-center gap-1.5" style={{ color: "#6B7280" }}>
-            <RotateCcw className="w-3 h-3" /> {langCode === "en" ? "tap to reveal" : "toque para revelar"}
-          </p>
-        </div>
-
-        {/* BACK */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6"
-          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)", backgroundColor: lang.accent,
-            border: `2px solid ${lang.accent}`, borderRadius: 2 }}>
-          {/* Fav button */}
-          <button onClick={e => { e.stopPropagation(); onToggleFav(card); }}
-            className="absolute top-3 right-3 p-2 hover:opacity-70 transition-opacity">
-            {isFav
-              ? <BookMarked size={20} style={{ color: "#ffffff" }} />
-              : <Bookmark size={20} style={{ color: "rgba(255,255,255,0.5)" }} />}
-          </button>
-          {/* TTS button — hidden for EN deck (PT target needs no TTS here) */}
-          {langCode !== "en" && (
-            <button onClick={handleTTS}
-              className="absolute top-3 left-3 p-2 hover:opacity-70 transition-opacity">
-              <Volume2 size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)" }} />
-            </button>
-          )}
-          <p className="text-xs font-semibold tracking-widest uppercase mb-3"
-            style={{ color: "rgba(255,255,255,0.7)" }}>{langCode === "en" ? "Português" : lang.name}</p>
-          <p className="text-3xl font-black text-center leading-tight text-white break-words max-w-full px-8">
-            {card.target}
-          </p>
-          {card.phonetic && (
-            <p className="mt-2 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.75)" }}>{card.phonetic}</p>
-          )}
-          <p className="mt-3 text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>{card.pt}</p>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ─── MASTERED CELEBRATION ────────────────────────────────────────────────────
-// Shown when user revisits an already-completed deck (perfect score last time)
-function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="min-h-screen flex flex-col bg-white">
-      <NavBar title={deckLabel} bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
-        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><X className="w-4 h-4" /> Sair</button>} />
-      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6 max-w-md mx-auto">
-        <div className="w-20 h-20 flex items-center justify-center"
-          style={{ backgroundColor: lang.accent, borderRadius: 2 }}>
-          <Check size={36} strokeWidth={2} className="text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-2">Categoria dominada!</h2>
-          <p className="text-gray-500 text-sm">Você já concluiu <strong>{deckLabel}</strong>. Quer revisar de novo ou escolher outra categoria?</p>
-        </div>
-        <div className="flex flex-col gap-3 w-full">
-          <PillButton onClick={onReview} className="w-full gap-2"
-            style={{ backgroundColor: lang.accent, color: "#fff", border: `2px solid ${lang.accent}` }}>
-            <RefreshCw size={16} /> Revisar novamente
-          </PillButton>
-          <PillButton onClick={onBack} className="w-full gap-2"
-            style={{ backgroundColor: "transparent", border: "2px solid #E5E7EB", color: "#374151" }}>
-            <ChevronLeft size={16} /> Escolher outra
-          </PillButton>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── STUDY SCREEN ─────────────────────────────────────────────────────────────
-function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav, isReview }) {
-  const isFavAll  = deckKey === "__favorites_all__";
-  const isFavDeck = deckKey === "__favorites__" || isFavAll;
-  const deckLabel = isFavAll ? "Todas as Favoritas" : isFavDeck ? "Favoritas" : DECKS[deckKey]?.label;
-
-  const neutralLang = { name: "Favoritas", accent: "#374151", textPrimary: "#111827", textSecondary: "#6B7280" };
-
-  // useMemo prevents reshuffling on parent re-renders
-  const originalCards = useMemo(() => {
-    if (isFavAll)
-      return shuffle(Object.entries(LANG_META).flatMap(([code]) =>
-        Object.values(VOCAB[code]).flat()
-          .filter(c => favorites[`${code}:${c.pt}`])
-          .map(c => ({ ...c, _lang: code }))
-      ));
-    if (isFavDeck)
-      return shuffle(Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`]));
-    return shuffle([...VOCAB[langCode][deckKey]]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);  // intentionally empty — we want a stable shuffle per mount
-
-  const [queue,        setQueue]        = useState(originalCards);
-  const [currentIdx,   setCurrentIdx]   = useState(0);
-  const [isFlipped,    setIsFlipped]    = useState(false);
-  const [correct,      setCorrect]      = useState(0);
-  const [incorrect,    setIncorrect]    = useState(0);
-  const [answered,     setAnswered]     = useState(false);
-  const [flashColor,   setFlashColor]   = useState(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const controls = useAnimation();
-
-  const total    = originalCards.length;
-  const progress = total > 0 ? Math.min(correct / total, 1) : 0;
-  const card     = queue[currentIdx];
-
-  // Handle mid-session favorites drain (unsave last word while studying)
-  if (!card) return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen flex flex-col bg-white">
-      <NavBar title={deckLabel} bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
-        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500"><X className="w-4 h-4" /> Sair</button>} />
-      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
-        <Bookmark size={40} strokeWidth={1.5} className="text-gray-200" />
-        <p className="font-bold text-gray-400">Sem palavras na fila.</p>
-        <PillButton onClick={onBack} style={{ backgroundColor: "#111111", color: "#fff", border: "2px solid #111111" }}>Voltar</PillButton>
-      </div>
-    </motion.div>
-  );
-
-  const cardLang     = isFavAll ? (card._lang || langCode) : langCode;
-  const cardLangMeta = isFavAll ? (LANG_META[card._lang] || neutralLang) : (LANG_META[langCode] || neutralLang);
-  const favKey       = `${cardLang}:${card.pt}`;
-  const isFav        = !!favorites[favKey];
-  const progressAccent = isFavAll ? cardLangMeta.accent : (LANG_META[langCode]?.accent || "#374151");
-
-  const handleFlip = () => { if (!isFlipped) setIsFlipped(true); };
-
-  const handleAnswer = async (knew) => {
-    if (!isFlipped || answered) return;
-    setAnswered(true);
-    setFlashColor(knew ? "green" : "red");
-    await controls.start({ x: knew ? 100 : -100, opacity: 0, rotate: knew ? 6 : -6, transition: { duration: 0.26, ease: "easeIn" } });
-    setFlashColor(null);
-    controls.set({ x: 0, opacity: 1, rotate: 0 });
-    if (knew) {
-      const newCorrect = correct + 1;
-      setCorrect(newCorrect);
-      const newQueue = queue.filter((_, i) => i !== currentIdx);
-      if (newQueue.length === 0) {
-        const totalAnswered = newCorrect + incorrect;
-        const xpGained = Math.round(newCorrect / totalAnswered * 50) + 10;
-        onXP(xpGained);
-        setShowConfetti(true);
-        setTimeout(() => onFinish({ correct: newCorrect, total: totalAnswered, xpGained, deckKey, langCode }), 800);
-        return;
-      }
-      setQueue(newQueue);
-      setCurrentIdx(Math.min(currentIdx, newQueue.length - 1));
-    } else {
-      setIncorrect(inc => inc + 1);
-      const newQueue = [...queue];
-      const [removed] = newQueue.splice(currentIdx, 1);
-      newQueue.splice(Math.min(currentIdx + 2, newQueue.length), 0, removed);
-      setQueue(newQueue);
-      setCurrentIdx(Math.min(currentIdx, newQueue.length - 1));
-    }
-    setIsFlipped(false);
-    setAnswered(false);
-  };
-
-  return (
-    <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
-      className="min-h-screen flex flex-col bg-white">
-      <Confetti active={showConfetti} />
-      <NavBar title={isReview ? `Revisão · ${deckLabel}` : deckLabel}
-        bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB"
-        left={<button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-gray-900"><X className="w-4 h-4" /> {langCode === "en" ? "Exit" : "Sair"}</button>}
-        right={<span className="text-sm font-semibold text-gray-400">{queue.length} {langCode === "en" ? "remaining" : "restantes"}</span>}
-      />
-      <div className="flex-1 max-w-md mx-auto w-full px-4 pt-6 pb-10 flex flex-col">
-        {/* Progress */}
-        <div className="mb-6">
-          <div className="h-1.5 overflow-hidden bg-gray-100" style={{ borderRadius: 2 }}>
-            <motion.div className="h-full" style={{ backgroundColor: progressAccent, borderRadius: 2 }}
-              animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-500">{correct} {langCode === "en" ? "correct" : "acertadas"}</span>
-            <span className="text-xs font-semibold text-gray-500">{Math.round(progress * 100)}%</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 flex-1 justify-center">
-          {/* Card */}
-          <div className="relative" style={{ height: 240 }}>
-            <AnimatePresence>
-              {flashColor && (
-                <motion.div className="absolute inset-0 z-10 pointer-events-none"
-                  style={{ backgroundColor: flashColor === "green" ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)", borderRadius: 2 }}
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-              )}
-            </AnimatePresence>
-            <motion.div animate={controls} style={{ height: "100%" }}>
-              <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
-                lang={cardLangMeta} langCode={cardLang} isFav={isFav}
-                onToggleFav={(c) => onToggleFav(cardLang, c)}
-                showLangBadge={isFavAll} />
-            </motion.div>
-          </div>
-
-          {/* Hint / Tips slot — fixed space, no layout shift */}
-          <div className="min-h-[20px]">
-            {!isFlipped ? (
-              <p className="text-center text-xs font-medium" style={{ color: "#6B7280" }}>
-                {langCode === "en" ? "Tap the card to see the translation" : "Toque no card para ver a tradução"}
-              </p>
-            ) : (card.example || card.tip) ? (
-              <div className="rounded-sm border border-gray-100 bg-gray-50 px-4 py-3 space-y-1.5" style={{ borderRadius: 2 }}>
-                {card.example && (
-                  <p className="text-xs font-semibold text-gray-700 leading-snug">
-                    <span className="text-gray-400 font-normal mr-1">ex.</span>{card.example}
-                  </p>
-                )}
-                {card.tip && (
-                  <p className="text-xs text-gray-500 leading-snug">{card.tip}</p>
-                )}
-              </div>
-            ) : null}
-          </div>
-
-          {/* Action pills */}
-          <div className="flex gap-3"
-            style={{ opacity: isFlipped ? 1 : 0, pointerEvents: isFlipped ? "auto" : "none", transition: "opacity 0.2s" }}>
-            <PillButton onClick={() => handleAnswer(false)} className="flex-1 gap-2 py-3.5 min-w-0"
-              style={{ backgroundColor: "#ffffff", border: "2px solid #E5E7EB", color: "#DC2626" }}>
-              <X size={18} strokeWidth={2} className="shrink-0" />
-              <span className="text-sm font-bold text-center leading-tight">{langCode === "en" ? "Still Learning" : "Ainda Aprendendo"}</span>
-            </PillButton>
-            <PillButton onClick={() => handleAnswer(true)} className="flex-1 gap-2 py-3.5 min-w-0"
-              style={{ backgroundColor: "#16A34A", border: "2px solid #16A34A", color: "#ffffff" }}>
-              <Check size={18} strokeWidth={2} className="shrink-0" />
-              <span className="text-sm font-bold text-center leading-tight">{langCode === "en" ? "I Know It!" : "Eu Conheço!"}</span>
-            </PillButton>
-          </div>
-        </div>
-
-        {/* Stats footer */}
-        <div className="flex justify-center gap-8 mt-8 pt-4 border-t border-gray-100">
-          {[{ label: langCode === "en" ? "Correct" : "Acertou", val: correct, color: "#16A34A" },
-            { label: langCode === "en" ? "Wrong"   : "Errou",   val: incorrect, color: "#DC2626" },
-            { label: "Total",                                    val: total,     color: "#6B7280" }].map(s => (
-            <div key={s.label} className="text-center">
-              <div className="text-lg font-black" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-xs text-gray-400">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── RESULT SCREEN ────────────────────────────────────────────────────────────
-function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck, onNextLang, fromFavorites }) {
-  const lang             = LANG_META[langCode] ?? { accent: "#374151", textPrimary: "#111827", textSecondary: "#6B7280", borderColor: "#D1D5DB" };
-  const accuracy         = Math.round((result.correct / result.total) * 100);
-  const currentDeckIndex = DECK_KEYS.indexOf(deckKey);
-  const nextDeckKey      = DECK_KEYS[currentDeckIndex + 1] ?? null;
-  const nextDeck         = (!fromFavorites && nextDeckKey) ? DECKS[nextDeckKey] : null;
-  const langKeys         = Object.keys(LANG_META);
-  const nextLangCode     = (!fromFavorites && !nextDeck) ? (langKeys[langKeys.indexOf(langCode) + 1] ?? null) : null;
-  const nextLang         = nextLangCode ? LANG_META[nextLangCode] : null;
-  const homeLabel        = fromFavorites ? "Favoritas" : "Início";
-
-  const msg = accuracy === 100 ? { Icon: Check,  text: "Perfeito!", sub: "Você acertou todas!" }
-    : accuracy >= 80           ? { Icon: Target, text: "Muito bem!", sub: "Quase perfeito, continue assim!" }
-    : accuracy >= 60           ? { Icon: Zap,    text: "Bom trabalho!", sub: "Continue praticando!" }
-    :                            { Icon: RotateCcw, text: "Continue tentando!", sub: "A prática leva à perfeição." };
-
-  return (
-    <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-      className="min-h-screen flex flex-col bg-white">
-      <NavBar title="Resultado" bgColor="#ffffff" textColor="#111827" borderColor="#E5E7EB" />
-      <div className="flex-1 max-w-md mx-auto w-full px-4 pt-8 pb-16 flex flex-col">
-        <div className="text-center mb-10">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.15 }}
-            className="w-20 h-20 flex items-center justify-center mx-auto mb-6"
-            style={{ backgroundColor: lang.accent, borderRadius: 2 }}>
-            <msg.Icon size={36} strokeWidth={2} className="text-white" />
-          </motion.div>
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">{msg.text}</h2>
-          <p className="text-sm mt-2 text-gray-500">{msg.sub}</p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 mb-10">
-          {[
-            { Icon: Target, label: "Precisão", value: `${accuracy}%`             },
-            { Icon: Zap,    label: "XP Ganho", value: `+${result.xpGained}`      },
-            { Icon: Check,  label: "Acertos",  value: `${result.correct}/${result.total}` },
-          ].map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.08 }}
-              className="p-4 text-center" style={{ borderRadius: 2, backgroundColor: lang.accent }}>
-              <s.Icon size={16} className="mx-auto mb-2" style={{ color: "rgba(255,255,255,0.75)" }} />
-              <div className="text-xl font-black text-white">{s.value}</div>
-              <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{s.label}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-3 mt-auto">
-          {nextDeck && (
-            <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-              whileTap={{ scale: 0.97 }} onClick={() => onNextDeck(nextDeckKey)}
-              className="w-full flex items-center justify-between px-6 py-4 font-bold"
-              style={{ backgroundColor: lang.accent, color: "#ffffff", borderRadius: 999, border: `2px solid ${lang.accent}` }}>
-              <span>Próxima: {nextDeck.label}</span>
-              <ArrowRight className="w-5 h-5" />
-            </motion.button>
-          )}
-          {nextLang && (
-            <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-              whileTap={{ scale: 0.97 }} onClick={() => onNextLang(nextLangCode)}
-              className="w-full flex items-center justify-between px-6 py-4 font-bold"
-              style={{ backgroundColor: "#111827", color: "#ffffff", borderRadius: 999, border: "2px solid #111827" }}>
-              <span>Começar: {nextLang.name}</span>
-              <ArrowRight className="w-5 h-5" />
-            </motion.button>
-          )}
-          <div className="flex gap-3">
-            <PillButton onClick={onHome} className="flex-1 gap-2"
-              style={{ backgroundColor: "transparent", border: "2px solid #E5E7EB", color: "#374151" }}>
-              <Home size={16} /> {homeLabel}
-            </PillButton>
-            <PillButton onClick={onRestart} className="flex-1 gap-2"
-              style={{ backgroundColor: "transparent", border: "2px solid #E5E7EB", color: "#374151" }}>
-              <RotateCcw size={16} /> Repetir
-            </PillButton>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── ROOT ─────────────────────────────────────────────────────────────────────
+// ─── PRINCIPAL EXPORT COMPONENT ──────────────────────────────────────────────
 export default function App() {
-  const [screen,        setScreen]        = useState(() => getStorage("lf_seen_onboard", false) ? "dashboard" : "onboard");
-  const [selectedLang,  setSelectedLang]  = useState(null);
-  const [selectedDeck,  setSelectedDeck]  = useState(null);
-  const [result,        setResult]        = useState(null);
+  const [screen, setScreen] = useState("dashboard"); // dashboard, decks, study, result, mastered
+  const [selectedLang, setSelectedLang] = useState("es");
+  const [selectedDeck, setSelectedDeck] = useState(null);
+  const [isReview, setIsReview] = useState(false);
   const [fromFavorites, setFromFavorites] = useState(false);
-  const [isReview,      setIsReview]      = useState(false);
 
-  const [xp,        setXP]        = useState(() => getStorage("lf_xp", 0));
-  const [favorites, setFavorites] = useState(() => getStorage("lf_favorites", {}));
-  const [streak,    setStreak]    = useState(() => {
-    const today     = new Date().toDateString();
-    const saved     = getStorage("lf_streak", { count: 0, lastDate: null });
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    return (saved.lastDate === today || saved.lastDate === yesterday) ? saved.count : 0;
-  });
-  const [stats, setStats] = useState(() => getStorage("lf_stats", { totalCorrect: 0, totalAttempts: 0, completedDecks: {}, studied: {} }));
-
-  const bumpStreak = useCallback(() => {
-    const today = new Date().toDateString();
-    const saved = getStorage("lf_streak", { count: 0, lastDate: null });
-    if (saved.lastDate !== today) {
-      const yesterday = new Date(Date.now() - 86400000).toDateString();
-      const newCount  = saved.lastDate === yesterday ? saved.count + 1 : 1;
-      setStreak(newCount);
-      setStorage("lf_streak", { count: newCount, lastDate: today });
-    }
-  }, []);
+  // Persistent States
+  const [xp, setXp] = useState(() => getStorage("lf_xp", 0));
+  const [streak, setStreak] = useState(() => getStorage("lf_streak", 0));
+  const [lastStudyDate, setLastStudyDate] = useState(() => getStorage("lf_last_date", ""));
+  const [favorites, setFavorites] = useState(() => getStorage("lf_favs", {}));
+  const [stats, setStats] = useState(() => getStorage("lf_stats", {}));
+  const [result, setResult] = useState(null);
 
   const addXP = useCallback((amount) => {
-    setXP(prev => { const n = prev + amount; setStorage("lf_xp", n); return n; });
-    bumpStreak();
-  }, [bumpStreak]);
+    setXp((prev) => {
+      const next = prev + amount;
+      setStorage("lf_xp", next);
+      return next;
+    });
 
-  const handleToggleFav = useCallback((langCode, card) => {
-    const key = `${langCode}:${card.pt}`;
-    setFavorites(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      if (!next[key]) delete next[key];
-      setStorage("lf_favorites", next);
+    const today = new Date().toISOString().split("T")[0];
+    if (lastStudyDate !== today) {
+      setStreak((prev) => {
+        let next = prev;
+        if (!lastStudyDate) {
+          next = 1;
+        } else {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yestStr = yesterday.toISOString().split("T")[0];
+          if (lastStudyDate === yestStr) next = prev + 1;
+          else next = 1;
+        }
+        setStorage("lf_streak", next);
+        return next;
+      });
+      setLastStudyDate(today);
+      setStorage("lf_last_date", today);
+    }
+  }, [lastStudyDate]);
+
+  const handleToggleFav = useCallback((card) => {
+    setFavorites((prev) => {
+      const next = { ...prev };
+      if (next[card.nativeId]) delete next[card.nativeId];
+      else next[card.nativeId] = card;
+      setStorage("lf_favs", next);
       return next;
     });
   }, []);
 
   const updateStats = useCallback((correct, total, deckKey, langCode) => {
-    setStats(prev => {
-      const next = {
-        ...prev,
-        totalCorrect:  (prev.totalCorrect  || 0) + correct,
-        totalAttempts: (prev.totalAttempts || 0) + total,
-        studied: { ...prev.studied, [langCode]: ((prev.studied || {})[langCode] || 0) + total },
+    setStats((prev) => {
+      const next = { ...prev };
+      const id = `${langCode}_${deckKey}`;
+      const existing = next[id] || { correct: 0, total: 0, count: 0 };
+      next[id] = {
+        correct: existing.correct + correct,
+        total: existing.total + total,
+        count: existing.count + 1
       };
-      const existing = (prev.completedDecks || {})[deckKey] || [];
-      if (!existing.includes(langCode)) {
-        next.completedDecks = { ...prev.completedDecks, [deckKey]: [...existing, langCode] };
-      }
       setStorage("lf_stats", next);
       return next;
     });
   }, []);
 
-  const goStudy = (lang, deck, fromFavs = false, review = false) => {
-    setSelectedLang(lang); setSelectedDeck(deck);
-    setFromFavorites(fromFavs);
-    setIsReview(review);
+  const goDecks = (lang) => { setSelectedLang(lang); setScreen("decks"); };
+  
+  const goStudy = (lang, deck, favMode = false, reviewMode = false) => {
+    setSelectedLang(lang);
+    setSelectedDeck(deck);
+    setFromFavorites(favMode);
+    setIsReview(reviewMode);
     setScreen("study");
   };
 
-  // Check if deck already completed → show mastered screen instead
-  const handleSelectDeck = (langCode, deckKey) => {
-    const isFavDeck = deckKey.startsWith("__");
-    const isDone = !isFavDeck && stats.completedDecks?.[deckKey]?.includes(langCode);
-    if (isDone) {
-      setSelectedLang(langCode);
-      setSelectedDeck(deckKey);
-      setScreen("mastered");
-    } else {
-      goStudy(langCode, deckKey, false, false);
-    }
+  const backFromStudy = () => {
+    if (fromFavorites) setScreen("dashboard");
+    else setScreen("decks");
   };
 
-  const backFromStudy  = () => setScreen(fromFavorites ? "favorites" : "decks");
-  const homeFromResult = () => setScreen(fromFavorites ? "favorites" : "dashboard");
+  const homeFromResult = () => { setScreen("dashboard"); };
 
   return (
     <ErrorBoundary>
-      <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Inter', sans-serif; } body { background: #fff; }`}</style>
-        <AnimatePresence mode="wait">
-          {screen === "onboard" && (
-            <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
-          )}
-          {screen === "dashboard" && (
-            <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
-              onSelectLang={(code) => { setSelectedLang(code); setScreen("decks"); }}
-              onOpenFavorites={() => setScreen("favorites")}
-              onOpenStats={() => setScreen("stats")} />
-          )}
-          {screen === "stats" && (
-            <StatsScreen key="stats" stats={stats} xp={xp} streak={streak} onBack={() => setScreen("dashboard")} />
-          )}
-          {screen === "favorites" && (
-            <FavoritesScreen key="favorites" favorites={favorites}
-              onStudyFavs={(code, deck) => goStudy(code === "__all__" ? "es" : code, deck, true)}
-              onBack={() => setScreen("dashboard")}
-              onClearAll={() => { setFavorites({}); setStorage("lf_favorites", {}); }} />
-          )}
-          {screen === "decks" && (
-            <DeckSelector key="decks" langCode={selectedLang} streak={streak}
-              completedDecks={stats.completedDecks || {}}
-              onSelectDeck={(key) => handleSelectDeck(selectedLang, key)}
-              onBack={() => setScreen("dashboard")} />
-          )}
-          {screen === "mastered" && (
-            <MasteredScreen key="mastered"
-              deckLabel={DECKS[selectedDeck]?.label}
-              lang={LANG_META[selectedLang]}
-              onReview={() => goStudy(selectedLang, selectedDeck, false, true)}
-              onBack={() => setScreen("decks")} />
-          )}
-          {screen === "study" && (
-            <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${isReview}`}
-              langCode={selectedLang} deckKey={selectedDeck}
-              favorites={favorites} onToggleFav={handleToggleFav}
-              isReview={isReview}
-              onFinish={(res) => {
-                updateStats(res.correct, res.total, res.deckKey, res.langCode);
-                setResult(res);
-                setScreen("result");
-              }}
-              onXP={addXP} onBack={backFromStudy} />
-          )}
-          {screen === "result" && result && (
-            <ResultScreen key="result" result={result}
-              langCode={selectedLang} deckKey={selectedDeck}
-              fromFavorites={fromFavorites}
-              onRestart={() => setScreen("study")}
-              onHome={homeFromResult}
-              onNextDeck={(nextKey) => goStudy(selectedLang, nextKey, false)}
-              onNextLang={(nextLang) => { setSelectedLang(nextLang); setScreen("decks"); }} />
-          )}
-        </AnimatePresence>
+      <div className="min-h-screen bg-[#F8F9FF] text-neutral-900 font-sans antialiased flex flex-col items-center justify-start w-full sm:py-6">
+        <div className="w-full max-w-md min-h-screen sm:min-h-[820px] sm:rounded-[24px] sm:shadow-xl bg-white border border-neutral-200 flex flex-col justify-between relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            
+            {/* SCREEN: DASHBOARD */}
+            {screen === "dashboard" && (
+              <DashboardScreen key="dashboard" 
+                xp={xp} streak={streak} favorites={favorites} stats={stats}
+                onSelectLang={goDecks} onStudyFavs={(lang, deck) => goStudy(lang, deck, true, false)} />
+            )}
+
+            {/* SCREEN: DECKS ARCHITECTURE */}
+            {screen === "decks" && (
+              <DecksScreen key={`decks-${selectedLang}`}
+                langCode={selectedLang} stats={stats} favorites={favorites}
+                onSelectDeck={(key) => goStudy(selectedLang, key, false, false)}
+                onReviewDeck={(key) => goStudy(selectedLang, key, false, true)}
+                onBack={() => setScreen("dashboard")} />
+            )}
+
+            {/* SCREEN: STUDY EXECUTION HUB */}
+            {screen === "study" && (
+              <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${isReview}`}
+                langCode={selectedLang} deckKey={selectedDeck}
+                favorites={favorites} onToggleFav={handleToggleFav}
+                isReview={isReview}
+                onFinish={(res) => {
+                  updateStats(res.correct, res.total, res.deckKey, res.langCode);
+                  setResult(res);
+                  setScreen("result");
+                }}
+                onXP={addXP} onBack={backFromStudy} />
+            )}
+
+            {/* SCREEN: RESULT SUMMARY */}
+            {screen === "result" && result && (
+              <ResultScreen key="result" result={result}
+                langCode={selectedLang} deckKey={selectedDeck}
+                fromFavorites={fromFavorites}
+                onRestart={() => setScreen("study")}
+                onHome={homeFromResult}
+                onNextDeck={(nextKey) => goStudy(selectedLang, nextKey, false)}
+                onNextLang={(nextLang) => { setSelectedLang(nextLang); setScreen("decks"); }} />
+            )}
+
+          </AnimatePresence>
+        </div>
       </div>
     </ErrorBoundary>
+  );
+}
+
+// ─── SUB-COMPONENTS SECTOR (YOUR CLAUDE WORK FRAMEWORK ENHANCED) ──────────────
+
+function DashboardScreen({ xp, streak, favorites, stats, onSelectLang, onStudyFavs }) {
+  const favArray = useMemo(() => Object.values(favorites), [favorites]);
+  
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col justify-between p-5 space-y-6">
+      <div className="space-y-6">
+        {/* Editorial Top Status Control */}
+        <div className="flex items-center justify-between border-b border-neutral-100 pb-4 pt-1">
+          <div className="flex items-center gap-2 font-black uppercase tracking-wider text-sm text-neutral-900">
+            <Sparkles className="w-4 h-4" />
+            <span>linguaflash</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-xs font-bold text-neutral-800">
+              <Flame className="w-4 h-4 text-orange-500 fill-current" />
+              <span>{streak}d</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-bold bg-neutral-900 text-white px-2.5 py-1 rounded-md">
+              <Zap className="w-3.5 h-3.5 fill-current text-yellow-400" />
+              <span>{xp} XP</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-neutral-900">Idiomas disponíveis</h2>
+          <p className="text-xs text-neutral-500 mt-0.5">Escolha uma trilha para carregar os baralhos de vocabulário.</p>
+        </div>
+
+        {/* Multi-Language Route Selectors */}
+        <div className="grid grid-cols-1 gap-2.5">
+          {Object.entries(LANG_META).map(([code, meta]) => (
+            <button key={code} onClick={() => onSelectLang(code)}
+              style={{ backgroundColor: meta.bg, borderColor: meta.borderColor }}
+              className="w-full text-left p-4 rounded-xl border-2 transition-all hover:scale-[1.01] flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <span className="text-2xl">{meta.flag}</span>
+                <div>
+                  <h3 className="font-bold text-sm text-neutral-900">{meta.name}</h3>
+                  <p className="text-xs text-neutral-600 mt-0.5">Acessar módulos de conversação</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
+            </button>
+          ))}
+        </div>
+
+        {/* Saved Favorites Row */}
+        {favArray.length > 0 && (
+          <div className="pt-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-2">Termos Arquivados</h4>
+            <button onClick={() => onStudyFavs(favArray[0].lang, favArray[0].deck)}
+              className="w-full p-4 border-2 border-neutral-200 hover:border-neutral-900 rounded-xl text-left bg-white transition-all flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                <Bookmark className="w-4 h-4 text-neutral-900 fill-current" />
+                <span className="text-xs font-bold text-neutral-900">{favArray.length} palavras marcadas para treino</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function DecksScreen({ langCode, stats, favorites, onSelectDeck, onReviewDeck, onBack }) {
+  const meta = LANG_META[langCode];
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="flex-1 flex flex-col p-5 space-y-5">
+      <header className="flex items-center gap-3 pt-2">
+        <button onClick={onBack} className="p-1.5 border border-neutral-200 rounded-lg hover:bg-neutral-50">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm">{meta.flag}</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">{meta.name}</span>
+          </div>
+          <h2 className="text-lg font-bold text-neutral-900 mt-0.5">Baralhos de Vocabulário</h2>
+        </div>
+      </header>
+
+      <div className="flex-1 space-y-2 overflow-y-auto max-h-[560px] pr-0.5">
+        {DECK_KEYS.map((key) => {
+          const deckMeta = DECKS[key];
+          const cards = VOCAB[langCode]?.[key] || [];
+          if (cards.length === 0) return null;
+
+          const statId = `${langCode}_${key}`;
+          const currentStat = stats[statId] || { correct: 0, total: 0, count: 0 };
+          const Icon = deckMeta.icon || BookOpen;
+
+          return (
+            <div key={key} className="border-2 border-neutral-100 rounded-xl p-4 bg-white space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg border border-neutral-100" style={{ backgroundColor: meta.bg }}>
+                    <Icon className="w-4 h-4" style={{ color: meta.accent }} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-neutral-900">{deckMeta.label}</h4>
+                    <p className="text-[11px] text-neutral-500">{cards.length} entradas estruturadas</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => onSelectDeck(key)}
+                  className="flex-1 py-2 bg-neutral-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg text-center hover:bg-neutral-800 transition-colors">
+                  Praticar
+                </button>
+                {currentStat.count > 0 && (
+                  <button onClick={() => onReviewDeck(key)}
+                    className="px-3 py-2 border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-neutral-50 transition-colors flex items-center justify-center">
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+function StudyScreen({ langCode, deckKey, favorites, onToggleFav, isReview, onFinish, onXP, onBack }) {
+  const meta = LANG_META[langCode];
+  const rawCards = useMemo(() => VOCAB[langCode]?.[deckKey] || [], [langCode, deckKey]);
+  
+  const [sessionCards, setSessionCards] = useState(() => {
+    const matched = rawCards.map((c, i) => ({ ...c, nativeId: `${langCode}_${deckKey}_${i}` }));
+    return isReview ? shuffle(matched) : matched;
+  });
+
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [incorrectList, setIncorrectList] = useState([]);
+
+  const currentCard = sessionCards[idx];
+
+  const handleChoice = (known) => {
+    setFlipped(false);
+    if (known) {
+      setCorrectCount(p => p + 1);
+      onXP(10);
+    } else {
+      setIncorrectList(p => [...p, currentCard]);
+    }
+
+    setTimeout(() => {
+      if (idx + 1 < sessionCards.length) {
+        setIdx(p => p + 1);
+      } else {
+        // Evaluate cycles correctly
+        if (incorrectList.length > 0 || (!known && incorrectList.length === 0)) {
+          const rem = [...incorrectList];
+          if (!known && !rem.some(c => c.nativeId === currentCard.nativeId)) rem.push(currentCard);
+          setSessionCards(rem);
+          setIncorrectList([]);
+          setIdx(0);
+        } else {
+          onFinish({ correct: correctCount + (known ? 1 : 0), total: sessionCards.length, deckKey, langCode });
+        }
+      }
+    }, 200);
+  };
+
+  if (!currentCard) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col justify-between p-5 space-y-4">
+      <div className="flex items-center justify-between gap-4 pt-1">
+        <button onClick={onBack} className="text-neutral-500 hover:text-neutral-900 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+        <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+          <div className="h-full transition-all duration-300" style={{ backgroundColor: meta.accent, width: `${(idx / sessionCards.length) * 100}%` }} />
+        </div>
+        <span className="font-mono text-xs font-bold text-neutral-500">{idx + 1}/{sessionCards.length}</span>
+      </div>
+
+      {/* Card Arena */}
+      <div className="flex-1 flex items-center justify-center py-4">
+        <div className="perspective-1000 w-full aspect-[4/5] max-w-xs" onClick={() => { setFlipped(!flipped); speak(currentCard.target, langCode); }}>
+          <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer ${flipped ? "rotate-y-180" : ""}`}>
+            
+            {/* FRONT */}
+            <div className="absolute inset-0 w-full h-full border-2 rounded-2xl p-6 flex flex-col justify-between backface-hidden items-center shadow-sm bg-white" style={{ borderColor: meta.borderColor }}>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-400">Português</span>
+              <div className="text-2xl font-black text-center text-neutral-900">{currentCard.pt}</div>
+              <span className="text-[10px] font-bold text-neutral-500 bg-neutral-50 px-3 py-1 rounded-md border border-neutral-100">Toque para ouvir e traduzir</span>
+            </div>
+
+            {/* BACK */}
+            <div className="absolute inset-0 w-full h-full border-2 bg-white rounded-2xl p-6 flex flex-col justify-between backface-hidden rotate-y-180 items-center shadow-sm" style={{ borderColor: meta.accent }}>
+              <div className="w-full flex justify-between items-center text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+                <span>{meta.name}</span>
+                <button onClick={(e) => { e.stopPropagation(); onToggleFav(currentCard); }}>
+                  <Bookmark className={`w-4 h-4 ${favorites[currentCard.nativeId] ? "fill-current text-neutral-900" : "text-neutral-300"}`} />
+                </button>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="text-3xl font-black tracking-tight" style={{ color: meta.accent }}>{currentCard.target}</div>
+                {currentCard.phonetic && <div className="text-xs font-mono text-neutral-500 bg-neutral-50 px-2 py-0.5 rounded border border-neutral-100">{currentCard.phonetic}</div>}
+              </div>
+
+              <div className="w-full text-center text-[11px] text-neutral-500 italic max-w-[90%]">{currentCard.tip || "Termo validado do repositório base"}</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Control Frame */}
+      <div className="grid grid-cols-2 gap-3 pb-2">
+        <button onClick={() => handleChoice(false)} className="py-3.5 border-2 border-neutral-900 text-neutral-900 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-neutral-50 transition-colors">
+          Revisar
+        </button>
+        <button onClick={() => handleChoice(true)} className="py-3.5 bg-neutral-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-neutral-800 transition-colors">
+          Domado
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+function ResultScreen({ result, langCode, deckKey, fromFavorites, onRestart, onHome, onNextDeck, onNextLang }) {
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 flex flex-col justify-center items-center p-6 text-center space-y-6">
+      <div className="w-14 h-14 bg-neutral-900 text-white rounded-xl flex items-center justify-center shadow-sm">
+        <Award className="w-6 h-6 text-yellow-400" />
+      </div>
+
+      <div className="space-y-1">
+        <h2 className="text-xl font-black uppercase tracking-tight text-neutral-900">Módulo Finalizado</h2>
+        <p className="text-xs text-neutral-500 max-w-xs mx-auto">Suas pontuações estatísticas e bônus de XP foram integrados ao banco de dados.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 w-full max-w-xs">
+        <div className="border border-neutral-200 p-4 rounded-xl bg-neutral-50">
+          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Acertos totais</div>
+          <div className="text-xl font-black text-neutral-900 mt-1">{result.correct}/{result.total}</div>
+        </div>
+        <div className="border border-neutral-200 p-4 rounded-xl bg-neutral-50">
+          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Rendimento</div>
+          <div className="text-xl font-black text-neutral-900 mt-1">+{result.correct * 10} XP</div>
+        </div>
+      </div>
+
+      <div className="w-full max-w-xs space-y-2 pt-2">
+        <button onClick={onRestart} className="w-full py-3 bg-neutral-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-neutral-800 transition-colors">
+          Refazer Estudo
+        </button>
+        <button onClick={onHome} className="w-full py-3 border border-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-neutral-50 transition-colors">
+          Voltar ao Início
+        </button>
+      </div>
+    </motion.div>
   );
 }
