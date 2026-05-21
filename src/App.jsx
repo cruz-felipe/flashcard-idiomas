@@ -1133,19 +1133,19 @@ export default function App() {
     });
   }, []);
 
-  const goStudy = (lang, deck, fromFavs = false, review = false) => {
+  const goStudy = useCallback((lang, deck, fromFavs = false, review = false) => {
     setSelectedLang(lang); setSelectedDeck(deck);
     setFromFavorites(fromFavs);
     setIsReview(review);
-    setStudySessionId(id => id + 1); // new id → fresh StudyScreen mount
+    setStudySessionId(id => id + 1);
     if (!fromFavs && lang) {
       setLastStudied(lang);
       setStorage("lf_last_studied", lang);
     }
     setScreen("study");
-  };
+  }, []);
 
-  const handleSelectDeck = (langCode, deckKey) => {
+  const handleSelectDeck = useCallback((langCode, deckKey) => {
     const isFavDeck = deckKey.startsWith("__");
     const isDone = !isFavDeck && stats.completedDecks?.[deckKey]?.includes(langCode);
     if (isDone) {
@@ -1155,25 +1155,24 @@ export default function App() {
     } else {
       goStudy(langCode, deckKey, false, false);
     }
-  };
+  }, [stats.completedDecks, goStudy]);
 
   // Stats screen: tap a completed deck badge → study it as review
   const handleStudyFromStats = (langCode, deckKey) => {
     goStudy(langCode, deckKey, false, true);
   };
 
-  const backFromStudy  = () => setScreen(fromFavorites ? "favorites" : "decks");
-  const homeFromResult = () => setScreen(fromFavorites ? "favorites" : "dashboard");
+  const backFromStudy  = useCallback(() => setScreen(fromFavorites ? "favorites" : "decks"), [fromFavorites]);
+  const homeFromResult = useCallback(() => setScreen(fromFavorites ? "favorites" : "dashboard"), [fromFavorites]);
 
-  // Dashboard: direct lang+deck shortcut (from continue button)
-  const handleSelectLangDirect = (code, deckKey) => {
+  const handleSelectLangDirect = useCallback((code, deckKey) => {
     setSelectedLang(code);
     if (deckKey) {
       handleSelectDeck(code, deckKey);
     } else {
       setScreen("decks");
     }
-  };
+  }, [handleSelectDeck]);
 
   return (
     <ErrorBoundary>
@@ -1230,8 +1229,9 @@ export default function App() {
             <ResultScreen key="result" result={result}
               langCode={selectedLang} deckKey={selectedDeck}
               fromFavorites={fromFavorites}
-              onRestart={(forceReview) => {
-                setIsReview(true); // always review on replay from result
+              onRestart={() => {
+                setIsReview(true);
+                setStudySessionId(id => id + 1);
                 setScreen("study");
               }}
               onHome={homeFromResult}
