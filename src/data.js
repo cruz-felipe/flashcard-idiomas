@@ -1,4 +1,4 @@
-import { BookOpen, Utensils, Plane, MessageCircle, Hash, Palette, Users, Heart, Home, Smile, Sparkles } from "lucide-react";
+import { BookOpen, Utensils, Plane, MessageCircle, Hash, Palette, Users, Heart, Home, Smile, Sparkles, Laptop, Coffee } from "lucide-react";
 
 export const LANG_META = {
   es: { name: "Espanhol", flag: "🇪🇸", accent: "#E63329", bg: "#FFCFCC", textPrimary: "#1A0A09", textSecondary: "#7A3530", borderColor: "#F4A9A6" },
@@ -21,6 +21,8 @@ export const DECKS = {
   casa:         { label: "Casa & Objetos",      labelEN: "Home & Objects",     icon: Home          },
   adjetivos:    { label: "Adjetivos",           labelEN: "Adjectives",         icon: Smile         },
   frases:       { label: "Frases & Expressões", labelEN: "Phrases & Expressions", icon: Sparkles   },
+  tech:         { label: "UX & Tecnologia",     labelEN: "UX & Tech",             icon: Laptop     },
+  jantar:       { label: "À Mesa",              labelEN: "At the Table",          icon: Coffee     },
 };
 
 // Helper: get deck label for current language context
@@ -176,6 +178,12 @@ export const VOCAB = {
       { pt: "Precisa de aprovação do stakeholder", target: "Necesita la aprobación del stakeholder", phonetic: null, example: "Antes de avanzar necesita la aprobación del stakeholder.", tip: "'Stakeholder' é usado em inglês. 'Partes interesadas' é o termo formal mas raro na prática." },
       { pt: "Vamos revisar na daily",             target: "Lo revisamos en la daily",             phonetic: null, example: "No te preocupes, lo revisamos en la daily de mañana.", tip: "'Daily' (standup diário) é usado em inglês no contexto ágil. 'Lo revisamos' = a gente revisa." },
     ],
+    tech: [
+      { pt: "Em breve", target: "Próximamente", phonetic: null, example: "", tip: "Deck em construção." },
+    ],
+    jantar: [
+      { pt: "Em breve", target: "Próximamente", phonetic: null, example: "", tip: "Deck em construção." },
+    ],
   },
   it: {
     cumprimentos: [
@@ -299,26 +307,60 @@ export const VOCAB = {
       { pt: "Triste",  target: "Triste",  phonetic: null, example: "Sono triste, mi manchi tanto.",           tip: "Mesma palavra em português e espanhol! 'Mi manchi' = sinto sua falta — literalmente 'você me falta'." },
     ],
     frases: [
-      { pt: "Muito prazer em conhecê-lo",          target: "Molto piacere di conoscerla",        phonetic: null, example: "Buongiorno, sono Felipe. Molto piacere di conoscerla!", tip: "'Conoscerla' usa o 'Lei' formal — obrigatório com idosos italianos na primeira vez. Mostra enorme respeito." },
-      { pt: "Ela me falou muito sobre o senhor",   target: "Lei mi ha parlato molto di lei",     phonetic: null, example: "Sono molto felice di essere qui. Lei mi ha parlato molto di lei!", tip: "O primeiro 'lei' = ela (namorada). O segundo 'lei' formal = o senhor (avô). Confuso mas correto!" },
-      { pt: "O senhor tem uma família linda",      target: "Ha una famiglia bellissima",         phonetic: null, example: "Complimenti, ha una famiglia bellissima.",         tip: "'Complimenti' = parabéns/que lindo! Abrir com um elogio à família é gesto muito bem-vindo na cultura italiana." },
-      { pt: "Esta comida está deliciosa",          target: "Questo cibo è squisito",             phonetic: null, example: "Complimenti, questo cibo è squisito! Chi ha cucinato?", tip: "'Squisito' é mais intenso que 'delizioso' — use para impressionar. Elogiar a comida é essencial na Itália." },
-      { pt: "Posso ajudar com alguma coisa?",      target: "Posso aiutare in qualcosa?",         phonetic: null, example: "Non si preoccupi, posso aiutare in qualcosa?",     tip: "Oferecer ajuda espontaneamente é sinal de boa educação. 'Non si preoccupi' = não se preocupe (formal)." },
-      { pt: "Estou aprendendo italiano",           target: "Sto imparando l'italiano",           phonetic: null, example: "Scusi il mio italiano, sto ancora imparando.",     tip: "'Ancora' = ainda. Admitir que está aprendendo cria empatia — os italianos adoram quem tenta falar a língua deles." },
-      { pt: "Pode falar mais devagar?",            target: "Può parlare più lentamente?",        phonetic: null, example: "Mi dispiace, può parlare più lentamente per favore?", tip: "Formal e educado. 'Mi dispiace' = me desculpe/sinto muito. Essencial quando o nonno fala rápido!" },
-      { pt: "Há quanto tempo mora aqui?",          target: "Da quanto tempo abita qui?",         phonetic: null, example: "È bellissima questa casa. Da quanto tempo abita qui?", tip: "'Abitare' = morar. 'Da quanto tempo' = há quanto tempo. Boa pergunta para abrir conversa sobre história da família." },
-      { pt: "De onde é a família do senhor?",      target: "Di dov'è la sua famiglia?",          phonetic: null, example: "Le piace raccontare, di dov'è la sua famiglia?",   tip: "Italianos têm orgulho enorme de sua origem regional — perguntar de qual cidade ou região é sempre bem recebido." },
-      { pt: "O senhor tem fotos antigas?",         target: "Ha delle foto vecchie?",             phonetic: null, example: "Mi piacerebbe vedere, ha delle foto vecchie della famiglia?", tip: "Pedir para ver fotos antigas é convite perfeito para o nonno contar histórias — ele vai adorar." },
-      { pt: "Ela é muito especial para mim",       target: "Lei è molto speciale per me",        phonetic: null, example: "Voglio che sappia che lei è molto speciale per me.", tip: "'Voglio che sappia' = quero que saiba. Declaração direta e sincera — os italianos valorizam quem fala com o coração." },
-      { pt: "Cuidarei bem dela",                   target: "Mi prenderò cura di lei",            phonetic: null, example: "Può stare tranquillo, mi prenderò cura di lei.",   tip: "'Può stare tranquillo' = pode ficar tranquilo (formal). Frase que qualquer avô quer ouvir." },
-      { pt: "O que o senhor gosta de fazer?",      target: "Cosa le piace fare?",                phonetic: null, example: "Nel tempo libero, cosa le piace fare?",           tip: "'Le piace' = o senhor gosta (formal). 'Tempo libero' = tempo livre. Abre conversa sobre hobbies e interesses." },
-      { pt: "Sempre quis visitar a Itália",        target: "Ho sempre voluto visitare l'Italia", phonetic: null, example: "Sa, ho sempre voluto visitare l'Italia. Mi può consigliare un posto?", tip: "'Mi può consigliare' = pode me recomendar. Pedir recomendação ao nonno é reconhecer sua experiência." },
-      { pt: "Qual é a receita desse prato?",       target: "Qual è la ricetta di questo piatto?",phonetic: null, example: "È fantastico! Qual è la ricetta di questo piatto?", tip: "Pedir a receita é o maior elogio na Itália — significa que a comida está tão boa que você quer reproduzir em casa." },
-      { pt: "O senhor me ensina alguma palavra?",  target: "Mi insegna qualche parola?",         phonetic: null, example: "Voglio imparare di più, mi insegna qualche parola del dialetto?", tip: "Pedir para aprender o dialeto local (veneziano, napolitano etc.) é gesto que derrete qualquer nonno italiano." },
-      { pt: "Que história incrível",               target: "Che storia incredibile",             phonetic: null, example: "Davvero? Che storia incredibile! Non lo sapevo.",  tip: "'Davvero?' = sério?/de verdade? 'Non lo sapevo' = não sabia disso. Reações genuínas mantêm o nonno falando." },
-      { pt: "Obrigado pela hospitalidade",         target: "Grazie per l'ospitalità",            phonetic: null, example: "È stato bellissimo. Grazie mille per l'ospitalità.", tip: "'Ospitalità' = hospitalidade. 'È stato bellissimo' = foi lindo/maravilhoso. Frase obrigatória ao se despedir." },
-      { pt: "Espero voltar em breve",              target: "Spero di tornare presto",            phonetic: null, example: "Ci siamo divertiti molto. Spero di tornare presto!",tip: "'Ci siamo divertiti' = nos divertimos (muito). 'Tornare presto' = voltar em breve. Deixa o nonno com boa impressão." },
-      { pt: "Foi uma honra conhecê-lo",            target: "È stato un onore conoscerla",        phonetic: null, example: "È stato un onore conoscerla. Arrivederci!",        tip: "'Onore' = honra. Despedida formal e calorosa ao mesmo tempo — perfeita para encerrar a visita com chave de ouro." },
+      { pt: "Onde fica o metrô?",                 target: "Dov'è la metro?",                  phonetic: null, example: "Scusi, dov'è la metro più vicina?",              tip: "'Più vicina' = mais próxima. Em Roma é 'metropolitana', mas todo mundo diz 'metro'." },
+      { pt: "Que linha pega pra…?",               target: "Quale linea prendo per…?",         phonetic: null, example: "Quale linea prendo per il Colosseo?",             tip: "'Prendo' = eu pego (de 'prendere'). Mais natural que 'quale linea va a'. Tom de quem já está no metrô." },
+      { pt: "Quanto custa a passagem?",           target: "Quanto costa il biglietto?",       phonetic: null, example: "Quanto costa il biglietto per una corsa?",         tip: "'Una corsa' = uma viagem/corrida. Em Roma o bilhete único custa 1,50€ e vale 100 minutos." },
+      { pt: "Pode me dar uma água, por favor?",   target: "Mi dà un'acqua, per favore?",      phonetic: null, example: "Mi dà un'acqua naturale, per favore?",             tip: "Sempre especifique: 'naturale' (sem gás) ou 'frizzante' (com gás). Sem isso, a escolha é do garçom." },
+      { pt: "Onde fica o banheiro?",              target: "Dov'è il bagno?",                  phonetic: null, example: "Scusi, dov'è il bagno?",                          tip: "Frase mais usada em qualquer viagem. 'Scusi' antes é obrigatório — sem ele soa abrupto." },
+      { pt: "Pode me ajudar?",                    target: "Mi può aiutare?",                  phonetic: null, example: "Scusi, mi può aiutare? Mi sono perso.",            tip: "'Mi può aiutare?' é mais natural que 'può aiutarmi?' no dia a dia. Italianos costumam ser bem prestativos." },
+      { pt: "Não entendo, pode repetir?",         target: "Non capisco, può ripetere?",       phonetic: null, example: "Scusi, non capisco bene, può ripetere più lento?", tip: "'Più lento' = mais devagar. Adicione um sorriso e eles vão ter paciência." },
+      { pt: "Tem mesa pra dois?",                 target: "Avete un tavolo per due?",         phonetic: null, example: "Buonasera, avete un tavolo per due persone?",       tip: "'Avete' = vocês têm (formal plural). Melhor que 'c'è un tavolo' para falar com o atendente." },
+      { pt: "Qual é o prato do dia?",             target: "Qual è il piatto del giorno?",     phonetic: null, example: "Cosa mi consiglia? Qual è il piatto del giorno?",  tip: "'Cosa mi consiglia?' = o que o senhor recomenda? Combinar as duas perguntas é muito natural." },
+      { pt: "A conta, por favor",                 target: "Il conto, per favore",             phonetic: null, example: "Quando può portare il conto, per favore?",         tip: "Em restaurantes italianos a conta não vem sozinha — sempre peça. 'Quando può' = quando puder." },
+      { pt: "Quanto tempo leva?",                 target: "Quanto tempo ci vuole?",           phonetic: null, example: "Quanto tempo ci vuole a piedi?",                   tip: "'A piedi' = a pé. 'Ci vuole' é uma expressão fixa que significa 'leva/é necessário'." },
+      { pt: "É longe daqui?",                     target: "È lontano da qui?",                phonetic: null, example: "Il Pantheon, è lontano da qui?",                   tip: "'Lontano' = longe. Resposta provável: 'No, è qui vicino' (não, é aqui perto) ou 'ci vuole mezz'ora' (leva meia hora)." },
+      { pt: "Tem WiFi aqui?",                     target: "C'è il WiFi qui?",                 phonetic: null, example: "C'è il WiFi? Qual è la password?",                 tip: "'Password' é a palavra mais usada — não 'parola chiave'. Quase todo café tem WiFi grátis na Itália." },
+      { pt: "Aceita cartão?",                     target: "Si accettano carte?",              phonetic: null, example: "Si accettano carte di credito o solo contanti?",   tip: "'Contanti' = dinheiro vivo. Muitos estabelecimentos pequenos ainda preferem. Sempre pergunte antes de comer." },
+      { pt: "Onde compro o bilhete?",             target: "Dove si compra il biglietto?",     phonetic: null, example: "Dove si compra il biglietto per il museo?",        tip: "'Dove si compra' = onde se compra (reflexivo impessoal). Mais natural que 'dove posso comprare'." },
+      { pt: "Tô perdido, pode me mostrar no mapa?", target: "Mi sono perso, me lo indica sulla mappa?", phonetic: null, example: "Mi sono perso. Me lo indica sulla mappa, per favore?", tip: "'Me lo indica' = pode me indicar. Mostrar o celular com o mapa aberto e perguntar isso funciona em qualquer cidade." },
+      { pt: "Pode chamar um táxi pra mim?",       target: "Può chiamarmi un taxi?",           phonetic: null, example: "Può chiamarmi un taxi, per favore? Devo andare in aeroporto.", tip: "'Devo andare' = preciso ir. Dizer o destino logo ajuda o atendente a estimar o tempo e o custo." },
+      { pt: "Que horas fecha?",                   target: "A che ora chiude?",                phonetic: null, example: "A che ora chiude il museo oggi?",                  tip: "'A che ora' = a que horas. Museus e igrejas na Itália têm horários imprevisíveis — sempre confirme." },
+      { pt: "Tem algo sem glúten?",               target: "Avete qualcosa senza glutine?",    phonetic: null, example: "Sono celiaco, avete qualcosa senza glutine?",      tip: "'Sono celiaco/celiaca' = sou celíaco/celíaca. Itália é um dos países mais bem preparados para dietas sem glúten." },
+      { pt: "Qual é a saída?",                    target: "Dov'è l'uscita?",                  phonetic: null, example: "Dov'è l'uscita? Non trovo l'uscita.",              tip: "'Uscita' = saída. Em estações de metrô, museus e shoppings. 'Non trovo' = não estou encontrando." },
+    ],
+    tech: [
+      { pt: "Você usa Figma aqui?",              target: "Usate Figma qui?",                  phonetic: null, example: "Nel vostro team usate Figma o Sketch?",            tip: "'Usate' = vocês usam (plural). Boa abertura de conversa com designers italianos — Figma dominou o mercado." },
+      { pt: "Qual é o seu stack de design?",     target: "Qual è il vostro stack di design?", phonetic: null, example: "Come lavorate? Qual è il vostro stack di design?", tip: "'Stack' é usada em inglês mesmo. 'Come lavorate' = como vocês trabalham — abre conversa sobre processo." },
+      { pt: "Você faz pesquisa com usuários?",   target: "Fate ricerca con gli utenti?",      phonetic: null, example: "Nel processo di design, fate ricerca con gli utenti?", tip: "'Fate' = vocês fazem. 'Ricerca con gli utenti' = user research. O termo 'user research' também é usado em inglês." },
+      { pt: "Como vocês definem prioridade?",    target: "Come definite le priorità?",        phonetic: null, example: "Con molte richieste, come definite le priorità?",   tip: "'Priorità' = prioridade (plural invariável). Boa pergunta para entender o processo de produto de um time." },
+      { pt: "Tem um design system?",             target: "Avete un design system?",           phonetic: null, example: "Per mantenere consistenza, avete un design system?", tip: "'Design system' é em inglês mesmo. 'Per mantenere consistenza' = para manter consistência — vocabulário padrão." },
+      { pt: "Qual é o processo de handoff?",     target: "Come fate l'handoff?",              phonetic: null, example: "Dopo il design, come fate l'handoff agli sviluppatori?", tip: "'Handoff' em inglês. 'Sviluppatori' = desenvolvedores. Frase natural para entender o fluxo de entrega." },
+      { pt: "Você trabalha com sprints?",        target: "Lavorate con gli sprint?",          phonetic: null, example: "Avete un processo agile? Lavorate con gli sprint?",  tip: "'Sprint' em inglês. 'Agile' também. O vocabulário do Scrum é universal em times de tech." },
+      { pt: "Qual é a principal dor do usuário?", target: "Qual è il pain point principale?", phonetic: null, example: "In questo progetto, qual è il pain point principale?", tip: "'Pain point' em inglês — amplamente adotado. Alternativa italiana: 'problema principale dell'utente'." },
+      { pt: "Você faz testes de usabilidade?",  target: "Fate test di usabilità?",           phonetic: null, example: "Prima del lancio, fate test di usabilità?",          tip: "'Test di usabilità' = testes de usabilidade. 'Prima del lancio' = antes do lançamento." },
+      { pt: "Qual ferramenta de prototipagem?",  target: "Che strumento usate per i prototipi?", phonetic: null, example: "Per i prototipi interattivi, che strumento usate?", tip: "'Strumento' = ferramenta. 'Prototipi interattivi' = protótipos interativos. Muito direto ao ponto." },
+      { pt: "Tem documentação de UX?",          target: "Avete documentazione UX?",          phonetic: null, example: "Dove tenete la documentazione UX? Confluence o Notion?", tip: "Perguntar onde fica a documentação é a pergunta mais prática para se integrar a um time novo." },
+      { pt: "Como vocês medem sucesso?",         target: "Come misurate il successo?",        phonetic: null, example: "Dopo il lancio, come misurate il successo del prodotto?", tip: "'Misurate' = vocês medem. 'Successo del prodotto' = sucesso do produto. Boa pergunta de discovery." },
+      { pt: "Qual é o ciclo de release?",        target: "Qual è il ciclo di rilascio?",      phonetic: null, example: "Ogni quanto fate rilascio? Qual è il ciclo?",        tip: "'Rilascio' = release. 'Ogni quanto' = de quanto em quanto tempo. 'Rilascio' é o equivalente italiano de deploy/release." },
+      { pt: "Você trabalha em telecom?",         target: "Lavori nel settore telecom?",       phonetic: null, example: "In quale settore lavori? Telecom, fintech, retail?",  tip: "'Settore' = setor. 'Lavori nel settore' = você trabalha no setor. Útil para se contextualizar em eventos." },
+      { pt: "Qual é o maior desafio do produto?", target: "Qual è la sfida principale del prodotto?", phonetic: null, example: "Da dove stai? Qual è la sfida principale del prodotto?", tip: "'Sfida' = desafio/challenge. 'Principale' = principal. Pergunta de nível sênior que impressiona." },
+    ],
+    jantar: [
+      { pt: "Isso está muito bom",               target: "È buonissimo",                     phonetic: null, example: "Assaggio questo e già… è buonissimo!",              tip: "'Buonissimo' é o superlativo de 'buono'. Dizer isso em voz alta à mesa é o melhor presente que você pode dar." },
+      { pt: "Você fez tudo isso?",               target: "Ha fatto tutto lei?",              phonetic: null, example: "Questo ragù, ha fatto tutto lei? Incredibile!",      tip: "'Ha fatto tutto lei?' usa o 'Lei' formal — com o nonno é o jeito certo. 'Incredibile' coloca a cereja no bolo." },
+      { pt: "Qual é o ingrediente secreto?",     target: "Qual è l'ingrediente segreto?",    phonetic: null, example: "È così buono, qual è l'ingrediente segreto?",        tip: "Todo italiano com mais de 70 anos tem um ingrediente secreto. Perguntar isso vai render uma história de 20 minutos." },
+      { pt: "Posso ter mais um pouco?",          target: "Posso averne ancora un po'?",      phonetic: null, example: "È troppo buono, posso averne ancora un po'?",        tip: "'Ancora un po'' = mais um pouco. Pedir repetição é o maior elogio à mesa italiana. Jamais recuse uma segunda porção." },
+      { pt: "O que tem nesse prato?",            target: "Cosa c'è in questo piatto?",       phonetic: null, example: "Mmm, sento qualcosa di speciale. Cosa c'è in questo piatto?", tip: "'Sento qualcosa di speciale' = sinto algo especial. Abrir assim antes de perguntar os ingredientes soa genuíno." },
+      { pt: "Você sempre cozinhou assim?",       target: "Ha sempre cucinato così?",         phonetic: null, example: "Ha sempre cucinato così o ha imparato da qualcuno?", tip: "'Ha imparato da qualcuno?' = aprendeu com alguém? Vai abrir uma conversa sobre a mãe, a nonna, a região." },
+      { pt: "Me conta mais sobre sua cidade",    target: "Mi racconti della sua città",      phonetic: null, example: "Non conosco bene quella zona, mi racconti della sua città.", tip: "'Mi racconti' é o imperativo formal de 'raccontare'. 'Quella zona' = aquela região — mostra que você prestou atenção." },
+      { pt: "Você foi lá quando jovem?",         target: "Ci è andato da giovane?",          phonetic: null, example: "Ha vissuto sempre qui o ci è andato da giovane?",     tip: "'Da giovane' = quando jovem. Perguntar sobre a juventude do nonno é o jeito mais fácil de ter uma conversa de duas horas." },
+      { pt: "O vinho é daqui da região?",        target: "Il vino è della zona?",            phonetic: null, example: "È molto buono questo vino, è della zona?",           tip: "Quase sempre é. E quase sempre tem uma história. Perguntar isso vai render uma explicação entusiasmada." },
+      { pt: "Como era a Itália antes?",          target: "Com'era l'Italia prima?",          phonetic: null, example: "Guardando como è cambiata, com'era l'Italia prima?", tip: "'Com'era l'Italia prima?' é pergunta que todo nono adora. 'Guardando come è cambiata' = vendo como mudou — mostra interesse." },
+      { pt: "Você torce pra qual time?",         target: "Per quale squadra tifa?",          phonetic: null, example: "In questa zona, per quale squadra tifa?",             tip: "'Tifa' vem de 'tifare' = torcer. Futebol na Itália não é esporte, é identidade. Prepare-se para uma resposta apaixonada." },
+      { pt: "Posso ajudar a limpar a mesa?",     target: "Posso aiutare a sparecchiare?",   phonetic: null, example: "È stato bellissimo, posso aiutare a sparecchiare?",  tip: "'Sparecchiare' = tirar a mesa. Oferecer isso no final é gesto de boa educação que vai ser lembrado." },
+      { pt: "Posso ter a receita?",              target: "Posso avere la ricetta?",          phonetic: null, example: "È così buono che vorrei rifarla a casa. Posso avere la ricetta?", tip: "'Vorrei rifarla a casa' = queria refazer em casa. Dizer que quer reproduzir em casa é o elogio máximo." },
+      { pt: "Foi a melhor refeição que já tive", target: "È stato il pasto migliore della mia vita", phonetic: null, example: "Devo essere onesto: è stato il pasto migliore della mia vita.", tip: "'Devo essere onesto' = preciso ser honesto — faz parecer mais genuíno. Se verdadeiro, diga. Se exagerado, ainda funciona." },
+      { pt: "Qual é sua memória favorita?",      target: "Qual è il suo ricordo preferito?", phonetic: null, example: "Con tutta questa vita vissuta, qual è il suo ricordo preferito?", tip: "'Con tutta questa vita vissuta' = com toda essa vida vivida — abertura que honra a experiência do nonno sem ser piegas." },
     ],
   },
   ru: {
@@ -463,6 +505,12 @@ export const VOCAB = {
       { pt: "Vou fazer um handoff",               target: "Сделаю хэндофф",                         phonetic: "[Sdyelayu khendof]",                        example: "Дизайн готов, сделаю хэндофф разработке.",         tip: "'Хэндофф' = handoff — usado em inglês no contexto de design. 'Разработка' = desenvolvimento." },
       { pt: "Precisa de aprovação do stakeholder", target: "Нужно согласование со стейкхолдером",   phonetic: "[Nújno soglasovániye so steykkhólderom]",   example: "Перед тем как двигаться, нужно согласование со стейкхолдером.", tip: "'Стейкхолдер' = stakeholder — empréstimo. 'Согласование' = aprovação/alinhamento." },
       { pt: "Vamos revisar na daily",             target: "Разберём на дейли",                       phonetic: "[Razberyóm na déyli]",                      example: "Не беспокойся, разберём на дейли завтра.",         tip: "'Дейли' = daily standup. 'Разобрать' = analisar/resolver. Ágil em russo absorveu todo o vocabulário inglês." },
+    ],
+    tech: [
+      { pt: "Em breve", target: "Скоро", phonetic: "[Skoro]", example: "", tip: "Deck em construção." },
+    ],
+    jantar: [
+      { pt: "Em breve", target: "Скоро", phonetic: "[Skoro]", example: "", tip: "Deck em construção." },
     ],
   },
 
@@ -609,6 +657,12 @@ export const VOCAB = {
       { pt: "A conta, por favor",      target: "L'addition, s'il vous plaît", phonetic: null, example: "Monsieur, l'addition s'il vous plaît!",  tip: "'L'addition' = a conta. Em francês não se diz 'la facture' em restaurante — seria formal demais." },
       { pt: "Posso pagar com cartão?", target: "Puis-je payer par carte?",    phonetic: null, example: "Puis-je payer par carte ou en espèces?", tip: "'En espèces' = em dinheiro vivo. Mercados e pequenos comércios franceses ainda preferem espèces." },
     ],
+    tech: [
+      { pt: "Em breve", target: "Bientôt", phonetic: null, example: "", tip: "Deck em construção." },
+    ],
+    jantar: [
+      { pt: "Em breve", target: "Bientôt", phonetic: null, example: "", tip: "Deck em construção." },
+    ],
   },
 
   de: {
@@ -754,9 +808,15 @@ export const VOCAB = {
       { pt: "A conta, por favor",      target: "Die Rechnung, bitte",           phonetic: null, example: "Herr Ober, die Rechnung bitte!",             tip: "'Herr Ober' = garçom (senhor garçom). 'Getrennt oder zusammen?' = separado ou junto?" },
       { pt: "Posso pagar com cartão?", target: "Kann ich mit Karte zahlen?",    phonetic: null, example: "Kann ich mit Karte zahlen oder nur bar?",    tip: "'Bar' = dinheiro vivo. Alemanha ainda é muito 'bargeld' (dinheiro em espécie) — leve euro!" },
     ],
+    tech: [
+      { pt: "Em breve", target: "Demnächst", phonetic: null, example: "", tip: "Deck em construção." },
+    ],
+    jantar: [
+      { pt: "Em breve", target: "Demnächst", phonetic: null, example: "", tip: "Deck em construção." },
+    ],
   },
   en: {
-    familia: [
+    familia:[
       { pt: "Filho", target: "Sohn",      phonetic: null },
       { pt: "Filha", target: "Tochter",   phonetic: null },
       { pt: "Irmão", target: "Bruder",    phonetic: null },
@@ -967,6 +1027,12 @@ export const VOCAB = {
       { pt: "Is there Wi-Fi here?",       target: "Tem Wi-Fi aqui?",         phonetic: null, example: "Is there Wi-Fi here? What's the password?", tip: "'Senha' = password. 'Tem' here means 'is there' — an informal but extremely common Brazilian construction." },
       { pt: "The bill, please",           target: "A conta, por favor",      phonetic: null, example: "Waiter, the bill please!",                 tip: "'Garçom' = waiter (male), 'garçonete' = waitress. In Brazil, ask for 'a conta' — you'll rarely get it without asking." },
       { pt: "Can I pay by card?",         target: "Posso pagar com cartão?", phonetic: null, example: "Can I pay by card or cash only?",          tip: "'Dinheiro' = cash. 'Cartão de crédito/débito' = credit/debit card. Card payment is widely accepted in Brazil." },
+    ],
+    tech: [
+      { pt: "Coming soon", target: "Em breve", phonetic: null, example: "", tip: "Deck under construction." },
+    ],
+    jantar: [
+      { pt: "Coming soon", target: "Em breve", phonetic: null, example: "", tip: "Deck under construction." },
     ],
   },
 };
