@@ -511,7 +511,7 @@ function GyroBlobs() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, dailyChallenge }) {
   const [showHelp, setShowHelp] = useState(false);
   const favCount = Object.keys(favorites).length;
 
@@ -1781,6 +1781,7 @@ body{background:var(--cream);background-image:var(--bg-gradient)}
               {screen === "dashboard" && (
                 <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
                   lastStudied={lastStudied}
+                  dailyChallenge={dailyChallenge}
                   onSelectLang={handleSelectLangDirect}
                   onOpenFavorites={() => setScreen("favorites")}
                   onOpenStats={() => setScreen("stats")} />
