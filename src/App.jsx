@@ -403,7 +403,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20 space-y-4">
 
@@ -536,7 +536,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <NavBar right={
         <button onClick={() => setShowHelp(true)} className="w-9 h-9 flex items-center justify-center rounded-full"
           style={{ ...glass.card }}>
@@ -673,7 +673,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20">
         <h1 className="font-black mb-6" style={{ fontSize: "3rem", color: C.ink, letterSpacing: "-0.02em" }}>Favoritas</h1>
@@ -942,7 +942,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col justify-end px-6 pb-14 max-w-md mx-auto w-full">
         <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -1107,7 +1107,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
         <Bookmark size={48} strokeWidth={1} style={{ color: "#DEDBD7" }} />
@@ -1128,7 +1128,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <Confetti active={showConfetti} accentColor={accentColor} />
       <NavBar
         title={deckLabel} subtitle={isReview ? "Revisão" : undefined}
@@ -1329,7 +1329,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
+      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <NavBar />
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-6 pb-14 flex flex-col">
 
