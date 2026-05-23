@@ -1847,15 +1847,8 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
             <BadgeToast key={badgeUnlock.id} badge={badgeUnlock} onDone={() => setBadgeUnlock(null)} />
           )}
         </AnimatePresence>
-        <div style={{ position: "relative" }}>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={screen}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-              style={{ position: "relative", width: "100%" }}>
-              {screen === "onboard" && (
+        <div>
+          {screen === "onboard" && (
                 <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
               )}
               {screen === "dashboard" && (
@@ -1927,10 +1920,8 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
                     goStudy(selectedLang, "__favorites__", true);
                   }} />
               )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-    </ErrorBoundary>
-  );
-}
+            </div>
+          </div>
+        </ErrorBoundary>
+      );
+    }
