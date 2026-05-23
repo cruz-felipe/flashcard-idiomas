@@ -37,18 +37,6 @@ function getStreakMultiplier(streak) {
 }
 function getMultiplierLabel(m) { return m === 1 ? null : `×${m}`; }
 
-const BADGES = [
-  { id: "first_deck", icon: "⚡", label: "Primeira categoria",  check: (s)       => Object.keys(s.completedDecks || {}).length >= 1 },
-  { id: "perfect",    icon: "🎯", label: "Sem erros",           check: (s)       => (s.perfectSessions || 0) >= 1 },
-  { id: "streak_7",   icon: "🔥", label: "7 dias seguidos",     check: (_, str)  => str >= 7 },
-  { id: "streak_30",  icon: "🌙", label: "30 dias seguidos",    check: (_, str)  => str >= 30 },
-  { id: "polyglot",   icon: "🌍", label: "Poliglota",           check: (s)       => Object.keys(s.studied || {}).length >= 4 },
-  { id: "cards_100",  icon: "💬", label: "100 cards",           check: (s)       => (s.totalAttempts || 0) >= 100 },
-  { id: "cards_500",  icon: "📚", label: "500 cards",           check: (s)       => (s.totalAttempts || 0) >= 500 },
-  { id: "all_it",     icon: "🏆", label: "Mestre Italiano",     check: (s)       => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("it")) },
-  { id: "all_es",     icon: "🏆", label: "Mestre Espanhol",     check: (s)       => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("es")) },
-  { id: "sharp",      icon: "✨", label: "Afiado",              check: (s)       => (s.totalAttempts || 0) >= 20 && Math.round((s.totalCorrect || 0) / (s.totalAttempts || 1) * 100) >= 90 },
-];
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const R = { card: 24, pill: 999, xl: 32 };
