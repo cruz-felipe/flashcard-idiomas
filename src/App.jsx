@@ -54,7 +54,109 @@ const BADGES = [
 const R = { card: 24, pill: 999, xl: 32 };
 const C = { cream: "#FAF9F6", ink: "#111111", dim: "#888888" };
 
-// ─── ERROR BOUNDARY ───────────────────────────────────────────────────────────
+// ─── GLASS STYLES ─────────────────────────────────────────────────────────────
+const glass = {
+  card:   { background: "rgba(255,255,255,0.72)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)" },
+  dark:   { background: "rgba(17,17,17,0.82)",   backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 40px rgba(0,0,0,0.22)" },
+  nav:    { background: "rgba(250,249,246,0.88)", backdropFilter: "blur(20px)",                WebkitBackdropFilter: "blur(20px)",                border: "none", boxShadow: "0 1px 0 rgba(0,0,0,0.05)" },
+  pill:   { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",                WebkitBackdropFilter: "blur(12px)",                border: "1px solid rgba(255,255,255,0.7)",  boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  accent: (color) => ({ background: `${color}EE`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", border: `1px solid ${color}44`, boxShadow: `0 12px 40px ${color}44` }),
+};
+
+// ─── BADGE ILLUSTRATIONS ──────────────────────────────────────────────────────
+const BadgeIllustrations = {
+  first_deck: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FFF0B2"} />
+      <path d="M18 8 L20.5 14.5 L27.5 15 L22.5 19.5 L24 26.5 L18 23 L12 26.5 L13.5 19.5 L8.5 15 L15.5 14.5 Z" fill={dim ? "#BDBDBD" : "#F59E0B"} />
+    </svg>
+  ),
+  perfect: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#D1FAE5"} />
+      <circle cx="18" cy="18" r="6" fill={dim ? "#BDBDBD" : "#10B981"} />
+      <circle cx="18" cy="18" r="10" stroke={dim ? "#BDBDBD" : "#10B981"} strokeWidth="2" fill="none" />
+      <path d="M14 18 L17 21 L22 15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  streak_7: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEF3C7"} />
+      <path d="M20 9 C20 9 22 13 20 16 C24 13 26 17 23 20 C25 20 26 22 24 24 C22 26 19 27 18 27 C13 27 10 23.5 10 20 C10 17 12 15 14 15 C12 12 14 9 16 10 C16 13 18 14 18 14 C18 14 18 10 20 9Z" fill={dim ? "#BDBDBD" : "#F59E0B"} />
+    </svg>
+  ),
+  streak_30: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#EDE9FE"} />
+      <path d="M18 9 L19.5 13.5 L24 12 L21 15.5 L25 18 L21 20.5 L24 24 L19.5 22.5 L18 27 L16.5 22.5 L12 24 L15 20.5 L11 18 L15 15.5 L12 12 L16.5 13.5 Z" fill={dim ? "#BDBDBD" : "#8B5CF6"} />
+    </svg>
+  ),
+  polyglot: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#DBEAFE"} />
+      <ellipse cx="18" cy="18" rx="9" ry="5.5" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" fill="none" />
+      <ellipse cx="18" cy="18" rx="9" ry="9" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" fill="none" />
+      <line x1="9" y1="18" x2="27" y2="18" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" />
+      <line x1="18" y1="9" x2="18" y2="27" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" />
+    </svg>
+  ),
+  cards_100: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FCE7F3"} />
+      <rect x="11" y="14" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#EC4899"} opacity="0.4" />
+      <rect x="13" y="12" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#EC4899"} opacity="0.65" />
+      <rect x="15" y="10" width="11" height="9" rx="2.5" fill={dim ? "#BDBDBD" : "#EC4899"} />
+      <path d="M17.5 14.5 L18.5 16.5 L20.5 13 L21.5 17 L23 15.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  ),
+  cards_500: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FFEDD5"} />
+      <rect x="11" y="16" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#F97316"} opacity="0.35" />
+      <rect x="12" y="13" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#F97316"} opacity="0.6" />
+      <rect x="13" y="10" width="12" height="9" rx="2.5" fill={dim ? "#BDBDBD" : "#F97316"} />
+      <text x="19" y="17" textAnchor="middle" fill="white" fontSize="5.5" fontWeight="900">500</text>
+    </svg>
+  ),
+  all_it: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#D1FAE5"} />
+      <rect x="13" y="22" width="10" height="3" rx="1.5" fill={dim ? "#BDBDBD" : "#059669"} />
+      <rect x="15" y="13" width="6" height="9" rx="1" fill={dim ? "#BDBDBD" : "#059669"} opacity="0.4" />
+      <path d="M14 13 L18 9 L22 13" fill={dim ? "#BDBDBD" : "#059669"} />
+      <path d="M16 13 L18 10.5 L20 13" fill={dim ? "#BDBDBD" : "#34D399"} />
+    </svg>
+  ),
+  all_es: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEE2E2"} />
+      <rect x="13" y="22" width="10" height="3" rx="1.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
+      <rect x="15" y="13" width="6" height="9" rx="1" fill={dim ? "#BDBDBD" : "#DC2626"} opacity="0.4" />
+      <path d="M14 13 L18 9 L22 13" fill={dim ? "#BDBDBD" : "#DC2626"} />
+      <path d="M16 13 L18 10.5 L20 13" fill={dim ? "#BDBDBD" : "#F87171"} />
+    </svg>
+  ),
+  sharp: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#F0FDF4"} />
+      <path d="M18 10 L19.5 16 L26 18 L19.5 20 L18 26 L16.5 20 L10 18 L16.5 16 Z" fill={dim ? "#BDBDBD" : "#22C55E"} />
+      <path d="M26 10 L27 12.5 L29.5 13.5 L27 14.5 L26 17 L25 14.5 L22.5 13.5 L25 12.5 Z" fill={dim ? "#BDBDBD" : "#86EFAC"} />
+    </svg>
+  ),
+};
+
+const BADGES = [
+  { id: "first_deck", label: "Primeira categoria",  check: (s)      => Object.keys(s.completedDecks || {}).length >= 1 },
+  { id: "perfect",    label: "Sem erros",           check: (s)      => (s.perfectSessions || 0) >= 1 },
+  { id: "streak_7",   label: "7 dias seguidos",     check: (_, str) => str >= 7 },
+  { id: "streak_30",  label: "30 dias seguidos",    check: (_, str) => str >= 30 },
+  { id: "polyglot",   label: "Poliglota",           check: (s)      => Object.keys(s.studied || {}).length >= 4 },
+  { id: "cards_100",  label: "100 cards",           check: (s)      => (s.totalAttempts || 0) >= 100 },
+  { id: "cards_500",  label: "500 cards",           check: (s)      => (s.totalAttempts || 0) >= 500 },
+  { id: "all_it",     label: "Mestre Italiano",     check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("it")) },
+  { id: "all_es",     label: "Mestre Espanhol",     check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("es")) },
+  { id: "sharp",      label: "Afiado",              check: (s)      => (s.totalAttempts || 0) >= 20 && Math.round((s.totalCorrect || 0) / (s.totalAttempts || 1) * 100) >= 90 },
+];
 class ErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(e) { return { error: e }; }
@@ -101,8 +203,10 @@ function Confetti({ active, accentColor }) {
 
 // ─── NAV BAR ──────────────────────────────────────────────────────────────────
 function NavBar({ title, subtitle, left, right, bg, textColor }) {
+  const isAccent = bg && bg !== C.cream;
   return (
-    <div className="sticky top-0 z-40" style={{ backgroundColor: bg || C.cream }}>
+    <div className="sticky top-0 z-40"
+      style={isAccent ? { backgroundColor: bg } : { ...glass.nav }}>
       <div className="max-w-md mx-auto h-14 flex items-center justify-between px-5">
         <div className="w-20 flex justify-start">{left}</div>
         <div className="flex flex-col items-center">
@@ -207,6 +311,25 @@ function HelpModal({ onClose }) {
 }
 
 // ─── STATS SCREEN ─────────────────────────────────────────────────────────────
+function AnimatedNumber({ value, suffix = "" }) {
+  const [display, setDisplay] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    const from = prev.current, to = value;
+    prev.current = value;
+    if (from === to) return;
+    const start = performance.now(), dur = 600;
+    const tick = now => {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + (to - from) * ease));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value]);
+  return <span>{display}{suffix}</span>;
+}
+
 function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
   const totalStudied  = Object.values(stats.studied || {}).reduce((a, b) => a + b, 0);
   const overallAcc    = stats.totalAttempts > 0 ? Math.round(stats.totalCorrect / stats.totalAttempts * 100) : 0;
@@ -221,70 +344,82 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20 space-y-4">
 
-        {/* Level hero */}
-        <div className="relative overflow-hidden p-7" style={{ backgroundColor: C.ink, borderRadius: R.xl }}>
-          <div className="absolute -right-10 -top-10 rounded-full pointer-events-none"
-            style={{ width: 180, height: 180, backgroundColor: "rgba(255,255,255,0.06)" }} />
-          <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>Nível atual</div>
-          <div className="font-black leading-none mb-1" style={{ fontSize: "5rem", color: C.cream }}>{level}</div>
-          <div className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.4)" }}>{xpInLevel}/{XP_PER_LEVEL} XP → nível {level + 1}</div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-            <motion.div className="h-full rounded-full" style={{ backgroundColor: C.cream }}
+        {/* Level hero — dark glass */}
+        <div className="relative overflow-hidden p-7" style={{ ...glass.dark, borderRadius: R.xl }}>
+          <div className="absolute -right-8 -top-8 rounded-full pointer-events-none"
+            style={{ width: 160, height: 160, background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)" }} />
+          <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Nível atual</div>
+          <div className="font-black leading-none mb-1" style={{ fontSize: "5rem", color: C.cream }}>
+            <AnimatedNumber value={level} />
+          </div>
+          <div className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <AnimatedNumber value={xpInLevel} />/100 XP → nível {level + 1}
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
+            <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.9))" }}
               initial={{ width: 0 }} animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
               transition={{ duration: 1, ease: "easeOut" }} />
           </div>
           {getStreakMultiplier(streak) > 1 && (
             <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: "#EF9F27" }}>
+              style={{ backgroundColor: "#EF9F27", boxShadow: "0 4px 12px rgba(239,159,39,0.4)" }}>
               <Flame size={12} className="text-white" />
-              <span className="text-xs font-black text-white">{getMultiplierLabel(getStreakMultiplier(streak))} XP multiplicador ativo</span>
+              <span className="text-xs font-black text-white">{getMultiplierLabel(getStreakMultiplier(streak))} XP ativo</span>
             </div>
           )}
         </div>
 
-        {/* Stats row */}
+        {/* Stats row — glass cards */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Estudadas", value: totalStudied,      Icon: BookOpen },
-            { label: "Precisão",  value: `${overallAcc}%`, Icon: Target   },
-            { label: "Streak",    value: streak,            Icon: Flame    },
-          ].map(({ label, value, Icon }, i) => (
-            <div key={i} className="p-5 flex flex-col items-center" style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl }}>
-              <div className="font-black mb-1" style={{ fontSize: "1.75rem", color: C.ink }}>{value}</div>
+            { label: "Estudadas", value: totalStudied,  suffix: ""  },
+            { label: "Precisão",  value: overallAcc,    suffix: "%" },
+            { label: "Streak",    value: streak,        suffix: ""  },
+          ].map(({ label, value, suffix }, i) => (
+            <div key={i} className="p-5 flex flex-col items-center" style={{ ...glass.card, borderRadius: R.xl }}>
+              <div className="font-black mb-1" style={{ fontSize: "1.75rem", color: C.ink }}>
+                <AnimatedNumber value={value} suffix={suffix} />
+              </div>
               <div className="text-xs font-bold tracking-widest uppercase" style={{ color: C.dim }}>{label}</div>
             </div>
           ))}
         </div>
 
-        {/* Badges */}
-        <div className="p-6" style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl }}>
+        {/* Badges — SVG illustrations */}
+        <div className="p-6" style={{ ...glass.card, borderRadius: R.xl }}>
           <div className="text-xs font-black tracking-widest uppercase mb-5" style={{ color: C.dim }}>Conquistas</div>
           {earnedBadges.length === 0 && (
             <p className="text-sm text-center py-3" style={{ color: C.dim }}>Complete sessões para ganhar conquistas</p>
           )}
-          <div className="grid grid-cols-4 gap-2">
-            {earnedBadges.map(b => (
-              <motion.div key={b.id} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="flex flex-col items-center gap-1.5 py-3 px-1 text-center"
-                style={{ backgroundColor: C.cream, borderRadius: R.card }}>
-                <span style={{ fontSize: 26 }}>{b.icon}</span>
-                <span className="text-xs font-bold leading-tight" style={{ color: C.ink }}>{b.label}</span>
-              </motion.div>
-            ))}
-            {lockedBadges.map(b => (
-              <div key={b.id} className="flex flex-col items-center gap-1.5 py-3 px-1 text-center"
-                style={{ backgroundColor: C.cream, borderRadius: R.card, opacity: 0.3 }}>
-                <span style={{ fontSize: 26, filter: "grayscale(1)" }}>{b.icon}</span>
-                <span className="text-xs font-medium leading-tight" style={{ color: C.dim }}>{b.label}</span>
-              </div>
-            ))}
+          <div className="grid grid-cols-4 gap-2 mb-2">
+            {earnedBadges.map(b => {
+              const Illus = BadgeIllustrations[b.id];
+              return (
+                <motion.div key={b.id} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="flex flex-col items-center gap-1.5 py-3 px-1 text-center"
+                  style={{ background: "rgba(255,255,255,0.8)", borderRadius: R.card, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                  {Illus ? <Illus dim={false} /> : <span style={{ fontSize: 26 }}>⭐</span>}
+                  <span className="text-xs font-bold leading-tight" style={{ color: C.ink }}>{b.label}</span>
+                </motion.div>
+              );
+            })}
+            {lockedBadges.map(b => {
+              const Illus = BadgeIllustrations[b.id];
+              return (
+                <div key={b.id} className="flex flex-col items-center gap-1.5 py-3 px-1 text-center"
+                  style={{ background: "rgba(255,255,255,0.4)", borderRadius: R.card, opacity: 0.45 }}>
+                  {Illus ? <Illus dim={true} /> : <span style={{ fontSize: 26, filter: "grayscale(1)" }}>⭐</span>}
+                  <span className="text-xs font-medium leading-tight" style={{ color: C.dim }}>{b.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Completed decks */}
         {Object.keys(stats.completedDecks || {}).length > 0 && (
-          <div className="p-6" style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl }}>
+          <div className="p-6" style={{ ...glass.card, borderRadius: R.xl }}>
             <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Categorias concluídas</div>
             <div className="space-y-3">
               {Object.entries(stats.completedDecks || {}).map(([key, langs]) => {
@@ -300,7 +435,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
                         return (
                           <button key={lc} onClick={() => onStudyDeck(lc, key)}
                             className="text-xs font-black px-2.5 py-1"
-                            style={{ backgroundColor: lm.accent, color: "#fff", borderRadius: R.pill }}>
+                            style={{ backgroundColor: lm.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 2px 8px ${lm.accent}55` }}>
                             {lm.name.split(" ")[0]}
                           </button>
                         );
@@ -316,6 +451,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
     </motion.div>
   );
 }
+
 
 // ─── FLAG ICON ────────────────────────────────────────────────────────────────
 const FLAG_ICONS = { es: "/espanha.png", it: "/italia.png", ru: "/russia.png", fr: "/franca.png" };
@@ -435,7 +571,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
                 transition={{ delay: i * 0.07, type: "spring", stiffness: 260, damping: 22 }}
                 whileTap={locked ? {} : { scale: 0.97 }}
                 className="w-full text-left"
-                style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl, opacity: locked ? 0.5 : 1, cursor: locked ? "default" : "pointer" }}>
+                style={{ ...glass.card, borderRadius: R.xl, opacity: locked ? 0.5 : 1, cursor: locked ? "default" : "pointer" }}>
                 <div className="flex items-center gap-4 px-5 py-4">
                   <FlagIcon langCode={code} size={52} />
                   <div className="flex-1 min-w-0">
@@ -467,7 +603,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         <div className="flex gap-3">
           <button onClick={onOpenFavorites}
             className="flex-1 flex items-center justify-center gap-2 py-4 font-bold text-sm"
-            style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl, color: C.ink }}>
+            style={{ ...glass.card, borderRadius: R.xl, color: C.ink }}>
             <Bookmark size={18} strokeWidth={1.5} />
             Favoritas
             {favCount > 0 && (
@@ -477,7 +613,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </button>
           <button onClick={onOpenStats}
             className="flex-1 flex items-center justify-center gap-2 py-4 font-bold text-sm"
-            style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl, color: C.ink }}>
+            style={{ ...glass.card, borderRadius: R.xl, color: C.ink }}>
             <BarChart2 size={18} strokeWidth={1.5} />
             Estatísticas
           </button>
@@ -587,10 +723,11 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
         </p>
         <div className="relative mb-6">
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ color: "rgba(255,255,255,0.45)" }} />
+            style={{ color: "rgba(255,255,255,0.6)" }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar..."
             className="w-full pl-10 pr-4 py-3.5 text-sm font-semibold outline-none"
-            style={{ backgroundColor: "rgba(255,255,255,0.18)", borderRadius: R.pill, color: "#fff", border: "none" }} />
+            style={{ backgroundColor: "rgba(255,255,255,0.22)", borderRadius: R.pill, color: "#ffffff", border: "1px solid rgba(255,255,255,0.3)", caretColor: "#ffffff" }}
+          />
         </div>
         <div className="space-y-3">
           {filtered.map((key, i) => {
@@ -603,24 +740,26 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
                 transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 28 }}
                 whileTap={{ scale: 0.97 }}
                 className="w-full flex items-center justify-between px-6 py-5 text-left"
-                style={{ backgroundColor: done ? C.cream : "rgba(255,255,255,0.18)", borderRadius: R.xl }}>
+                style={done
+                  ? { ...glass.card, borderRadius: R.xl }
+                  : { background: "rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: R.xl }}>
                 <div className="flex items-center gap-4">
                   <Icon size={26} strokeWidth={1.5}
-                    style={{ color: done ? lang.accent : "rgba(255,255,255,0.85)", flexShrink: 0 }} />
+                    style={{ color: done ? lang.accent : "rgba(255,255,255,0.9)", flexShrink: 0 }} />
                   <div>
                     <div className="font-black leading-tight"
                       style={{ fontSize: "1.15rem", color: done ? C.ink : "#fff" }}>
                       {getDeckLabel(key, langCode)}
                     </div>
                     <div className="text-xs font-medium mt-0.5"
-                      style={{ color: done ? C.dim : "rgba(255,255,255,0.5)" }}>
+                      style={{ color: done ? C.dim : "rgba(255,255,255,0.55)" }}>
                       {VOCAB[langCode][key]?.length || 0} cards
                     </div>
                   </div>
                 </div>
                 {done
                   ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                      style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill }}>✓ Feito</span>
+                      style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
                   : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                 }
               </motion.button>
@@ -683,28 +822,29 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
         style={{ transformStyle: "preserve-3d", height: "100%" }}
         onClick={onClick}>
 
-        {/* FRONT — cream, massive ink type */}
+        {/* FRONT — glass morphism, massive ink type */}
         <div className="absolute inset-0 flex flex-col justify-between p-7"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            backgroundColor: C.cream, borderRadius: R.xl, border: `1.5px solid #EAE6E0` }}>
+            ...glass.card, borderRadius: R.xl }}>
           {showLangBadge
-            ? <span className="self-start text-xs font-black px-3 py-1.5"
-                style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill }}>{lang.name}</span>
-            : <div />
+            ? <span className="self-start text-xs font-black px-3 py-1.5 shrink-0"
+                style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>{lang.name}</span>
+            : <div className="shrink-0" />
           }
-          <div>
+          <div className="min-w-0 overflow-hidden">
             <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Português</p>
-            <p className="font-black leading-none" style={{ fontSize: frontSz, color: C.ink, letterSpacing: "-0.02em" }}>{card.pt}</p>
+            <p className="font-black leading-none break-words"
+              style={{ fontSize: frontSz, color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.pt}</p>
           </div>
-          <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#C0BBB4" }}>
+          <p className="flex items-center gap-1.5 text-xs font-medium shrink-0" style={{ color: "#C0BBB4" }}>
             <RotateCcw size={11} /> toque para revelar
           </p>
         </div>
 
-        {/* BACK — full-bleed accent, white editorial type */}
+        {/* BACK — glass accent, white editorial type */}
         <div className="absolute inset-0 flex flex-col justify-between p-7"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)", backgroundColor: lang.accent, borderRadius: R.xl }}>
+            transform: "rotateY(180deg)", ...glass.accent(lang.accent), borderRadius: R.xl }}>
           <div className="flex items-center justify-between">
             <button onClick={handleTTS} className="p-1 -ml-1">
               {ttsPlaying
@@ -724,9 +864,10 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
               }
             </motion.button>
           </div>
-          <div>
+          <div className="min-w-0 overflow-hidden">
             <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>{lang.name}</p>
-            <p className="font-black text-white leading-none" style={{ fontSize: backSz, letterSpacing: "-0.02em" }}>{card.target}</p>
+            <p className="font-black text-white leading-none break-words"
+              style={{ fontSize: backSz, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word" }}>{card.target}</p>
             {card.phonetic && <p className="mt-2 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>{card.phonetic}</p>}
             <p className="mt-2 text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{card.pt}</p>
           </div>
@@ -771,6 +912,36 @@ function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ─── ANIMATED PROGRESS % ──────────────────────────────────────────────────────
+function AnimatedProgressPct({ value, color }) {
+  const [display, setDisplay] = useState(value);
+  const prev = useRef(value);
+  useEffect(() => {
+    const from = prev.current, to = value;
+    prev.current = value;
+    if (from === to) return;
+    const start = performance.now(), dur = 500;
+    const tick = now => {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + (to - from) * ease));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value]);
+  return (
+    <motion.span
+      key={value}
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 400, damping: 24 }}
+      className="text-xs font-black"
+      style={{ color }}>
+      {display}%
+    </motion.span>
   );
 }
 
@@ -917,15 +1088,15 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       />
 
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-4 pb-8 flex flex-col">
-        {/* Progress */}
+        {/* Progress bar + animated % */}
         <div className="mb-5">
           <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
             <motion.div className="h-full rounded-full" style={{ backgroundColor: accentColor }}
-              animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
+              animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.5, ease: [0.34, 1.2, 0.64, 1] }} />
           </div>
           <div className="flex justify-between mt-2">
             <span className="text-xs font-bold" style={{ color: C.dim }}>{correct} acertadas</span>
-            <span className="text-xs font-black" style={{ color: C.dim }}>{Math.round(progress * 100)}%</span>
+            <AnimatedProgressPct value={Math.round(progress * 100)} color={accentColor} />
           </div>
         </div>
 
@@ -984,7 +1155,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             ) : (card.example || card.tip) ? (
               <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="px-5 py-4 space-y-2" style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl }}>
+                className="px-5 py-4 space-y-2" style={{ ...glass.card, borderRadius: R.xl }}>
                 {card.example && (
                   <p className="text-xs font-semibold leading-snug" style={{ color: C.ink }}>
                     <span className="font-normal mr-1" style={{ color: C.dim }}>ex.</span>{card.example}
@@ -995,20 +1166,20 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             ) : null}
           </div>
 
-          {/* Answer buttons */}
+          {/* Answer buttons — glass treatment */}
           <motion.div className="flex gap-3"
             animate={{ opacity: buttonsVisible ? 1 : 0, y: buttonsVisible ? 0 : 8 }}
             transition={{ duration: 0.2 }}
             style={{ pointerEvents: buttonsVisible ? "auto" : "none" }}>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
-              style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl, color: "#DC2626" }}>
+              style={{ ...glass.card, borderRadius: R.xl, color: "#DC2626" }}>
               <X size={18} strokeWidth={2.5} />
               <span style={{ fontSize: "0.9rem" }}>Ainda Aprendendo</span>
             </motion.button>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
-              style={{ backgroundColor: C.ink, borderRadius: R.xl, color: C.cream }}>
+              style={{ ...glass.dark, borderRadius: R.xl, color: C.cream }}>
               <Check size={18} strokeWidth={2.5} />
               <span style={{ fontSize: "0.9rem" }}>Eu Conheço!</span>
             </motion.button>
@@ -1292,7 +1463,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased", backgroundColor: C.cream }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif}body{background:${C.cream}}`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif}body{background:${C.cream};background-image:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(200,190,180,0.18), transparent)}::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
             <LevelUpOverlay key="levelup" level={levelUp}
