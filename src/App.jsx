@@ -471,6 +471,45 @@ function FlagIcon({ langCode, size = 40 }) {
     style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0, display: "block" }} />;
 }
 
+// ─── GYRO BLOBS ───────────────────────────────────────────────────────────────
+function GyroBlobs() {
+  const x1 = useMotionValue(0);
+  const y1 = useMotionValue(0);
+  const x2 = useMotionValue(0);
+  const y2 = useMotionValue(0);
+
+  useEffect(() => {
+    const handleOrientation = (e) => {
+      // gamma = left/right tilt (-90 to 90), beta = front/back tilt (-180 to 180)
+      const gx = Math.max(-30, Math.min(30, e.gamma || 0));
+      const gy = Math.max(-30, Math.min(30, (e.beta  || 0) - 20)); // offset 20° for natural hold
+      // Blob A moves with tilt, Blob B moves in opposite direction (parallax)
+      x1.set(gx  * 2.5);
+      y1.set(gy  * 2.0);
+      x2.set(gx  * -1.5);
+      y2.set(gy  * -1.2);
+    };
+
+    // Request permission on iOS 13+
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function") {
+      DeviceOrientationEvent.requestPermission()
+        .then(p => { if (p === "granted") window.addEventListener("deviceorientation", handleOrientation); })
+        .catch(() => {});
+    } else {
+      window.addEventListener("deviceorientation", handleOrientation);
+    }
+    return () => window.removeEventListener("deviceorientation", handleOrientation);
+  }, [x1, y1, x2, y2]);
+
+  return (
+    <>
+      <motion.div style={{ position: "absolute", top: "20%", right: "5%", width: "40vw", height: "40vw", maxWidth: 320, maxHeight: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(180,100,200,0.28) 0%, transparent 70%)", filter: "blur(60px)", willChange: "transform", x: x1, y: y1 }} />
+      <motion.div style={{ position: "absolute", bottom: "25%", left: "5%",  width: "35vw", height: "35vw", maxWidth: 280, maxHeight: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(80,200,160,0.24) 0%, transparent 70%)",  filter: "blur(55px)", willChange: "transform", x: x2, y: y2 }} />
+    </>
+  );
+}
+
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied }) {
   const [showHelp, setShowHelp] = useState(false);
@@ -508,40 +547,43 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
     <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: C.cream }}>
       {/* ── Ambient liquid glass background ── */}
       <div className="absolute inset-0 pointer-events-none" style={{ willChange: "transform", zIndex: 0 }}>
-        {/* Blob 1 — 22s cycle, lazy figure-eight, warm coral-rose */}
+        {/* Blob 1 — 22s cycle, warm coral-rose */}
         <motion.div
-          style={{ position: "absolute", top: "-5%", left: "-10%", width: "70vw", height: "70vw", maxWidth: 560, maxHeight: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(230,100,80,0.28) 0%, rgba(255,160,120,0.16) 50%, transparent 72%)", filter: "blur(90px)", willChange: "transform" }}
+          style={{ position: "absolute", top: "-5%", left: "-10%", width: "75vw", height: "75vw", maxWidth: 600, maxHeight: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(230,80,60,0.42) 0%, rgba(255,140,100,0.22) 50%, transparent 72%)", filter: "blur(70px)", willChange: "transform" }}
           animate={{ x: [0, 90, 40, -50, 0], y: [0, -40, 50, -15, 0], scale: [1, 0.97, 1.07, 0.98, 1] }}
           transition={{ duration: 22, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
         />
-        {/* Blob 2 — 28s cycle, wide oval, soft lavender-blue */}
+        {/* Blob 2 — 28s cycle, soft lavender-blue */}
         <motion.div
-          style={{ position: "absolute", bottom: "-10%", right: "-5%", width: "60vw", height: "60vw", maxWidth: 480, maxHeight: 480, borderRadius: "50%", background: "radial-gradient(circle, rgba(120,140,230,0.22) 0%, rgba(160,180,255,0.12) 50%, transparent 72%)", filter: "blur(100px)", willChange: "transform" }}
+          style={{ position: "absolute", bottom: "-10%", right: "-5%", width: "65vw", height: "65vw", maxWidth: 520, maxHeight: 520, borderRadius: "50%", background: "radial-gradient(circle, rgba(100,120,230,0.36) 0%, rgba(140,160,255,0.18) 50%, transparent 72%)", filter: "blur(80px)", willChange: "transform" }}
           animate={{ x: [0, -60, -20, 55, 0], y: [0, 35, -50, 18, 0], scale: [1, 1.08, 0.96, 1.05, 1] }}
           transition={{ duration: 28, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
         />
-        {/* Blob 3 — 34s cycle, diagonal drift, warm amber-gold */}
+        {/* Blob 3 — 34s cycle, warm amber-gold */}
         <motion.div
-          style={{ position: "absolute", top: "35%", left: "30%", width: "55vw", height: "55vw", maxWidth: 440, maxHeight: 440, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,160,80,0.18) 0%, rgba(240,200,120,0.10) 50%, transparent 72%)", filter: "blur(110px)", willChange: "transform" }}
+          style={{ position: "absolute", top: "35%", left: "30%", width: "60vw", height: "60vw", maxWidth: 480, maxHeight: 480, borderRadius: "50%", background: "radial-gradient(circle, rgba(210,155,60,0.32) 0%, rgba(250,195,100,0.16) 50%, transparent 72%)", filter: "blur(85px)", willChange: "transform" }}
           animate={{ x: [0, 45, -35, 25, 0], y: [0, 25, 55, -35, 0], scale: [1, 0.94, 1.10, 0.97, 1] }}
           transition={{ duration: 34, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
         />
-        {/* Very light frosted veil — lets blobs show through on cream */}
-        <div className="absolute inset-0" style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", background: "rgba(250,249,246,0.18)" }} />
+        {/* Gyroscope overlay — reacts to phone tilt */}
+        <GyroBlobs />
+        {/* Very light frosted veil */}
+        <div className="absolute inset-0" style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", background: "rgba(250,249,246,0.12)" }} />
       </div>
 
       {/* Dashboard content */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className="relative min-h-screen" style={{ zIndex: 1 }}>
-      <NavBar right={
-        <button onClick={() => setShowHelp(true)} className="w-9 h-9 flex items-center justify-center rounded-full"
+      {/* Floating help button — no bar, directly on background */}
+      <div className="absolute top-4 right-4 z-10">
+        <button onClick={() => setShowHelp(true)} className="w-10 h-10 flex items-center justify-center rounded-full"
           style={{ ...glass.card }}>
           <HelpCircle size={18} style={{ color: C.dim }} />
         </button>
-      } />
+      </div>
       <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
 
-      <div className="max-w-md mx-auto px-5 pt-2 pb-28">
+      <div className="max-w-md mx-auto px-5 pt-16 pb-28">
         {/* Editorial hero — streak as massive number */}
         <div className="mb-7">
           <motion.div className="font-black leading-none"
@@ -1070,6 +1112,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     if (!mounted.current) return;
     setFlashColor(null);
     controls.set({ opacity: 1, scale: 1, x: 0 });
+    dragX.set(0); // reset drag position for next card
     if (knew) {
       const newCorrect = correct + 1;
       setCorrect(newCorrect);
@@ -1189,10 +1232,10 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             )}
             {/* Entrance wrapper — key triggers fresh slide-in for each new card */}
             <motion.div key={`${cardLang}-${card.pt}`}
-              initial={{ opacity: 0, x: -32 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ opacity: { duration: 0.16 }, x: { type: "spring", stiffness: 360, damping: 30 } }}
-              style={{ height: "100%" }}>
+              initial={{ opacity: 0, x: -28, y: 0 }}
+              animate={{ opacity: 1, x: 0,  y: 0 }}
+              transition={{ opacity: { duration: 0.14 }, x: { type: "spring", stiffness: 380, damping: 32, restDelta: 0.001 } }}
+              style={{ height: "100%", willChange: "transform" }}>
               {/* Exit wrapper — controls drives fade/scale out on answer */}
               <motion.div animate={controls} style={{ height: "100%", x: dragX }}
                 drag={isFlipped && !answered ? "x" : false}
@@ -1332,7 +1375,15 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
     };
     const raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [accuracy]);
+  }, [accuracy]); // eslint-disable-line
+
+  // Memoize static text so it never re-renders during count-up
+  const heroText = useMemo(() => ({
+    text: pick.text,
+    sub: pick.sub,
+    score: `${result.correct}/${result.total} em ${deckName}.`,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
@@ -1343,14 +1394,13 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
         {/* Score hero */}
         <motion.div className="mb-8" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: C.dim }}>Resultado</div>
+          {/* Number animates independently — text below never re-renders */}
           <div className="font-black leading-none" style={{ fontSize: "6rem", color: C.ink, letterSpacing: "-0.03em" }}>
             {displayAcc}<span style={{ fontSize: "2.5rem", color: C.dim }}>%</span>
           </div>
-          <p className="font-bold mt-3" style={{ color: C.dim, fontSize: "1rem", lineHeight: 1.6 }}>
-            {pick.text}
-          </p>
+          <p className="font-bold mt-3" style={{ color: C.dim, fontSize: "1rem", lineHeight: 1.6 }}>{heroText.text}</p>
           <p className="mt-1" style={{ color: C.dim, fontSize: "0.9rem" }}>
-            {pick.sub} <strong style={{ color: C.ink }}>{result.correct}/{result.total} em {deckName}.</strong>
+            {heroText.sub}{" "}<strong style={{ color: C.ink }}>{heroText.score}</strong>
           </p>
         </motion.div>
 
