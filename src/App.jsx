@@ -44,7 +44,7 @@ const C = { cream: "#FAF9F6", ink: "#111111", dim: "#888888" };
 
 // ─── GLASS STYLES ─────────────────────────────────────────────────────────────
 const glass = {
-  card:   { background: "rgba(255,255,255,0.72)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)" },
+  card:   { background: "rgba(255,255,255,0.78)", backdropFilter: "blur(28px) saturate(200%)", WebkitBackdropFilter: "blur(28px) saturate(200%)", border: "1px solid rgba(255,255,255,0.7)", boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)" },
   dark:   { background: "rgba(17,17,17,0.82)",   backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 40px rgba(0,0,0,0.22)" },
   nav:    { background: "rgba(250,249,246,0.88)", backdropFilter: "blur(20px)",                WebkitBackdropFilter: "blur(20px)",                border: "none", boxShadow: "0 1px 0 rgba(0,0,0,0.05)" },
   pill:   { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",                WebkitBackdropFilter: "blur(12px)",                border: "1px solid rgba(255,255,255,0.7)",  boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
@@ -108,20 +108,31 @@ const BadgeIllustrations = {
   ),
   all_it: ({ dim }) => (
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#D1FAE5"} />
-      <rect x="13" y="22" width="10" height="3" rx="1.5" fill={dim ? "#BDBDBD" : "#059669"} />
-      <rect x="15" y="13" width="6" height="9" rx="1" fill={dim ? "#BDBDBD" : "#059669"} opacity="0.4" />
-      <path d="M14 13 L18 9 L22 13" fill={dim ? "#BDBDBD" : "#059669"} />
-      <path d="M16 13 L18 10.5 L20 13" fill={dim ? "#BDBDBD" : "#34D399"} />
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEF3C7"} />
+      <path d="M18 9 L27 26 L9 26 Z" fill={dim ? "#BDBDBD" : "#F59E0B"} />
+      <path d="M18 13 L24.5 24 L11.5 24 Z" fill={dim ? "#D0D0D0" : "#FDE68A"} />
+      <circle cx="15.5" cy="21" r="1.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
+      <circle cx="20.5" cy="20" r="1.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
+      <circle cx="18" cy="23.5" r="1" fill={dim ? "#BDBDBD" : "#16A34A"} />
     </svg>
   ),
   all_es: ({ dim }) => (
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
       <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEE2E2"} />
-      <rect x="13" y="22" width="10" height="3" rx="1.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
-      <rect x="15" y="13" width="6" height="9" rx="1" fill={dim ? "#BDBDBD" : "#DC2626"} opacity="0.4" />
-      <path d="M14 13 L18 9 L22 13" fill={dim ? "#BDBDBD" : "#DC2626"} />
-      <path d="M16 13 L18 10.5 L20 13" fill={dim ? "#BDBDBD" : "#F87171"} />
+      <rect x="15.5" y="9" width="5" height="9" rx="2.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
+      <path d="M12 17 C12 21.4 14.7 25 18 25 C21.3 25 24 21.4 24 17" stroke={dim ? "#BDBDBD" : "#DC2626"} strokeWidth="2" fill="none" strokeLinecap="round"/>
+      <line x1="18" y1="25" x2="18" y2="28" stroke={dim ? "#BDBDBD" : "#DC2626"} strokeWidth="2"/>
+      <line x1="15" y1="28" x2="21" y2="28" stroke={dim ? "#BDBDBD" : "#DC2626"} strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+  all_ru: ({ dim }) => (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#DBEAFE"} />
+      <ellipse cx="18" cy="24" rx="8" ry="3" fill={dim ? "#BDBDBD" : "#1B4FD8"} opacity="0.35"/>
+      <rect x="10" y="15" width="16" height="9" rx="2" fill={dim ? "#BDBDBD" : "#1B4FD8"} />
+      <ellipse cx="18" cy="15" rx="8" ry="3" fill={dim ? "#D0D0D0" : "#3B82F6"} />
+      <line x1="23" y1="11" x2="27" y2="15" stroke={dim ? "#BDBDBD" : "#1E40AF"} strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="23" cy="11" r="2" fill={dim ? "#BDBDBD" : "#93C5FD"} />
     </svg>
   ),
   sharp: ({ dim }) => (
@@ -141,8 +152,9 @@ const BADGES = [
   { id: "polyglot",   label: "Poliglota",           check: (s)      => Object.keys(s.studied || {}).length >= 4 },
   { id: "cards_100",  label: "100 cards",           check: (s)      => (s.totalAttempts || 0) >= 100 },
   { id: "cards_500",  label: "500 cards",           check: (s)      => (s.totalAttempts || 0) >= 500 },
-  { id: "all_it",     label: "Mestre Italiano",     check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("it")) },
-  { id: "all_es",     label: "Mestre Espanhol",     check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("es")) },
+  { id: "all_it",     label: "Mestre Pizzaiolo",    check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("it")) },
+  { id: "all_es",     label: "Julio Iglesias",      check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("es")) },
+  { id: "all_ru",     label: "Pagode Russo",        check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("ru")) },
   { id: "sharp",      label: "Afiado",              check: (s)      => (s.totalAttempts || 0) >= 20 && Math.round((s.totalCorrect || 0) / (s.totalAttempts || 1) * 100) >= 90 },
 ];
 class ErrorBoundary extends Component {
@@ -150,7 +162,7 @@ class ErrorBoundary extends Component {
   static getDerivedStateFromError(e) { return { error: e }; }
   render() {
     if (this.state.error) return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center", gap: 16, backgroundColor: C.cream }}>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center", gap: 16, background: "rgba(250,249,246,0.95)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
         <p style={{ fontWeight: 900, color: C.ink, fontSize: "1.2rem" }}>Algo deu errado.</p>
         <p style={{ color: C.dim, fontSize: "0.875rem" }}>{this.state.error.message}</p>
         <button onClick={() => this.setState({ error: null })}
@@ -213,7 +225,7 @@ function Onboarding({ onDone }) {
     { title: "Bem-vindo ao\nLinguaFlash",  body: "Aprenda vocabulário em 4 idiomas com flashcards. Feito para brasileiros.",        accent: "#E63329" },
     { title: "Vire o\ncard",               body: "Toque para revelar a tradução. Diga se você conhecia a palavra ou não.",           accent: "#1A7A4A" },
     { title: "Salve\nfavoritas",           body: "Toque no ícone de favorito para salvar palavras difíceis e revisar depois.",       accent: "#1B4FD8" },
-    { title: "Mantenha\no molejo",         body: "Estude todo dia, acumule XP, suba de nível e desbloqueie novos idiomas.",         accent: "#1251A3" },
+    { title: "Mantenha\no streak",         body: "Estude todo dia, acumule XP, suba de nível e desbloqueie novos idiomas.",         accent: "#1251A3" },
   ];
   const [step, setStep] = useState(0);
   const isLast = step === steps.length - 1;
@@ -221,7 +233,7 @@ function Onboarding({ onDone }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ backgroundColor: C.cream }}>
+      style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <button onClick={onDone} className="absolute top-6 right-6 z-10 text-xs font-black tracking-widest uppercase"
         style={{ color: C.dim }}>Pular</button>
       {/* Accent circle — geometric decoration like ref 1 */}
@@ -263,7 +275,7 @@ function HelpModal({ onClose }) {
     { Icon: X,         label: '"Ainda Aprendendo" recicla o card para mais tarde' },
     { Icon: Bookmark,  label: "Favorito salva palavras para revisar depois" },
     { Icon: Volume2,   label: "Ícone de som toca a pronúncia" },
-    { Icon: Flame,     label: "Estude todo dia para manter o molejo e subir de nível" },
+    { Icon: Flame,     label: "Estude todo dia para manter o streak e subir de nível" },
     { Icon: Lock,      label: "Russo e Francês desbloqueiam no nível 3" },
   ];
   return (
@@ -274,11 +286,11 @@ function HelpModal({ onClose }) {
         transition={{ type: "spring", stiffness: 340, damping: 34 }}
         onClick={e => e.stopPropagation()}
         className="w-full max-w-md pb-10 px-6 pt-7"
-        style={{ backgroundColor: C.cream, borderRadius: `${R.xl}px ${R.xl}px 0 0` }}>
+        style={{ background: "rgba(250,249,246,0.96)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)", borderRadius: `${R.xl}px ${R.xl}px 0 0` }}>
         <div className="flex items-center justify-between mb-7">
           <h2 className="font-black" style={{ fontSize: "1.75rem", color: C.ink }}>Como funciona</h2>
           <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full"
-            style={{ backgroundColor: "#EBEBEB" }}>
+            style={{ ...glass.card }}>
             <X size={18} style={{ color: C.ink }} />
           </button>
         </div>
@@ -286,7 +298,7 @@ function HelpModal({ onClose }) {
           {items.map(({ Icon, label }, i) => (
             <div key={i} className="flex items-center gap-4">
               <div className="w-10 h-10 flex items-center justify-center shrink-0"
-                style={{ backgroundColor: "#EBEBEB", borderRadius: R.card }}>
+                style={{ ...glass.card, borderRadius: R.card }}>
                 <Icon size={18} strokeWidth={1.5} style={{ color: C.ink }} />
               </div>
               <p className="text-sm font-medium" style={{ color: C.ink, opacity: 0.7 }}>{label}</p>
@@ -391,7 +403,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20 space-y-4">
 
@@ -524,10 +536,10 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <NavBar right={
         <button onClick={() => setShowHelp(true)} className="w-9 h-9 flex items-center justify-center rounded-full"
-          style={{ backgroundColor: "#EBEBEB" }}>
+          style={{ ...glass.card }}>
           <HelpCircle size={18} style={{ color: C.dim }} />
         </button>
       } />
@@ -540,7 +552,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             style={{ fontSize: "5.5rem", color: C.ink, letterSpacing: "-0.03em" }}
             animate={streakPop ? { scale: [1, 1.05, 1] } : {}}>
             {streak}
-            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>molejo</span>
+            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
           </motion.div>
           <div className="flex items-center gap-3 mt-3">
             <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
@@ -661,13 +673,13 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20">
         <h1 className="font-black mb-6" style={{ fontSize: "3rem", color: C.ink, letterSpacing: "-0.02em" }}>Favoritas</h1>
         {totalCount === 0 ? (
           <div className="flex flex-col items-center gap-5 pt-16 text-center">
-            <div className="w-20 h-20 flex items-center justify-center" style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl }}>
+            <div className="w-20 h-20 flex items-center justify-center" style={{ ...glass.card, borderRadius: R.xl }}>
               <Bookmark size={32} strokeWidth={1.5} style={{ color: C.dim }} />
             </div>
             <p className="font-black text-xl" style={{ color: C.ink }}>Nenhuma favorita ainda</p>
@@ -698,7 +710,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
               <motion.button key={code} whileTap={{ scale: 0.97 }}
                 onClick={() => onStudyFavs(code, "__favorites__")}
                 className="w-full flex items-center gap-4 px-6 py-5 text-left"
-                style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl }}>
+                style={{ ...glass.card, borderRadius: R.xl }}>
                 <FlagIcon langCode={code} size={52} />
                 <div className="flex-1">
                   <div className="font-black" style={{ fontSize: "1.2rem", color: C.ink }}>{lang.name}</div>
@@ -930,7 +942,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col justify-end px-6 pb-14 max-w-md mx-auto w-full">
         <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -954,7 +966,7 @@ function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
           </motion.button>
           <motion.button whileTap={{ scale: 0.97 }} onClick={onBack}
             className="w-full flex items-center justify-between px-7 py-5 font-black"
-            style={{ backgroundColor: "#EBEBEB", color: C.ink, borderRadius: R.xl, fontSize: "1.1rem" }}>
+            style={{ ...glass.card, color: C.ink, borderRadius: R.xl, fontSize: "1.1rem" }}>
             <span>Escolher outra</span><ChevronLeft size={20} />
           </motion.button>
         </div>
@@ -1095,7 +1107,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
         <Bookmark size={48} strokeWidth={1} style={{ color: "#DEDBD7" }} />
@@ -1116,7 +1128,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <Confetti active={showConfetti} accentColor={accentColor} />
       <NavBar
         title={deckLabel} subtitle={isReview ? "Revisão" : undefined}
@@ -1190,42 +1202,55 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             </motion.div>
           </div>
 
-          {/* Tip box */}
+          {/* Tip box — animated in/out */}
           <div className="min-h-[20px]">
-            {!isFlipped ? (
-              <p className="text-center text-xs font-medium" style={{ color: "#C0BBB4" }}>
-                Toque no card para ver a tradução
-              </p>
-            ) : (card.example || card.tip) ? (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="px-5 py-4 space-y-2" style={{ ...glass.card, borderRadius: R.xl }}>
-                {card.example && (
-                  <p className="text-xs font-semibold leading-snug" style={{ color: C.ink }}>
-                    <span className="font-normal mr-1" style={{ color: C.dim }}>ex.</span>{card.example}
-                  </p>
-                )}
-                {card.tip && <p className="text-xs leading-snug" style={{ color: C.dim }}>{card.tip}</p>}
-              </motion.div>
-            ) : null}
+            <AnimatePresence mode="wait">
+              {!isFlipped ? (
+                <motion.p key="hint"
+                  initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}
+                  className="text-center text-xs font-medium" style={{ color: "#C0BBB4" }}>
+                  Toque no card para ver a tradução
+                </motion.p>
+              ) : (card.example || card.tip) ? (
+                <motion.div key="tip"
+                  initial={{ opacity: 0, y: 8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 340, damping: 28, delay: 0.08 }}
+                  className="px-5 py-4 space-y-2" style={{ ...glass.card, borderRadius: R.xl }}>
+                  {card.example && (
+                    <p className="text-xs font-semibold leading-snug" style={{ color: C.ink }}>
+                      <span className="font-normal mr-1" style={{ color: C.dim }}>ex.</span>{card.example}
+                    </p>
+                  )}
+                  {card.tip && <p className="text-xs leading-snug" style={{ color: C.dim }}>{card.tip}</p>}
+                </motion.div>
+              ) : (
+                <motion.div key="empty" initial={{ opacity: 0 }} exit={{ opacity: 0 }} />
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Answer buttons — liquid glass with gradient border */}
-          <motion.div className="flex gap-3"
-            animate={{ opacity: buttonsVisible ? 1 : 0, y: buttonsVisible ? 0 : 8 }}
-            transition={{ duration: 0.2 }}
-            style={{ pointerEvents: buttonsVisible ? "auto" : "none" }}>
-            <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
-              className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-              style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.25)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
-              <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
-            </motion.button>
-            <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-              style={{ background: "linear-gradient(135deg, rgba(30,30,30,0.92), rgba(17,17,17,0.98))", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "0.95rem", boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
-              <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
-            </motion.button>
-          </motion.div>
+          {/* Answer buttons — animated in, animated out */}
+          <AnimatePresence>
+            {buttonsVisible && (
+              <motion.div key="btns" className="flex gap-3"
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8, transition: { duration: 0.15 } }}
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}>
+                <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
+                  style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.25)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+                  <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
+                </motion.button>
+                <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
+                  style={{ background: "linear-gradient(135deg, rgba(30,30,30,0.92), rgba(17,17,17,0.98))", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "0.95rem", boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+                  <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Stats footer — glass pill */}
@@ -1304,7 +1329,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="min-h-screen flex flex-col" style={ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }>
       <NavBar />
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-6 pb-14 flex flex-col">
 
@@ -1524,7 +1549,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased", backgroundColor: C.cream }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif}body{background:${C.cream};background-image:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(200,190,180,0.18), transparent)}::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif}body{background:${C.cream};background-image:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%)}::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
             <LevelUpOverlay key="levelup" level={levelUp}
