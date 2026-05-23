@@ -505,29 +505,29 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
   const xpInLevel    = getXPInLevel(displayXP);
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: "#0f0f0f" }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: C.cream }}>
       {/* ── Ambient liquid glass background ── */}
       <div className="absolute inset-0 pointer-events-none" style={{ willChange: "transform", zIndex: 0 }}>
-        {/* Blob 1 — 22s cycle, lazy figure-eight, warm amber */}
+        {/* Blob 1 — 22s cycle, lazy figure-eight, warm coral-rose */}
         <motion.div
-          style={{ position: "absolute", top: "10%", left: "15%", width: "65vw", height: "65vw", maxWidth: 520, maxHeight: 520, borderRadius: "50%", background: "radial-gradient(circle, rgba(230,51,41,0.55) 0%, rgba(245,158,11,0.35) 50%, transparent 75%)", filter: "blur(110px)", willChange: "transform" }}
-          animate={{ x: [0, 80, 30, -60, 0], y: [0, -50, 40, -20, 0], scale: [1, 0.96, 1.08, 0.97, 1] }}
+          style={{ position: "absolute", top: "-5%", left: "-10%", width: "70vw", height: "70vw", maxWidth: 560, maxHeight: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(230,100,80,0.28) 0%, rgba(255,160,120,0.16) 50%, transparent 72%)", filter: "blur(90px)", willChange: "transform" }}
+          animate={{ x: [0, 90, 40, -50, 0], y: [0, -40, 50, -15, 0], scale: [1, 0.97, 1.07, 0.98, 1] }}
           transition={{ duration: 22, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
         />
-        {/* Blob 2 — 28s cycle, wide oval, cool blue */}
+        {/* Blob 2 — 28s cycle, wide oval, soft lavender-blue */}
         <motion.div
-          style={{ position: "absolute", bottom: "15%", right: "10%", width: "55vw", height: "55vw", maxWidth: 440, maxHeight: 440, borderRadius: "50%", background: "radial-gradient(circle, rgba(27,79,216,0.5) 0%, rgba(99,102,241,0.3) 45%, transparent 75%)", filter: "blur(130px)", willChange: "transform" }}
-          animate={{ x: [0, -70, -30, 60, 0], y: [0, 40, -60, 20, 0], scale: [1, 1.1, 0.95, 1.06, 1] }}
+          style={{ position: "absolute", bottom: "-10%", right: "-5%", width: "60vw", height: "60vw", maxWidth: 480, maxHeight: 480, borderRadius: "50%", background: "radial-gradient(circle, rgba(120,140,230,0.22) 0%, rgba(160,180,255,0.12) 50%, transparent 72%)", filter: "blur(100px)", willChange: "transform" }}
+          animate={{ x: [0, -60, -20, 55, 0], y: [0, 35, -50, 18, 0], scale: [1, 1.08, 0.96, 1.05, 1] }}
           transition={{ duration: 28, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
         />
-        {/* Blob 3 — 34s cycle, irregular diagonal drift, deep green */}
+        {/* Blob 3 — 34s cycle, diagonal drift, warm amber-gold */}
         <motion.div
-          style={{ position: "absolute", top: "40%", left: "40%", width: "50vw", height: "50vw", maxWidth: 400, maxHeight: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(26,122,74,0.45) 0%, rgba(16,185,129,0.25) 50%, transparent 75%)", filter: "blur(120px)", willChange: "transform" }}
-          animate={{ x: [0, 50, -40, 20, 0], y: [0, 30, 60, -40, 0], scale: [1, 0.93, 1.12, 0.98, 1] }}
+          style={{ position: "absolute", top: "35%", left: "30%", width: "55vw", height: "55vw", maxWidth: 440, maxHeight: 440, borderRadius: "50%", background: "radial-gradient(circle, rgba(200,160,80,0.18) 0%, rgba(240,200,120,0.10) 50%, transparent 72%)", filter: "blur(110px)", willChange: "transform" }}
+          animate={{ x: [0, 45, -35, 25, 0], y: [0, 25, 55, -35, 0], scale: [1, 0.94, 1.10, 0.97, 1] }}
           transition={{ duration: 34, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
         />
-        {/* Frosted glass pane over blobs */}
-        <div className="absolute inset-0" style={{ backdropFilter: "blur(48px) saturate(140%)", WebkitBackdropFilter: "blur(48px) saturate(140%)", background: "rgba(15,15,15,0.52)" }} />
+        {/* Very light frosted veil — lets blobs show through on cream */}
+        <div className="absolute inset-0" style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", background: "rgba(250,249,246,0.18)" }} />
       </div>
 
       {/* Dashboard content */}
@@ -545,19 +545,19 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         {/* Editorial hero — streak as massive number */}
         <div className="mb-7">
           <motion.div className="font-black leading-none"
-            style={{ fontSize: "5.5rem", color: "#ffffff", letterSpacing: "-0.03em" }}
+            style={{ fontSize: "5.5rem", color: C.ink, letterSpacing: "-0.03em" }}
             animate={streakPop ? { scale: [1, 1.05, 1] } : {}}>
             {streak}
-            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.45)" }}>dias</span>
+            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
           </motion.div>
           <div className="flex items-center gap-3 mt-3">
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-              <motion.div className="h-full rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.7)" }}
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
+              <motion.div className="h-full rounded-full" style={{ backgroundColor: C.ink }}
                 animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
                 transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }} />
             </div>
             <button onClick={onOpenStats} className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-black" style={{ color: "rgba(255,255,255,0.5)" }}>Nível {currentLevel}</span>
+              <span className="text-sm font-black" style={{ color: C.dim }}>Nível {currentLevel}</span>
               {getMolejoMultiplier(streak) > 1 && (
                 <span className="text-xs font-black px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "#EF9F27", color: "#fff" }}>
@@ -596,7 +596,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         })()}
 
         {/* Language list */}
-        <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: "rgba(255,255,255,0.45)" }}>Idiomas</div>
+        <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Idiomas</div>
         <div className="space-y-3 mb-6">
           {Object.entries(LANG_META).map(([code, lang], i) => {
             const doneCount = DECK_KEYS.filter(k => stats.completedDecks?.[k]?.includes(code)).length;
@@ -814,9 +814,9 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
 
 // ─── FLASH CARD ───────────────────────────────────────────────────────────────
 function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFav, showLangBadge }) {
-  const [ttsPlaying,    setTtsPlaying]     = useState(false);
-  const [ttsUnsupported,setTtsUnsupported] = useState(false);
-  const [favPulse,      setFavPulse]       = useState(false);
+  const [ttsPlaying,     setTtsPlaying]     = useState(false);
+  const [ttsUnsupported, setTtsUnsupported] = useState(false);
+  const [favPulse,       setFavPulse]       = useState(false);
 
   const handleTTS = (e) => {
     e.stopPropagation();
@@ -836,43 +836,38 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
     e.stopPropagation();
     const willSave = !isFav;
     onToggleFav(card);
-    if (willSave) {   // only animate when saving, not unsaving
-      setFavPulse(true);
-      setTimeout(() => setFavPulse(false), 600);
-    }
+    if (willSave) { setFavPulse(true); setTimeout(() => setFavPulse(false), 600); }
   };
 
-  const ptLen   = (card.pt     || "").length;
-  const tgtLen  = (card.target || "").length;
-  const frontSz = ptLen  <= 8  ? "3rem"   : ptLen  <= 20 ? "2.25rem" : "1.5rem";
-  const backSz  = tgtLen <= 12 ? "2.75rem" : tgtLen <= 24 ? "2rem"   : "1.4rem";
+  const ptLen  = (card.pt     || "").length;
+  const tgtLen = (card.target || "").length;
+  const frontSz = ptLen  <= 8  ? "3rem"    : ptLen  <= 20 ? "2.25rem" : "1.5rem";
+  const backSz  = tgtLen <= 12 ? "2.75rem" : tgtLen <= 24 ? "2rem"    : "1.4rem";
 
   return (
     <div className="w-full" style={{ perspective: 1400, height: 280 }}>
-      {/* Entrance wrapper — slides in from left once, never re-animates */}
-      <motion.div key={card.pt + card.target}
-        initial={{ opacity: 0, x: -40 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ opacity: { duration: 0.18 }, x: { type: "spring", stiffness: 340, damping: 28 } }}
-        className="relative w-full"
-        style={{ height: "100%" }}>
-        {/* Flip wrapper — only handles rotateY, no entrance animation */}
-        <motion.div
-          animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{ duration: 0.48, ease: [0.4, 0, 0.2, 1] }}
-          className="relative w-full cursor-pointer"
-          style={{ transformStyle: "preserve-3d", height: "100%" }}
-          onClick={onClick}>
+      {/* Single motion.div handles ONLY the flip — no x/entrance here */}
+      <motion.div
+        animate={{
+          rotateY: isFlipped ? 180 : 0,
+          scale: isFlipped ? [1, 1.03, 1] : 1,
+        }}
+        transition={{
+          rotateY: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+          scale:   { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+        }}
+        className="relative w-full cursor-pointer"
+        style={{ transformStyle: "preserve-3d", height: "100%" }}
+        onClick={onClick}>
 
-        {/* FRONT — glass morphism, massive ink type */}
+        {/* FRONT */}
         <div className="absolute inset-0 flex flex-col justify-between p-7"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
             ...glass.card, borderRadius: R.xl }}>
           {showLangBadge
             ? <span className="self-start text-xs font-black px-3 py-1.5 shrink-0"
                 style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>{lang.name}</span>
-            : <div className="shrink-0" />
-          }
+            : <div className="shrink-0" />}
           <div className="min-w-0 overflow-hidden">
             <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Português</p>
             <p className="font-black leading-none break-words"
@@ -883,7 +878,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
           </p>
         </div>
 
-        {/* BACK — glass accent, white editorial type */}
+        {/* BACK */}
         <div className="absolute inset-0 flex flex-col justify-between p-7"
           style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)", ...glass.accent(lang.accent), borderRadius: R.xl }}>
@@ -891,19 +886,15 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
             <button onClick={handleTTS} className="p-1 -ml-1">
               {ttsPlaying
                 ? <VolumeX size={20} style={{ color: "rgba(255,255,255,0.75)" }} />
-                : <Volume2  size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.55)" }} />
-              }
+                : <Volume2  size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.55)" }} />}
             </button>
             <div className="relative" style={{ overflow: "visible" }}>
               <motion.button onClick={handleFav} className="p-1 -mr-1 relative" style={{ overflow: "visible" }}>
-                {/* Rolling "Salvo!" — clips up like the % counter, only on save */}
                 <div className="absolute pointer-events-none" style={{ right: 0, bottom: 28, height: 20, overflow: "hidden" }}>
                   <AnimatePresence>
                     {favPulse && (
                       <motion.span key="salvo"
-                        initial={{ y: 20, opacity: 1 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -20, opacity: 0 }}
+                        initial={{ y: 20 }} animate={{ y: 0 }} exit={{ y: -20 }}
                         transition={{ type: "spring", stiffness: 400, damping: 28 }}
                         className="block text-xs font-black text-white whitespace-nowrap"
                         style={{ textShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>
@@ -912,14 +903,12 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
                     )}
                   </AnimatePresence>
                 </div>
-                {/* Icon spring pop on save only */}
                 <motion.div
                   animate={favPulse ? { scale: [1, 1.5, 0.88, 1], y: [0, -6, 0] } : { scale: 1, y: 0 }}
                   transition={{ type: "spring", stiffness: 480, damping: 14 }}>
                   {isFav
                     ? <BookMarked size={20} style={{ color: "#fff" }} />
-                    : <Bookmark  size={20} style={{ color: "rgba(255,255,255,0.45)" }} />
-                  }
+                    : <Bookmark  size={20} style={{ color: "rgba(255,255,255,0.45)" }} />}
                 </motion.div>
               </motion.button>
             </div>
@@ -933,7 +922,6 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
           </div>
           <div />
         </div>
-        </motion.div>
       </motion.div>
     </div>
   );
@@ -1051,27 +1039,37 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const accentColor  = cardLangMeta.accent;
 
   const handleFlip = () => {
-    if (!isFlipped) {
-      setIsFlipped(true);
-      setTimeout(() => { if (mounted.current) setButtonsVisible(true); }, 630);
-    }
+    if (!isFlipped) setIsFlipped(true);
   };
 
-  const resetCard = () => { setIsFlipped(false); setAnswered(false); setButtonsVisible(false); };
+  const resetCard = () => {
+    setIsFlipped(false);
+    setAnswered(false);
+    setButtonsVisible(false);
+  };
+
+  // After flip completes (500ms) reveal buttons
+  useEffect(() => {
+    if (!isFlipped) return;
+    const t = setTimeout(() => { if (mounted.current) setButtonsVisible(true); }, 520);
+    return () => clearTimeout(t);
+  }, [isFlipped]);
 
   const handleAnswer = async (knew) => {
     if (!isFlipped || answered) return;
     setAnswered(true);
+    // Hide buttons and tip immediately — clean slate before card exits
+    setButtonsVisible(false);
     setFlashColor(knew ? "green" : "red");
     if (knew) {
-      await controls.start({ x: 100, opacity: 0, rotate: 6, transition: { duration: 0.26, ease: "easeIn" } });
+      await controls.start({ opacity: 0, scale: 0.9, transition: { duration: 0.22, ease: "easeIn" } });
     } else {
-      await controls.start({ x: [-6, 6, -5, 5, 0], transition: { duration: 0.35 } });
-      await controls.start({ x: -100, opacity: 0, rotate: -6, transition: { duration: 0.22, ease: "easeIn" } });
+      await controls.start({ x: [-6, 6, -5, 5, 0], transition: { duration: 0.32 } });
+      await controls.start({ opacity: 0, scale: 0.9, x: -30, transition: { duration: 0.2, ease: "easeIn" } });
     }
     if (!mounted.current) return;
     setFlashColor(null);
-    controls.set({ x: 0, opacity: 1, rotate: 0 });
+    controls.set({ opacity: 1, scale: 1, x: 0 });
     if (knew) {
       const newCorrect = correct + 1;
       setCorrect(newCorrect);
@@ -1095,6 +1093,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       setQueue(nq);
       setCurrentIdx(Math.min(currentIdx, nq.length - 1));
     }
+    // Reset after queue update — isFlipped goes false AFTER new card key is set
     resetCard();
   };
 
@@ -1171,7 +1170,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
         </div>
 
         <div className="flex flex-col gap-4 flex-1 justify-center">
-          {/* Card */}
+          {/* Card — key drives entrance animation, controls drives exit */}
           <div className="relative" style={{ height: 280 }}>
             <AnimatePresence>
               {flashColor && (
@@ -1188,34 +1187,41 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   style={{ backgroundColor: accentColor, opacity: bleedRight, borderRadius: R.xl }} />
               </>
             )}
-            <motion.div animate={controls} style={{ height: "100%", x: dragX }}
-              drag={isFlipped && !answered ? "x" : false}
-              dragConstraints={{ left: -120, right: 120 }}
-              dragElastic={0.15}
-              onDragEnd={handleDragEnd}
-              whileDrag={{ cursor: "grabbing" }}>
-              <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
-                lang={cardLangMeta} langCode={cardLang} isFav={isFav}
-                onToggleFav={c => onToggleFav(cardLang, c)}
-                showLangBadge={isFavAll} />
+            {/* Entrance wrapper — key triggers fresh slide-in for each new card */}
+            <motion.div key={`${cardLang}-${card.pt}`}
+              initial={{ opacity: 0, x: -32 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ opacity: { duration: 0.16 }, x: { type: "spring", stiffness: 360, damping: 30 } }}
+              style={{ height: "100%" }}>
+              {/* Exit wrapper — controls drives fade/scale out on answer */}
+              <motion.div animate={controls} style={{ height: "100%", x: dragX }}
+                drag={isFlipped && !answered ? "x" : false}
+                dragConstraints={{ left: -120, right: 120 }}
+                dragElastic={0.15}
+                onDragEnd={handleDragEnd}
+                whileDrag={{ cursor: "grabbing" }}>
+                <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
+                  lang={cardLangMeta} langCode={cardLang} isFav={isFav}
+                  onToggleFav={c => onToggleFav(cardLang, c)}
+                  showLangBadge={isFavAll} />
+              </motion.div>
             </motion.div>
           </div>
 
-          {/* Tip box — animated in/out */}
-          <div className="min-h-[20px]">
+          {/* Tip — stable container height, content fades in/out */}
+          <div style={{ minHeight: 72 }}>
             <AnimatePresence mode="wait">
               {!isFlipped ? (
                 <motion.p key="hint"
-                  initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}
-                  className="text-center text-xs font-medium" style={{ color: "#C0BBB4" }}>
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-center text-xs font-medium pt-6" style={{ color: "#C0BBB4" }}>
                   Toque no card para ver a tradução
                 </motion.p>
               ) : (card.example || card.tip) ? (
                 <motion.div key="tip"
-                  initial={{ opacity: 0, y: 8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                  transition={{ type: "spring", stiffness: 340, damping: 28, delay: 0.08 }}
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }}
                   className="px-5 py-4 space-y-2" style={{ ...glass.card, borderRadius: R.xl }}>
                   {card.example && (
                     <p className="text-xs font-semibold leading-snug" style={{ color: C.ink }}>
@@ -1225,31 +1231,33 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   {card.tip && <p className="text-xs leading-snug" style={{ color: C.dim }}>{card.tip}</p>}
                 </motion.div>
               ) : (
-                <motion.div key="empty" initial={{ opacity: 0 }} exit={{ opacity: 0 }} />
+                <motion.div key="empty" style={{ height: 72 }} />
               )}
             </AnimatePresence>
           </div>
 
-          {/* Answer buttons — animated in, animated out */}
-          <AnimatePresence>
-            {buttonsVisible && (
-              <motion.div key="btns" className="flex gap-3"
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8, transition: { duration: 0.15 } }}
-                transition={{ type: "spring", stiffness: 380, damping: 28 }}>
-                <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
-                  className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-                  style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.25)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
-                  <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
-                </motion.button>
-                <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
-                  className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-                  style={{ background: "linear-gradient(135deg, rgba(30,30,30,0.92), rgba(17,17,17,0.98))", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "0.95rem", boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
-                  <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Buttons — slide up after flip, stable space reserved */}
+          <div style={{ height: 60 }}>
+            <AnimatePresence>
+              {buttonsVisible && (
+                <motion.div key="btns" className="flex gap-3"
+                  initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                  transition={{ type: "spring", stiffness: 420, damping: 26 }}>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
+                    className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
+                    style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.25)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+                    <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
+                    className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
+                    style={{ background: "linear-gradient(135deg, rgba(30,30,30,0.92), rgba(17,17,17,0.98))", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "0.95rem", boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+                    <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Stats footer — glass pill */}
