@@ -550,20 +550,17 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         {/* Blob 1 — 22s cycle, warm coral-rose */}
         <motion.div
           style={{ position: "absolute", top: "-5%", left: "-10%", width: "75vw", height: "75vw", maxWidth: 600, maxHeight: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(230,80,60,0.42) 0%, rgba(255,140,100,0.22) 50%, transparent 72%)", filter: "blur(70px)", willChange: "transform" }}
-          animate={{ x: [0, 90, 40, -50, 0], y: [0, -40, 50, -15, 0], scale: [1, 0.97, 1.07, 0.98, 1] }}
-          transition={{ duration: 22, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
+
         />
         {/* Blob 2 — 28s cycle, soft lavender-blue */}
         <motion.div
           style={{ position: "absolute", bottom: "-10%", right: "-5%", width: "65vw", height: "65vw", maxWidth: 520, maxHeight: 520, borderRadius: "50%", background: "radial-gradient(circle, rgba(100,120,230,0.36) 0%, rgba(140,160,255,0.18) 50%, transparent 72%)", filter: "blur(80px)", willChange: "transform" }}
-          animate={{ x: [0, -60, -20, 55, 0], y: [0, 35, -50, 18, 0], scale: [1, 1.08, 0.96, 1.05, 1] }}
-          transition={{ duration: 28, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
+
         />
         {/* Blob 3 — 34s cycle, warm amber-gold */}
         <motion.div
           style={{ position: "absolute", top: "35%", left: "30%", width: "60vw", height: "60vw", maxWidth: 480, maxHeight: 480, borderRadius: "50%", background: "radial-gradient(circle, rgba(210,155,60,0.32) 0%, rgba(250,195,100,0.16) 50%, transparent 72%)", filter: "blur(85px)", willChange: "transform" }}
-          animate={{ x: [0, 45, -35, 25, 0], y: [0, 25, 55, -35, 0], scale: [1, 0.94, 1.10, 0.97, 1] }}
-          transition={{ duration: 34, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
+
         />
         {/* Gyroscope overlay — reacts to phone tilt */}
         <GyroBlobs />
@@ -635,6 +632,49 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
               <ArrowRight size={22} className="text-white shrink-0" />
             </motion.button>
           ) : null;
+        })()}
+
+        {/* New user CTA — only when no lastStudied */}
+        {!lastStudied && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            className="mb-6 p-5" style={{ ...glass.card, borderRadius: R.xl }}>
+            <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: C.dim }}>Comece aqui</div>
+            <p className="text-sm mb-4" style={{ color: C.dim }}>Aprenda as primeiras palavras em Espanhol — o idioma mais próximo do Português.</p>
+            <motion.button whileTap={{ scale: 0.97 }}
+              onClick={() => onSelectLang("es", "cumprimentos")}
+              className="w-full flex items-center justify-between px-5 py-3.5 font-black"
+              style={{ backgroundColor: LANG_META.es.accent, color: "#fff", borderRadius: R.xl }}>
+              <span>Cumprimentos em Espanhol</span>
+              <ArrowRight size={18} />
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* Daily challenge */}
+        {dailyChallenge && (() => {
+          const cLang = LANG_META[dailyChallenge.lang];
+          const done = stats.completedDecks?.[dailyChallenge.deck]?.includes(dailyChallenge.lang);
+          return (
+            <motion.button whileTap={{ scale: 0.97 }}
+              onClick={() => onSelectLang(dailyChallenge.lang, dailyChallenge.deck)}
+              className="w-full flex items-center justify-between px-5 py-4 mb-4 text-left"
+              style={{ ...glass.card, borderRadius: R.xl, opacity: done ? 0.6 : 1 }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: cLang.accent, borderRadius: R.card }}>
+                  <Zap size={18} className="text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: C.dim }}>Desafio do dia</div>
+                  <div className="font-black" style={{ fontSize: "1rem", color: C.ink }}>{getDeckLabel(dailyChallenge.deck, dailyChallenge.lang)} — {cLang.name}</div>
+                </div>
+              </div>
+              {done
+                ? <Check size={18} style={{ color: "#16A34A", flexShrink: 0 }} />
+                : <span className="text-xs font-black px-2.5 py-1 shrink-0" style={{ backgroundColor: "#EF9F27", color: "#fff", borderRadius: R.pill }}>+XP bônus</span>
+              }
+            </motion.button>
+          );
         })()}
 
         {/* Language list */}
@@ -1045,6 +1085,10 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
+  // SRS: load per-card difficulty from storage
+  const srsKey = `lf_srs_${langCode}_${deckKey}`;
+  const srsData = useMemo(() => getStorage(srsKey, {}), []); // eslint-disable-line
+
   const originalCards = useMemo(() => {
     if (isFavAll)
       return shuffle(Object.entries(LANG_META).flatMap(([code]) =>
@@ -1054,7 +1098,14 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       ));
     if (isFavDeck)
       return shuffle(Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`]));
-    return shuffle([...VOCAB[langCode][deckKey]]);
+    // SRS: sort by difficulty — hard cards (score < 0.5) first, easy last
+    const cards = [...VOCAB[langCode][deckKey]];
+    cards.sort((a, b) => {
+      const sa = srsData[a.pt]?.score ?? 0.5;
+      const sb = srsData[b.pt]?.score ?? 0.5;
+      return sa - sb; // hardest first
+    });
+    return cards;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1067,6 +1118,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const [flashColor,     setFlashColor]     = useState(null);
   const [showConfetti,   setShowConfetti]   = useState(false);
   const [buttonsVisible, setButtonsVisible] = useState(false);
+  const [wrongCards,     setWrongCards]     = useState([]);
 
   const controls = useAnimation();
   const [dragOffset, setDragOffset] = useState(0);
@@ -1101,6 +1153,11 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const handleAnswer = async (knew) => {
     if (!isFlipped || answered) return;
     setAnswered(true);
+    const isAlmost = knew === "almost";
+    const isCorrect = knew === true;
+    // Haptic feedback — triple pulse for "almost"
+    if (navigator.vibrate) navigator.vibrate(isCorrect ? [10] : isAlmost ? [10, 30, 10] : [10, 50, 10]);
+    knew = isCorrect; // normalize for the rest of the logic — "almost" behaves like wrong (recycles)
     // Hide buttons and tip immediately — clean slate before card exits
     setButtonsVisible(false);
     setFlashColor(knew ? "green" : "red");
@@ -1120,17 +1177,30 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       const newQueue = queue.filter((_, i) => i !== currentIdx);
       if (newQueue.length === 0) {
         const totalAns = newCorrect + incorrect;
-        const xpGained = Math.round(newCorrect / totalAns * 50) + 10;
+        // XP scales with deck size and accuracy, minimum 10
+        const baseXP = Math.max(10, Math.round(total * 1.5));
+        const xpGained = Math.round(baseXP * (newCorrect / totalAns));
         const accuracy = Math.round(newCorrect / totalAns * 100);
         onXP(xpGained, accuracy);
         setShowConfetti(true);
-        setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAns, xpGained, deckKey, langCode, accuracy }); }, 800);
+        setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAns, xpGained, deckKey, langCode, accuracy, wrongCards }); }, 800);
         return;
+      }
+      if (!isFavDeck) {
+        const prev = srsData[card.pt] ?? { score: 0.5, attempts: 0 };
+        srsData[card.pt] = { score: Math.min(1, prev.score + 0.15), attempts: prev.attempts + 1 };
+        setStorage(srsKey, srsData);
       }
       setQueue(newQueue);
       setCurrentIdx(Math.min(currentIdx, newQueue.length - 1));
     } else {
       setIncorrect(inc => inc + 1);
+      setWrongCards(prev => prev.find(w => w.pt === card.pt) ? prev : [...prev, { ...card, _lang: cardLang }]);
+      if (!isFavDeck) {
+        const prev = srsData[card.pt] ?? { score: 0.5, attempts: 0 };
+        srsData[card.pt] = { score: Math.max(0, prev.score - 0.2), attempts: prev.attempts + 1 };
+        setStorage(srsKey, srsData);
+      }
       const nq = [...queue];
       const [rem] = nq.splice(currentIdx, 1);
       nq.splice(Math.min(currentIdx + 2, nq.length), 0, rem);
@@ -1170,7 +1240,8 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      className="min-h-screen flex flex-col"
+      style={{ background: `linear-gradient(160deg, ${accentColor}08 0%, var(--cream) 35%)`, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
       <Confetti active={showConfetti} accentColor={accentColor} />
       <NavBar
         title={deckLabel} subtitle={isReview ? "Revisão" : undefined}
@@ -1430,6 +1501,28 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
           ))}
         </div>
 
+        {/* Error review — missed words */}
+        {result.wrongCards && result.wrongCards.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+            className="mb-6 p-5" style={{ ...glass.card, borderRadius: R.xl }}>
+            <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Revisar erros</div>
+            <div className="space-y-2.5">
+              {result.wrongCards.map((w, i) => {
+                const wLang = LANG_META[w._lang || result.langCode] ?? lang;
+                return (
+                  <div key={i} className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-bold" style={{ color: C.ink }}>{w.pt}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm" style={{ color: wLang.accent }}>{w.target}</span>
+                      {w.phonetic && <span className="text-xs" style={{ color: C.dim }}>{w.phonetic}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {/* CTAs — glass */}
         <div className="flex flex-col gap-3 mt-auto">
           {nextDeck && (
@@ -1463,6 +1556,24 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
             </motion.button>
           </div>
         </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── BADGE TOAST ─────────────────────────────────────────────────────────────
+function BadgeToast({ badge, onDone }) {
+  const Illus = BadgeIllustrations[badge.id];
+  return (
+    <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 80 }}
+      transition={{ type: "spring", stiffness: 320, damping: 28 }}
+      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-4"
+      style={{ ...glass.dark, borderRadius: R.xl, maxWidth: 320, boxShadow: "0 16px 48px rgba(0,0,0,0.3)" }}>
+      {Illus && <Illus dim={false} />}
+      <div>
+        <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Conquista desbloqueada!</div>
+        <div className="font-black text-white" style={{ fontSize: "1rem" }}>{badge.label}</div>
       </div>
     </motion.div>
   );
@@ -1502,18 +1613,38 @@ export default function App() {
   const [lastStudied,    setLastStudied]    = useState(() => getStorage("lf_last_studied", null));
   const [studySessionId, setStudySessionId] = useState(0);
   const [levelUp,        setLevelUp]        = useState(null);
+  const [badgeUnlock,    setBadgeUnlock]    = useState(null);
 
   const [xp,        setXP]        = useState(() => getStorage("lf_xp", 0));
   const [favorites, setFavorites] = useState(() => getStorage("lf_favorites", {}));
   const [streak,    setMolejo]    = useState(() => {
     const today     = new Date().toDateString();
-    const saved     = getStorage("lf_streak", { count: 0, lastDate: null });
+    const saved     = getStorage("lf_streak", { count: 0, lastDate: null, shieldUsed: false });
     const yesterday = new Date(Date.now() - 86400000).toDateString();
-    return (saved.lastDate === today || saved.lastDate === yesterday) ? saved.count : 0;
+    const twoDaysAgo = new Date(Date.now() - 172800000).toDateString();
+    // Grace period: if missed exactly 1 day and has shield (earned at streak≥7), restore streak
+    if (saved.lastDate === today || saved.lastDate === yesterday) return saved.count;
+    if (saved.lastDate === twoDaysAgo && saved.count >= 7 && !saved.shieldUsed) {
+      setStorage("lf_streak", { ...saved, lastDate: yesterday, shieldUsed: true });
+      return saved.count;
+    }
+    return 0;
   });
   const [stats, setStats] = useState(() => getStorage("lf_stats", {
     totalCorrect: 0, totalAttempts: 0, completedDecks: {}, studied: {}, perfectSessions: 0
   }));
+  const [dailyChallenge] = useState(() => {
+    const today = new Date().toDateString();
+    const saved = getStorage("lf_daily", null);
+    if (saved?.date === today) return saved;
+    // Pick a random deck + language as today's challenge
+    const langs = ["es", "it"];
+    const lang = langs[new Date().getDate() % langs.length];
+    const deck = DECK_KEYS[new Date().getDate() % DECK_KEYS.length];
+    const challenge = { date: today, lang, deck, completed: false };
+    setStorage("lf_daily", challenge);
+    return challenge;
+  });
 
   const bumpMolejo = useCallback(() => {
     const today = new Date().toDateString();
@@ -1523,6 +1654,17 @@ export default function App() {
       const newCount  = saved.lastDate === yesterday ? saved.count + 1 : 1;
       setMolejo(newCount);
       setStorage("lf_streak", { count: newCount, lastDate: today });
+    }
+  }, []);
+
+  const checkNewBadges = useCallback((newStats, newStreak) => {
+    const prevBadges = getStorage("lf_badges", []);
+    const earned = BADGES.filter(b => b.check(newStats, newStreak));
+    const newOnes = earned.filter(b => !prevBadges.includes(b.id));
+    if (newOnes.length > 0) {
+      setStorage("lf_badges", earned.map(b => b.id));
+      setBadgeUnlock(newOnes[0]);
+      setTimeout(() => setBadgeUnlock(null), 3000);
     }
   }, []);
 
@@ -1548,7 +1690,8 @@ export default function App() {
       });
     }
     bumpMolejo();
-  }, [bumpMolejo, streak]);
+    setStats(prev => { checkNewBadges(prev, streak); return prev; });
+  }, [bumpMolejo, streak, checkNewBadges]);
 
   const handleToggleFav = useCallback((langCode, card) => {
     const key = `${langCode}:${card.pt}`;
@@ -1610,68 +1753,84 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased", backgroundColor: C.cream }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif}body{background:${C.cream};background-image:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%)}::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+:root{--cream:#FAF9F6;--ink:#111111;--dim:#888888;--surface:rgba(255,255,255,0.78);--surface-border:rgba(255,255,255,0.7);--bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%)}
+@media(prefers-color-scheme:dark){:root{--cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;--surface:rgba(40,38,34,0.85);--surface-border:rgba(255,255,255,0.1);--bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(120,60,50,0.25), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,120,0.2), transparent 50%)}}
+*{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+body{background:var(--cream);background-image:var(--bg-gradient)}
+::placeholder{color:rgba(255,255,255,0.45)!important}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}.skeleton{background:linear-gradient(90deg,rgba(0,0,0,0.06) 25%,rgba(0,0,0,0.12) 50%,rgba(0,0,0,0.06) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}`}</style>
         <AnimatePresence>
           {levelUp && (
             <LevelUpOverlay key="levelup" level={levelUp}
               accentColor={selectedLang ? LANG_META[selectedLang]?.accent : undefined} />
           )}
+          {badgeUnlock && (
+            <BadgeToast key={badgeUnlock.id} badge={badgeUnlock} onDone={() => setBadgeUnlock(null)} />
+          )}
         </AnimatePresence>
-        <div>
-          {screen === "onboard" && (
-            <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
-          )}
-          {screen === "dashboard" && (
-            <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
-              lastStudied={lastStudied}
-              onSelectLang={handleSelectLangDirect}
-              onOpenFavorites={() => setScreen("favorites")}
-              onOpenStats={() => setScreen("stats")} />
-          )}
-          {screen === "stats" && (
-            <StatsScreen key="stats" stats={stats} xp={xp} streak={streak}
-              onBack={() => setScreen("dashboard")}
-              onStudyDeck={handleStudyFromStats} />
-          )}
-          {screen === "favorites" && (
-            <FavoritesScreen key="favorites" favorites={favorites}
-              onStudyFavs={(code, deck) => goStudy(
-                code === "__all__" ? Object.keys(favorites)[0]?.split(":")[0] || "es" : code,
-                deck, true
+        <div style={{ position: "relative", overflow: "hidden" }}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={screen}
+              initial={{ opacity: 0, x: 32 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -32 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}>
+              {screen === "onboard" && (
+                <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
               )}
-              onBack={() => setScreen("dashboard")}
-              onClearAll={() => { setFavorites({}); setStorage("lf_favorites", {}); }} />
-          )}
-          {screen === "decks" && (
-            <DeckSelector key="decks" langCode={selectedLang} streak={streak}
-              completedDecks={stats.completedDecks || {}}
-              onSelectDeck={key => handleSelectDeck(selectedLang, key)}
-              onBack={() => setScreen("dashboard")} />
-          )}
-          {screen === "mastered" && (
-            <MasteredScreen key="mastered"
-              deckLabel={getDeckLabel(selectedDeck, selectedLang)}
-              lang={LANG_META[selectedLang]}
-              onReview={() => goStudy(selectedLang, selectedDeck, false, true)}
-              onBack={() => setScreen("decks")} />
-          )}
-          {screen === "study" && (
-            <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${studySessionId}`}
-              langCode={selectedLang} deckKey={selectedDeck}
-              favorites={favorites} onToggleFav={handleToggleFav}
-              isReview={isReview} streak={streak}
-              onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); setResult(res); setScreen("result"); }}
-              onXP={addXP} onBack={backFromStudy} />
-          )}
-          {screen === "result" && result && (
-            <ResultScreen key="result" result={result}
-              langCode={selectedLang} deckKey={selectedDeck}
-              fromFavorites={fromFavorites} streak={streak}
-              onRestart={() => { setIsReview(true); setStudySessionId(id => id + 1); setScreen("study"); }}
-              onHome={homeFromResult}
-              onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
-              onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)} />
-          )}
+              {screen === "dashboard" && (
+                <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
+                  lastStudied={lastStudied}
+                  onSelectLang={handleSelectLangDirect}
+                  onOpenFavorites={() => setScreen("favorites")}
+                  onOpenStats={() => setScreen("stats")} />
+              )}
+              {screen === "stats" && (
+                <StatsScreen key="stats" stats={stats} xp={xp} streak={streak}
+                  onBack={() => setScreen("dashboard")}
+                  onStudyDeck={handleStudyFromStats} />
+              )}
+              {screen === "favorites" && (
+                <FavoritesScreen key="favorites" favorites={favorites}
+                  onStudyFavs={(code, deck) => goStudy(
+                    code === "__all__" ? Object.keys(favorites)[0]?.split(":")[0] || "es" : code,
+                    deck, true
+                  )}
+                  onBack={() => setScreen("dashboard")}
+                  onClearAll={() => { setFavorites({}); setStorage("lf_favorites", {}); }} />
+              )}
+              {screen === "decks" && (
+                <DeckSelector key="decks" langCode={selectedLang} streak={streak}
+                  completedDecks={stats.completedDecks || {}}
+                  onSelectDeck={key => handleSelectDeck(selectedLang, key)}
+                  onBack={() => setScreen("dashboard")} />
+              )}
+              {screen === "mastered" && (
+                <MasteredScreen key="mastered"
+                  deckLabel={getDeckLabel(selectedDeck, selectedLang)}
+                  lang={LANG_META[selectedLang]}
+                  onReview={() => goStudy(selectedLang, selectedDeck, false, true)}
+                  onBack={() => setScreen("decks")} />
+              )}
+              {screen === "study" && (
+                <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${studySessionId}`}
+                  langCode={selectedLang} deckKey={selectedDeck}
+                  favorites={favorites} onToggleFav={handleToggleFav}
+                  isReview={isReview} streak={streak}
+                  onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); setResult(res); setScreen("result"); }}
+                  onXP={addXP} onBack={backFromStudy} />
+              )}
+              {screen === "result" && result && (
+                <ResultScreen key="result" result={result}
+                  langCode={selectedLang} deckKey={selectedDeck}
+                  fromFavorites={fromFavorites} streak={streak}
+                  onRestart={() => { setIsReview(true); setStudySessionId(id => id + 1); setScreen("study"); }}
+                  onHome={homeFromResult}
+                  onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
+                  onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)} />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </ErrorBoundary>
