@@ -289,7 +289,7 @@ function HelpModal({ onClose }) {
         transition={{ type: "spring", stiffness: 340, damping: 34 }}
         onClick={e => e.stopPropagation()}
         className="w-full max-w-md pb-10 px-6 pt-7"
-        style={{ background: "rgba(250,249,246,0.96)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)", borderRadius: `${R.xl}px ${R.xl}px 0 0` }}>
+        style={{ background: "var(--glass-nav)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)", borderRadius: `${R.xl}px ${R.xl}px 0 0`, borderTop: "1px solid var(--glass-border)" }}>
         <div className="flex items-center justify-between mb-7">
           <h2 className="font-black" style={{ fontSize: "1.75rem", color: C.ink }}>Como funciona</h2>
           <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full"
@@ -441,7 +441,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
               return (
                 <motion.div key={b.id} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className="flex flex-col items-center gap-1.5 text-center">
+                  className="badge-earned flex flex-col items-center gap-1.5 text-center">
                   {Illus ? <Illus dim={false} /> : <span style={{ fontSize: 26 }}>⭐</span>}
                   <span style={{ color: C.ink, fontSize: "0.6rem", fontWeight: 700, lineHeight: 1.2 }}>{b.label}</span>
                 </motion.div>
@@ -450,7 +450,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
             {lockedBadges.map(b => {
               const Illus = BadgeIllustrations[b.id];
               return (
-                <div key={b.id} className="flex flex-col items-center gap-1.5 text-center" style={{ opacity: 0.25 }}>
+                <div key={b.id} className="badge-locked flex flex-col items-center gap-1.5 text-center" style={{ opacity: 0.25 }}>
                   {Illus ? <Illus dim={true} /> : <span style={{ fontSize: 26, filter: "grayscale(1)" }}>⭐</span>}
                   <span style={{ color: C.dim, fontSize: "0.6rem", fontWeight: 600, lineHeight: 1.2 }}>{b.label}</span>
                 </div>
@@ -842,7 +842,8 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
       className="min-h-screen relative" style={{ backgroundColor: lang.accent }}>
       {/* Dark mode darkening overlay */}
       <div className="lf-deck-overlay absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
-      <NavBar bg={lang.accent} textColor="rgba(255,255,255,0.5)"
+      <div className="lf-deck-nav-tint" style={{ backgroundColor: lang.accent }}>
+      <NavBar bg="transparent" textColor="rgba(255,255,255,0.5)"
         left={
           <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black"
             style={{ color: "rgba(255,255,255,0.75)" }}>
@@ -857,6 +858,7 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
           </div>
         }
       />
+      </div>
       <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8">
         <h1 className="font-black text-white leading-none mb-1"
           style={{ fontSize: "3.5rem", letterSpacing: "-0.02em" }}>{lang.name}</h1>
@@ -1455,7 +1457,7 @@ const RESULT_COPY = {
   ],
 };
 
-function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck, onNextLang, fromFavorites, streak = 0 }) {
+function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck, onNextLang, onReviewErrors, fromFavorites, streak = 0 }) {
   const lang         = LANG_META[langCode] ?? { accent: C.ink };
   const accuracy     = Math.round((result.correct / result.total) * 100);
   const langDeckKeys = getLangDeckKeys(langCode);
@@ -1493,10 +1495,9 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
   }), []);
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
-      <NavBar />
-      <div className="flex-1 max-w-md mx-auto w-full px-5 pt-6 pb-14 flex flex-col">
+      <div className="flex-1 max-w-md mx-auto w-full px-5 pt-14 pb-14 flex flex-col">
 
         {/* Score hero */}
         <motion.div className="mb-8" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -1533,25 +1534,37 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
           ))}
         </div>
 
-        {/* Error review — missed words */}
+        {/* Error review — missed words with study CTA */}
         {result.wrongCards && result.wrongCards.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
-            className="mb-6 p-5" style={{ ...glass.card, borderRadius: R.xl }}>
-            <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Revisar erros</div>
-            <div className="space-y-2.5">
-              {result.wrongCards.map((w, i) => {
-                const wLang = LANG_META[w._lang || result.langCode] ?? lang;
-                return (
-                  <div key={i} className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-bold" style={{ color: C.ink }}>{w.pt}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm" style={{ color: wLang.accent }}>{w.target}</span>
-                      {w.phonetic && <span className="text-xs" style={{ color: C.dim }}>{w.phonetic}</span>}
+            className="mb-6" style={{ ...glass.card, borderRadius: R.xl, overflow: "hidden" }}>
+            <div className="px-5 pt-5 pb-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-black tracking-widest uppercase" style={{ color: C.dim }}>
+                  {result.wrongCards.length} erro{result.wrongCards.length > 1 ? "s" : ""}
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {result.wrongCards.map((w, i) => {
+                  const wLang = LANG_META[w._lang || result.langCode] ?? lang;
+                  return (
+                    <div key={i} className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-bold" style={{ color: C.ink }}>{w.pt}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold" style={{ color: wLang.accent }}>{w.target}</span>
+                        {w.phonetic && <span className="text-xs" style={{ color: C.dim }}>{w.phonetic}</span>}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
+            <motion.button whileTap={{ scale: 0.98 }} onClick={onReviewErrors}
+              className="w-full flex items-center justify-between px-5 py-3.5 font-black"
+              style={{ backgroundColor: lang.accent, color: "#fff", fontSize: "0.9rem" }}>
+              <span>Estudar os erros agora</span>
+              <RotateCcw size={16} />
+            </motion.button>
           </motion.div>
         )}
 
@@ -1825,7 +1838,7 @@ export default function App() {
 *{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
 html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark;transition:background 0.3s ease}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.35)}.lf-dark .lf-deck-content{position:relative;z-index:1}.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.38)}.lf-dark .lf-deck-nav-tint{background:rgba(0,0,0,0.38)!important}.lf-dark .badge-locked{opacity:0.4!important;filter:brightness(1.4) grayscale(1)}.lf-dark .badge-earned{filter:brightness(1.1)}.lf-dark .lf-deck-content{position:relative;z-index:1}.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
 ::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
@@ -1896,7 +1909,18 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
                   onRestart={() => { setIsReview(true); setStudySessionId(id => id + 1); setScreen("study"); }}
                   onHome={homeFromResult}
                   onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
-                  onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)} />
+                  onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)}
+                  onReviewErrors={() => {
+                    const r = result || pendingResult.current;
+                    if (!r?.wrongCards?.length) return;
+                    // Save wrong cards as favorites then open favorites study
+                    r.wrongCards.forEach(w => {
+                      const lc = w._lang || selectedLang;
+                      const key = `${lc}:${w.pt}`;
+                      setFavorites(prev => { const next = { ...prev, [key]: true }; setStorage("lf_favorites", next); return next; });
+                    });
+                    goStudy(selectedLang, "__favorites__", true);
+                  }} />
               )}
             </motion.div>
           </AnimatePresence>
