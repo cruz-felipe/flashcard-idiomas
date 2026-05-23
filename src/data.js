@@ -19,7 +19,7 @@ export const DECKS = {
   casa:         { label: "Casa & Objetos",      labelEN: "Home & Objects",     icon: Home          },
   adjetivos:    { label: "Adjetivos",           labelEN: "Adjectives",         icon: Smile         },
   frases:       { label: "Frases & Expressões", labelEN: "Phrases & Expressions", icon: Sparkles   },
-  tech:         { label: "UX & Tecnologia",     labelEN: "UX & Tech",             icon: Laptop     },
+  tech:         { label: "Tecnologia",          labelEN: "Technology",            icon: Laptop     },
 };
 
 // Helper: get deck label for current language context

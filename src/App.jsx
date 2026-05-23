@@ -236,7 +236,7 @@ function Onboarding({ onDone }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      style={{ backgroundColor: 'var(--cream)' }}>
       <button onClick={onDone} className="absolute top-6 right-6 z-10 text-xs font-black tracking-widest uppercase"
         style={{ color: C.dim }}>Pular</button>
       {/* Accent circle — geometric decoration like ref 1 */}
@@ -284,7 +284,7 @@ function HelpModal({ onClose }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.55)" }} onClick={onClose}>
+      style={{ backgroundColor: "rgba(0,0,0,0.65)" }} onClick={onClose}>
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", stiffness: 340, damping: 34 }}
         onClick={e => e.stopPropagation()}
@@ -406,7 +406,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20 space-y-4">
 
@@ -544,7 +544,7 @@ function GyroBlobs() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, isDark, theme, onToggleTheme }) {
   const [showHelp, setShowHelp] = useState(false);
   const [ready, setReady]       = useState(false);
   const favCount = Object.keys(favorites).length;
@@ -609,7 +609,15 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className="relative min-h-screen" style={{ zIndex: 1 }}>
       {/* Floating help button — no bar, directly on background */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <motion.button whileTap={{ scale: 0.92 }} onClick={onToggleTheme}
+          className="w-10 h-10 flex items-center justify-center rounded-full"
+          style={{ ...glass.card }}>
+          {isDark
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:C.dim}}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:C.dim}}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          }
+        </motion.button>
         <button onClick={() => setShowHelp(true)} className="w-10 h-10 flex items-center justify-center rounded-full"
           style={{ ...glass.card }}>
           <HelpCircle size={18} style={{ color: C.dim }} />
@@ -762,7 +770,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20">
         <h1 className="font-black mb-6" style={{ fontSize: "3rem", color: C.ink, letterSpacing: "-0.02em" }}>Favoritas</h1>
@@ -1025,7 +1033,7 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col justify-end px-6 pb-14 max-w-md mx-auto w-full">
         <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -1233,7 +1241,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
         <Bookmark size={48} strokeWidth={1} style={{ color: "#DEDBD7" }} />
@@ -1255,7 +1263,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       className="min-h-screen flex flex-col"
-      style={{ background: `linear-gradient(160deg, ${accentColor}08 0%, var(--cream) 35%)`, backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      style={{ backgroundColor: 'var(--cream)', position: 'relative' }}>
+      {/* Adaptive accent tint — top gradient from lang color */}
+      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${accentColor}14 0%, transparent 28%)`, pointerEvents: 'none', zIndex: 0 }} />
       <Confetti active={showConfetti} accentColor={accentColor} />
       <NavBar
         title={deckLabel} subtitle={isReview ? "Revisão" : undefined}
@@ -1377,14 +1387,19 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
                   transition={{ type: "spring", stiffness: 420, damping: 26 }}>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-                    style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.25)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
-                    <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
+                    className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
+                    style={{ flex:"1.2", background: "var(--glass-card)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.3)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.85rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1)" }}>
+                    <X size={15} strokeWidth={2.5} className="shrink-0" /> Não sei
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer("almost")}
+                    className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
+                    style={{ flex:"1", background: "var(--glass-card)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(245,158,11,0.35)", borderRadius: R.xl, color: "#D97706", fontSize: "0.85rem" }}>
+                    <RotateCcw size={14} strokeWidth={2.5} className="shrink-0" /> Quase
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-                    style={{ background: "rgba(17,17,17,0.88)", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid rgba(255,255,255,0.14)", borderRadius: R.xl, color: "#FAF9F6", fontSize: "0.95rem", boxShadow: "0 4px 16px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
-                    <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
+                    className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
+                    style={{ flex:"1.2", background: "rgba(17,17,17,0.88)", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid rgba(255,255,255,0.14)", borderRadius: R.xl, color: "#FAF9F6", fontSize: "0.85rem" }}>
+                    <Check size={15} strokeWidth={2.5} className="shrink-0" /> Sei!
                   </motion.button>
                 </motion.div>
               )}
@@ -1476,7 +1491,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-      className="min-h-screen flex flex-col" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
       <NavBar />
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-6 pb-14 flex flex-col">
 
@@ -1618,6 +1633,23 @@ function LevelUpOverlay({ level, accentColor }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [theme, setTheme] = useState(() => getStorage("lf_theme", "system"));
+  // Resolve actual mode: "system" follows OS, "light"/"dark" override
+  const [sysDark, setSysDark] = useState(() => window.matchMedia?.("(prefers-color-scheme:dark)").matches ?? false);
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme:dark)");
+    if (!mq) return;
+    const handler = e => setSysDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  const isDark = theme === "dark" || (theme === "system" && sysDark);
+
+  useEffect(() => {
+    document.documentElement.classList.remove('lf-dark', 'lf-light');
+    document.documentElement.classList.add(isDark ? 'lf-dark' : 'lf-light');
+  }, [isDark]);
+
   const [screen,         setScreen]         = useState(() => getStorage("lf_seen_onboard", false) ? "dashboard" : "onboard");
   const [selectedLang,   setSelectedLang]   = useState(null);
   const [selectedDeck,   setSelectedDeck]   = useState(null);
@@ -1755,7 +1787,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
+      <div className={isDark ? "lf-dark" : "lf-light"} style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 :root{
   --cream:#FAF9F6;--ink:#111111;--dim:#888888;
@@ -1764,7 +1796,14 @@ export default function App() {
   --progress-track:#E0DDD9;
   --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%);
 }
-@media(prefers-color-scheme:dark){:root{
+.lf-dark{
+  --cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;
+  --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
+  --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
+  --progress-track:rgba(255,255,255,0.12);
+  --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
+}
+@media(prefers-color-scheme:dark){:root:not(.lf-light){
   --cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;
   --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
   --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
@@ -1772,7 +1811,7 @@ export default function App() {
   --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
 }}
 *{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
-html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark}
+html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark;transition:background 0.3s ease}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 .sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
 ::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
@@ -1797,7 +1836,8 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
               )}
               {screen === "dashboard" && (
                 <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
-                  lastStudied={lastStudied}
+                  lastStudied={lastStudied} isDark={isDark} theme={theme}
+                  onToggleTheme={() => { const next = isDark ? "light" : "dark"; setTheme(next); setStorage("lf_theme", next); }}
                   onSelectLang={handleSelectLangDirect}
                   onOpenFavorites={() => setScreen("favorites")}
                   onOpenStats={() => setScreen("stats")} />
