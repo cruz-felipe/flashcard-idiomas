@@ -842,7 +842,6 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
       className="min-h-screen relative" style={{ backgroundColor: lang.accent }}>
       {/* Dark mode darkening overlay */}
       <div className="lf-deck-overlay absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
-      <div className="lf-deck-nav-tint" style={{ backgroundColor: lang.accent }}>
       <NavBar bg="transparent" textColor="rgba(255,255,255,0.5)"
         left={
           <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black"
@@ -858,7 +857,6 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
           </div>
         }
       />
-      </div>
       <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8">
         <h1 className="font-black text-white leading-none mb-1"
           style={{ fontSize: "3.5rem", letterSpacing: "-0.02em" }}>{lang.name}</h1>
@@ -1838,7 +1836,7 @@ export default function App() {
 *{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
 html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark;transition:background 0.3s ease}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.38)}.lf-dark .lf-deck-nav-tint{background:rgba(0,0,0,0.38)!important}.lf-dark .badge-locked{opacity:0.4!important;filter:brightness(1.4) grayscale(1)}.lf-dark .badge-earned{filter:brightness(1.1)}.lf-dark .lf-deck-content{position:relative;z-index:1}.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.38)}.lf-dark .badge-locked{opacity:0.55!important;filter:brightness(2.2) grayscale(1)}.lf-dark .badge-earned{filter:brightness(1.1)}.lf-dark .lf-deck-content{position:relative;z-index:1}.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
 ::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
@@ -1900,7 +1898,13 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
                   langCode={selectedLang} deckKey={selectedDeck}
                   favorites={favorites} onToggleFav={handleToggleFav}
                   isReview={isReview} streak={streak}
-                  onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); pendingResult.current = res; setResult(res); setScreen("result"); }}
+                  onFinish={res => {
+                    updateStats(res.correct, res.total, res.deckKey, res.langCode);
+                    pendingResult.current = res;  // sync — always available
+                    setResult(res);               // async state update
+                    // Wait one frame so result state flushes before screen key changes
+                    requestAnimationFrame(() => setScreen("result"));
+                  }}
                   onXP={addXP} onBack={backFromStudy} />
               )}
               {screen === "result" && (result || pendingResult.current) && (
