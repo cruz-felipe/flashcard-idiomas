@@ -29,7 +29,7 @@ function getXPInLevel(xp) { return xp % XP_PER_LEVEL; }
 
 const LANG_UNLOCK_LEVEL = { es: 1, it: 1, ru: 3, fr: 3 };
 
-function getStreakMultiplier(streak) {
+function getMolejoMultiplier(streak) {
   if (streak >= 14) return 3;
   if (streak >= 7)  return 2;
   if (streak >= 3)  return 1.5;
@@ -213,7 +213,7 @@ function Onboarding({ onDone }) {
     { title: "Bem-vindo ao\nLinguaFlash",  body: "Aprenda vocabulário em 4 idiomas com flashcards. Feito para brasileiros.",        accent: "#E63329" },
     { title: "Vire o\ncard",               body: "Toque para revelar a tradução. Diga se você conhecia a palavra ou não.",           accent: "#1A7A4A" },
     { title: "Salve\nfavoritas",           body: "Toque no ícone de favorito para salvar palavras difíceis e revisar depois.",       accent: "#1B4FD8" },
-    { title: "Mantenha\no streak",         body: "Estude todo dia, acumule XP, suba de nível e desbloqueie novos idiomas.",         accent: "#1251A3" },
+    { title: "Mantenha\no molejo",         body: "Estude todo dia, acumule XP, suba de nível e desbloqueie novos idiomas.",         accent: "#1251A3" },
   ];
   const [step, setStep] = useState(0);
   const isLast = step === steps.length - 1;
@@ -263,7 +263,7 @@ function HelpModal({ onClose }) {
     { Icon: X,         label: '"Ainda Aprendendo" recicla o card para mais tarde' },
     { Icon: Bookmark,  label: "Favorito salva palavras para revisar depois" },
     { Icon: Volume2,   label: "Ícone de som toca a pronúncia" },
-    { Icon: Flame,     label: "Estude todo dia para manter o streak e subir de nível" },
+    { Icon: Flame,     label: "Estude todo dia para manter o molejo e subir de nível" },
     { Icon: Lock,      label: "Russo e Francês desbloqueiam no nível 3" },
   ];
   return (
@@ -312,7 +312,12 @@ function XPHeroBlock({ level, xpInLevel, streak }) {
           <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2 }}>
             <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Nível atual</div>
             <div className="font-black leading-none mb-1" style={{ fontSize: "5rem", color: "#FAF9F6" }}>
-              {level}
+              <motion.span
+                whileTap={{ scaleX: 1.3, scaleY: 0.7 }}
+                transition={{ type: "spring", stiffness: 600, damping: 14 }}
+                style={{ display: "inline-block", cursor: "pointer", transformOrigin: "center bottom" }}>
+                {level}
+              </motion.span>
             </div>
             <div className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
               {xpInLevel}/100 XP → nível {level + 1}
@@ -323,11 +328,11 @@ function XPHeroBlock({ level, xpInLevel, streak }) {
                 initial={{ width: 0 }} animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
                 transition={{ duration: 1, ease: "easeOut" }} />
             </div>
-            {getStreakMultiplier(streak) > 1 && (
+            {getMolejoMultiplier(streak) > 1 && (
               <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
                 style={{ backgroundColor: "#EF9F27", boxShadow: "0 4px 12px rgba(239,159,39,0.4)" }}>
                 <Flame size={12} className="text-white" />
-                <span className="text-xs font-black text-white">{getMultiplierLabel(getStreakMultiplier(streak))} XP ativo</span>
+                <span className="text-xs font-black text-white">{getMultiplierLabel(getMolejoMultiplier(streak))} XP ativo</span>
               </div>
             )}
             <div className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>Toque para histórico →</div>
@@ -339,7 +344,7 @@ function XPHeroBlock({ level, xpInLevel, streak }) {
               {[
                 { label: "XP total acumulado",              value: `${(level - 1) * XP_PER_LEVEL + xpInLevel}`, color: "rgba(255,255,255,0.9)"  },
                 { label: `Faltam para nível ${level + 1}`,  value: `${XP_PER_LEVEL - xpInLevel} XP`,             color: "rgba(255,255,255,0.55)" },
-                { label: "Multiplicador ativo",             value: `×${getStreakMultiplier(streak)}`,             color: getStreakMultiplier(streak) > 1 ? "#EF9F27" : "rgba(255,255,255,0.25)" },
+                { label: "Multiplicador ativo",             value: `×${getMolejoMultiplier(streak)}`,             color: getMolejoMultiplier(streak) > 1 ? "#EF9F27" : "rgba(255,255,255,0.25)" },
                 { label: "Níveis completados",              value: `${level - 1}`,                                color: "rgba(255,255,255,0.55)" },
               ].map(({ label, value, color }) => (
                 <div key={label} className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
@@ -398,7 +403,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
           {[
             { label: "Estudadas", value: totalStudied,  suffix: ""  },
             { label: "Precisão",  value: overallAcc,    suffix: "%" },
-            { label: "Streak",    value: streak,        suffix: ""  },
+            { label: "Molejo",    value: streak,        suffix: ""  },
           ].map(({ label, value, suffix }, i) => (
             <div key={i} className="p-5 flex flex-col items-center" style={{ ...glass.card, borderRadius: R.xl }}>
               <div className="font-black mb-1" style={{ fontSize: "1.75rem", color: C.ink }}>
@@ -489,13 +494,13 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
   const [showHelp, setShowHelp] = useState(false);
   const favCount = Object.keys(favorites).length;
 
-  const prevStreak = useRef(streak);
-  const [streakPop, setStreakPop] = useState(false);
+  const prevMolejo = useRef(streak);
+  const [streakPop, setMolejoPop] = useState(false);
   useEffect(() => {
-    if (streak !== prevStreak.current) {
-      setStreakPop(true);
-      setTimeout(() => setStreakPop(false), 600);
-      prevStreak.current = streak;
+    if (streak !== prevMolejo.current) {
+      setMolejoPop(true);
+      setTimeout(() => setMolejoPop(false), 600);
+      prevMolejo.current = streak;
     }
   }, [streak]);
 
@@ -535,7 +540,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             style={{ fontSize: "5.5rem", color: C.ink, letterSpacing: "-0.03em" }}
             animate={streakPop ? { scale: [1, 1.05, 1] } : {}}>
             {streak}
-            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
+            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>molejo</span>
           </motion.div>
           <div className="flex items-center gap-3 mt-3">
             <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
@@ -545,10 +550,10 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             </div>
             <button onClick={onOpenStats} className="flex items-center gap-2 shrink-0">
               <span className="text-sm font-black" style={{ color: C.dim }}>Nível {currentLevel}</span>
-              {getStreakMultiplier(streak) > 1 && (
+              {getMolejoMultiplier(streak) > 1 && (
                 <span className="text-xs font-black px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "#EF9F27", color: "#fff" }}>
-                  {getMultiplierLabel(getStreakMultiplier(streak))}
+                  {getMultiplierLabel(getMolejoMultiplier(streak))}
                 </span>
               )}
             </button>
@@ -822,9 +827,10 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
     e.stopPropagation();
     const willSave = !isFav;
     onToggleFav(card);
-    setFavPulse(true);
-    setTimeout(() => setFavPulse(false), 500);
-    if (willSave) onFavSaved && onFavSaved();
+    if (willSave) {   // only animate when saving, not unsaving
+      setFavPulse(true);
+      setTimeout(() => setFavPulse(false), 600);
+    }
   };
 
   const ptLen   = (card.pt     || "").length;
@@ -876,27 +882,28 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
                 : <Volume2  size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.55)" }} />
               }
             </button>
-            <div className="relative">
-              <motion.button onClick={handleFav} className="p-1 -mr-1 relative">
-                <AnimatePresence mode="wait">
-                  {favPulse && !isFav ? (
-                    /* Flying "Salvo!" label that animates up then fades */
-                    <motion.span key="label"
-                      initial={{ opacity: 1, y: 0, scale: 1 }}
-                      animate={{ opacity: 0, y: -28, scale: 0.85 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                      className="absolute right-0 bottom-6 text-xs font-black text-white whitespace-nowrap pointer-events-none"
-                      style={{ textShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>
-                      Salvo!
-                    </motion.span>
-                  ) : null}
-                </AnimatePresence>
+            <div className="relative" style={{ overflow: "visible" }}>
+              <motion.button onClick={handleFav} className="p-1 -mr-1 relative" style={{ overflow: "visible" }}>
+                {/* Rolling "Salvo!" — clips up like the % counter, only on save */}
+                <div className="absolute pointer-events-none" style={{ right: 0, bottom: 28, height: 20, overflow: "hidden" }}>
+                  <AnimatePresence>
+                    {favPulse && (
+                      <motion.span key="salvo"
+                        initial={{ y: 20, opacity: 1 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                        className="block text-xs font-black text-white whitespace-nowrap"
+                        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>
+                        Salvo!
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {/* Icon spring pop on save only */}
                 <motion.div
-                  animate={favPulse
-                    ? { scale: [1, 0, 1.3, 1], y: [0, -8, -4, 0] }
-                    : { scale: 1, y: 0 }}
-                  transition={{ type: "spring", stiffness: 460, damping: 16, duration: 0.45 }}>
+                  animate={favPulse ? { scale: [1, 1.5, 0.88, 1], y: [0, -6, 0] } : { scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 480, damping: 14 }}>
                   {isFav
                     ? <BookMarked size={20} style={{ color: "#fff" }} />
                     : <Bookmark  size={20} style={{ color: "rgba(255,255,255,0.45)" }} />
@@ -1116,10 +1123,10 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
         left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>}
         right={
           <div className="flex items-center gap-2">
-            {getStreakMultiplier(streak) > 1 && (
+            {getMolejoMultiplier(streak) > 1 && (
               <span className="text-xs font-black px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: "#EF9F27", color: "#fff" }}>
-                {getMultiplierLabel(getStreakMultiplier(streak))}
+                {getMultiplierLabel(getMolejoMultiplier(streak))}
               </span>
             )}
             <span className="text-sm font-bold" style={{ color: C.dim }}>{queue.length}</span>
@@ -1128,15 +1135,27 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       />
 
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-4 pb-8 flex flex-col">
-        {/* Progress bar + animated % */}
-        <div className="mb-5">
+        {/* Progress bar + animated % + 100% success burst */}
+        <div className="mb-5 relative">
           <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
             <motion.div className="h-full rounded-full" style={{ backgroundColor: accentColor }}
               animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.5, ease: [0.34, 1.2, 0.64, 1] }} />
           </div>
           <div className="flex justify-between mt-2">
             <span className="text-xs font-bold" style={{ color: C.dim }}>{correct} acertadas</span>
-            <AnimatedProgressPct value={Math.round(progress * 100)} color={accentColor} />
+            <div className="relative">
+              <AnimatedProgressPct value={Math.round(progress * 100)} color={accentColor} />
+              {/* 100% success burst — confetti-style scale pop */}
+              <AnimatePresence>
+                {Math.round(progress * 100) === 100 && (
+                  <motion.div key="burst" className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    initial={{ scale: 0.5, opacity: 1 }} animate={{ scale: 2.5, opacity: 0 }}
+                    exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+                    <div className="w-8 h-8 rounded-full" style={{ backgroundColor: accentColor + "60" }} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
@@ -1191,19 +1210,19 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             ) : null}
           </div>
 
-          {/* Answer buttons — single line, no wrapping */}
+          {/* Answer buttons — liquid glass with gradient border */}
           <motion.div className="flex gap-3"
             animate={{ opacity: buttonsVisible ? 1 : 0, y: buttonsVisible ? 0 : 8 }}
             transition={{ duration: 0.2 }}
             style={{ pointerEvents: buttonsVisible ? "auto" : "none" }}>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-              style={{ ...glass.card, borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem" }}>
+              style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.25)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1), inset 0 1px 0 rgba(255,255,255,0.9)" }}>
               <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
             </motion.button>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-              style={{ ...glass.dark, borderRadius: R.xl, color: C.cream, fontSize: "0.95rem" }}>
+              style={{ background: "linear-gradient(135deg, rgba(30,30,30,0.92), rgba(17,17,17,0.98))", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "0.95rem", boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
               <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
             </motion.button>
           </motion.div>
@@ -1267,7 +1286,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
   const tier         = accuracy === 100 ? "perfect" : accuracy >= 80 ? "great" : accuracy >= 60 ? "good" : "keep";
   const pool         = RESULT_COPY[tier];
   const pick         = pool[Math.floor(Math.random() * pool.length)];
-  const mult         = getStreakMultiplier(streak);
+  const mult         = getMolejoMultiplier(streak);
 
   // Animated accuracy count-up
   const [displayAcc, setDisplayAcc] = useState(0);
@@ -1400,7 +1419,7 @@ export default function App() {
 
   const [xp,        setXP]        = useState(() => getStorage("lf_xp", 0));
   const [favorites, setFavorites] = useState(() => getStorage("lf_favorites", {}));
-  const [streak,    setStreak]    = useState(() => {
+  const [streak,    setMolejo]    = useState(() => {
     const today     = new Date().toDateString();
     const saved     = getStorage("lf_streak", { count: 0, lastDate: null });
     const yesterday = new Date(Date.now() - 86400000).toDateString();
@@ -1410,19 +1429,19 @@ export default function App() {
     totalCorrect: 0, totalAttempts: 0, completedDecks: {}, studied: {}, perfectSessions: 0
   }));
 
-  const bumpStreak = useCallback(() => {
+  const bumpMolejo = useCallback(() => {
     const today = new Date().toDateString();
     const saved = getStorage("lf_streak", { count: 0, lastDate: null });
     if (saved.lastDate !== today) {
       const yesterday = new Date(Date.now() - 86400000).toDateString();
       const newCount  = saved.lastDate === yesterday ? saved.count + 1 : 1;
-      setStreak(newCount);
+      setMolejo(newCount);
       setStorage("lf_streak", { count: newCount, lastDate: today });
     }
   }, []);
 
   const addXP = useCallback((amount, accuracy) => {
-    const multiplier = getStreakMultiplier(streak);
+    const multiplier = getMolejoMultiplier(streak);
     const earned     = Math.round(amount * multiplier);
     setXP(prev => {
       const n = prev + earned;
@@ -1442,8 +1461,8 @@ export default function App() {
         return next;
       });
     }
-    bumpStreak();
-  }, [bumpStreak, streak]);
+    bumpMolejo();
+  }, [bumpMolejo, streak]);
 
   const handleToggleFav = useCallback((langCode, card) => {
     const key = `${langCode}:${card.pt}`;
