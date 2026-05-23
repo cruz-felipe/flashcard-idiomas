@@ -298,6 +298,64 @@ function HelpModal({ onClose }) {
   );
 }
 
+// ─── XP HERO BLOCK ────────────────────────────────────────────────────────────
+function XPHeroBlock({ level, xpInLevel, streak }) {
+  const [show, setShow] = useState(false);
+  return (
+    <motion.div onClick={() => setShow(s => !s)} whileTap={{ scale: 0.98 }}
+      className="relative overflow-hidden p-7 cursor-pointer select-none"
+      style={{ ...glass.dark, borderRadius: R.xl }}>
+      <div className="absolute -right-8 -top-8 rounded-full pointer-events-none"
+        style={{ width: 160, height: 160, background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)" }} />
+      <AnimatePresence mode="wait">
+        {!show ? (
+          <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2 }}>
+            <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Nível atual</div>
+            <div className="font-black leading-none mb-1" style={{ fontSize: "5rem", color: "#FAF9F6" }}>
+              {level}
+            </div>
+            <div className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
+              {xpInLevel}/100 XP → nível {level + 1}
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
+              <motion.div className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.95))" }}
+                initial={{ width: 0 }} animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
+                transition={{ duration: 1, ease: "easeOut" }} />
+            </div>
+            {getStreakMultiplier(streak) > 1 && (
+              <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: "#EF9F27", boxShadow: "0 4px 12px rgba(239,159,39,0.4)" }}>
+                <Flame size={12} className="text-white" />
+                <span className="text-xs font-black text-white">{getMultiplierLabel(getStreakMultiplier(streak))} XP ativo</span>
+              </div>
+            )}
+            <div className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>Toque para histórico →</div>
+          </motion.div>
+        ) : (
+          <motion.div key="breakdown" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <div className="text-xs font-black tracking-widest uppercase mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>Histórico de XP</div>
+            <div className="space-y-3">
+              {[
+                { label: "XP total acumulado",              value: `${(level - 1) * XP_PER_LEVEL + xpInLevel}`, color: "rgba(255,255,255,0.9)"  },
+                { label: `Faltam para nível ${level + 1}`,  value: `${XP_PER_LEVEL - xpInLevel} XP`,             color: "rgba(255,255,255,0.55)" },
+                { label: "Multiplicador ativo",             value: `×${getStreakMultiplier(streak)}`,             color: getStreakMultiplier(streak) > 1 ? "#EF9F27" : "rgba(255,255,255,0.25)" },
+                { label: "Níveis completados",              value: `${level - 1}`,                                color: "rgba(255,255,255,0.55)" },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="flex items-center justify-between pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  <span className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.35)" }}>{label}</span>
+                  <span className="text-sm font-black" style={{ color }}>{value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 text-xs" style={{ color: "rgba(255,255,255,0.18)" }}>← Toque para voltar</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 // ─── STATS SCREEN ─────────────────────────────────────────────────────────────
 function AnimatedNumber({ value, suffix = "" }) {
   const [display, setDisplay] = useState(0);
@@ -332,32 +390,10 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20 space-y-4">
 
-        {/* Level hero — dark glass */}
-        <div className="relative overflow-hidden p-7" style={{ ...glass.dark, borderRadius: R.xl }}>
-          <div className="absolute -right-8 -top-8 rounded-full pointer-events-none"
-            style={{ width: 160, height: 160, background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)" }} />
-          <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Nível atual</div>
-          <div className="font-black leading-none mb-1" style={{ fontSize: "5rem", color: C.cream }}>
-            <AnimatedNumber value={level} />
-          </div>
-          <div className="text-sm mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
-            <AnimatedNumber value={xpInLevel} />/100 XP → nível {level + 1}
-          </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
-            <motion.div className="h-full rounded-full" style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.9))" }}
-              initial={{ width: 0 }} animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
-              transition={{ duration: 1, ease: "easeOut" }} />
-          </div>
-          {getStreakMultiplier(streak) > 1 && (
-            <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: "#EF9F27", boxShadow: "0 4px 12px rgba(239,159,39,0.4)" }}>
-              <Flame size={12} className="text-white" />
-              <span className="text-xs font-black text-white">{getMultiplierLabel(getStreakMultiplier(streak))} XP ativo</span>
-            </div>
-          )}
-        </div>
+        {/* Level hero — interactive dark glass card */}
+        <XPHeroBlock level={level} xpInLevel={xpInLevel} streak={streak} />
 
-        {/* Stats row — glass cards */}
+        {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Estudadas", value: totalStudied,  suffix: ""  },
@@ -373,32 +409,30 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
           ))}
         </div>
 
-        {/* Badges — SVG illustrations */}
+        {/* Badges — flat grid */}
         <div className="p-6" style={{ ...glass.card, borderRadius: R.xl }}>
           <div className="text-xs font-black tracking-widest uppercase mb-5" style={{ color: C.dim }}>Conquistas</div>
           {earnedBadges.length === 0 && (
             <p className="text-sm text-center py-3" style={{ color: C.dim }}>Complete sessões para ganhar conquistas</p>
           )}
-          <div className="grid grid-cols-4 gap-2 mb-2">
+          <div className="grid grid-cols-5 gap-x-2 gap-y-5">
             {earnedBadges.map(b => {
               const Illus = BadgeIllustrations[b.id];
               return (
                 <motion.div key={b.id} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className="flex flex-col items-center gap-1.5 py-3 px-1 text-center"
-                  style={{ background: "rgba(255,255,255,0.8)", borderRadius: R.card, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                  className="flex flex-col items-center gap-1.5 text-center">
                   {Illus ? <Illus dim={false} /> : <span style={{ fontSize: 26 }}>⭐</span>}
-                  <span className="text-xs font-bold leading-tight" style={{ color: C.ink }}>{b.label}</span>
+                  <span style={{ color: C.ink, fontSize: "0.6rem", fontWeight: 700, lineHeight: 1.2 }}>{b.label}</span>
                 </motion.div>
               );
             })}
             {lockedBadges.map(b => {
               const Illus = BadgeIllustrations[b.id];
               return (
-                <div key={b.id} className="flex flex-col items-center gap-1.5 py-3 px-1 text-center"
-                  style={{ background: "rgba(255,255,255,0.4)", borderRadius: R.card, opacity: 0.45 }}>
+                <div key={b.id} className="flex flex-col items-center gap-1.5 text-center" style={{ opacity: 0.25 }}>
                   {Illus ? <Illus dim={true} /> : <span style={{ fontSize: 26, filter: "grayscale(1)" }}>⭐</span>}
-                  <span className="text-xs font-medium leading-tight" style={{ color: C.dim }}>{b.label}</span>
+                  <span style={{ color: C.dim, fontSize: "0.6rem", fontWeight: 600, lineHeight: 1.2 }}>{b.label}</span>
                 </div>
               );
             })}
@@ -530,9 +564,11 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             <motion.button whileTap={{ scale: 0.97 }}
               onClick={() => onSelectLang(lastStudied, firstIncomplete)}
               className="w-full flex items-center justify-between px-6 py-5 mb-6 text-left"
-              style={{ backgroundColor: lang.accent, borderRadius: R.xl }}>
+              style={{ ...glass.accent(lang.accent), borderRadius: R.xl }}>
               <div className="flex items-center gap-4">
-                <FlagIcon langCode={lastStudied} size={48} />
+                <div style={{ borderRadius: "50%", padding: 3, background: "rgba(255,255,255,0.35)", flexShrink: 0, boxShadow: "0 0 0 1.5px rgba(255,255,255,0.5)" }}>
+                  <FlagIcon langCode={lastStudied} size={44} />
+                </div>
                 <div>
                   <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Continuar</div>
                   <div className="font-black text-white" style={{ fontSize: "1.3rem", letterSpacing: "-0.01em" }}>{lang.name}</div>
@@ -763,7 +799,7 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
 }
 
 // ─── FLASH CARD ───────────────────────────────────────────────────────────────
-function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFav, showLangBadge, onFavSaved }) {
+function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFav, showLangBadge }) {
   const [ttsPlaying,    setTtsPlaying]     = useState(false);
   const [ttsUnsupported,setTtsUnsupported] = useState(false);
   const [favPulse,      setFavPulse]       = useState(false);
@@ -799,11 +835,11 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
   return (
     <div className="w-full" style={{ perspective: 1400, height: 280 }}>
       <motion.div key={card.pt + card.target}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0, rotateY: isFlipped ? 180 : 0 }}
+        initial={{ opacity: 0, x: -40 }}
+        animate={{ opacity: 1, x: 0, rotateY: isFlipped ? 180 : 0 }}
         transition={{
-          opacity:  { duration: 0.2 },
-          y:        { type: "spring", stiffness: 380, damping: 28 },
+          opacity:  { duration: 0.18 },
+          x:        { type: "spring", stiffness: 340, damping: 28 },
           rotateY:  { duration: 0.48, ease: [0.4, 0, 0.2, 1] }
         }}
         className="relative w-full cursor-pointer"
@@ -840,17 +876,34 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
                 : <Volume2  size={20} style={{ color: ttsUnsupported ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.55)" }} />
               }
             </button>
-            <motion.button onClick={handleFav}
-              animate={favPulse
-                ? { scale: [1, 1.5, 0.9, 1], rotate: isFav ? [0, -10, 0] : [0, 10, 0] }
-                : { scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-              className="p-1 -mr-1">
-              {isFav
-                ? <BookMarked size={20} style={{ color: "#fff" }} />
-                : <Bookmark  size={20} style={{ color: "rgba(255,255,255,0.45)" }} />
-              }
-            </motion.button>
+            <div className="relative">
+              <motion.button onClick={handleFav} className="p-1 -mr-1 relative">
+                <AnimatePresence mode="wait">
+                  {favPulse && !isFav ? (
+                    /* Flying "Salvo!" label that animates up then fades */
+                    <motion.span key="label"
+                      initial={{ opacity: 1, y: 0, scale: 1 }}
+                      animate={{ opacity: 0, y: -28, scale: 0.85 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className="absolute right-0 bottom-6 text-xs font-black text-white whitespace-nowrap pointer-events-none"
+                      style={{ textShadow: "0 1px 4px rgba(0,0,0,0.2)" }}>
+                      Salvo!
+                    </motion.span>
+                  ) : null}
+                </AnimatePresence>
+                <motion.div
+                  animate={favPulse
+                    ? { scale: [1, 0, 1.3, 1], y: [0, -8, -4, 0] }
+                    : { scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 460, damping: 16, duration: 0.45 }}>
+                  {isFav
+                    ? <BookMarked size={20} style={{ color: "#fff" }} />
+                    : <Bookmark  size={20} style={{ color: "rgba(255,255,255,0.45)" }} />
+                  }
+                </motion.div>
+              </motion.button>
+            </div>
           </div>
           <div className="min-w-0 overflow-hidden">
             <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>{lang.name}</p>
@@ -966,7 +1019,6 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const [flashColor,     setFlashColor]     = useState(null);
   const [showConfetti,   setShowConfetti]   = useState(false);
   const [buttonsVisible, setButtonsVisible] = useState(false);
-  const [favToast,       setFavToast]       = useState(false);
 
   const controls = useAnimation();
   const dragX    = useMotionValue(0);
@@ -1115,24 +1167,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
               <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
                 lang={cardLangMeta} langCode={cardLang} isFav={isFav}
                 onToggleFav={c => onToggleFav(cardLang, c)}
-                onFavSaved={() => {
-                  setFavToast(true);
-                  setTimeout(() => { if (mounted.current) setFavToast(false); }, 1800);
-                }}
                 showLangBadge={isFavAll} />
             </motion.div>
           </div>
-
-          {/* Fav toast */}
-          <AnimatePresence>
-            {favToast && (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="absolute left-1/2 -translate-x-1/2 bottom-40 z-30 flex items-center gap-1.5 px-4 py-2 text-xs font-black"
-                style={{ backgroundColor: C.ink, color: C.cream, borderRadius: R.pill, pointerEvents: "none" }}>
-                <BookMarked size={12} /> Salvo!
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Tip box */}
           <div className="min-h-[20px]">
@@ -1232,6 +1269,20 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
   const pick         = pool[Math.floor(Math.random() * pool.length)];
   const mult         = getStreakMultiplier(streak);
 
+  // Animated accuracy count-up
+  const [displayAcc, setDisplayAcc] = useState(0);
+  useEffect(() => {
+    const start = performance.now(), dur = 900;
+    const tick = now => {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      setDisplayAcc(Math.round(accuracy * ease));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    const raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [accuracy]);
+
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
       className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
@@ -1239,47 +1290,48 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-6 pb-14 flex flex-col">
 
         {/* Score hero */}
-        <div className="mb-8">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: C.dim }}>Resultado</div>
-            <div className="font-black leading-none" style={{ fontSize: "6rem", color: C.ink, letterSpacing: "-0.03em" }}>
-              {accuracy}<span style={{ fontSize: "2.5rem", color: C.dim }}>%</span>
-            </div>
-            <p className="font-bold mt-2" style={{ color: C.dim, fontSize: "1rem" }}>
-              {pick.text} {pick.sub} <span style={{ color: C.ink }}>{result.correct}/{result.total} em {deckName}.</span>
-            </p>
-          </motion.div>
-        </div>
+        <motion.div className="mb-8" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="text-xs font-black tracking-widest uppercase mb-2" style={{ color: C.dim }}>Resultado</div>
+          <div className="font-black leading-none" style={{ fontSize: "6rem", color: C.ink, letterSpacing: "-0.03em" }}>
+            {displayAcc}<span style={{ fontSize: "2.5rem", color: C.dim }}>%</span>
+          </div>
+          <p className="font-bold mt-3" style={{ color: C.dim, fontSize: "1rem", lineHeight: 1.6 }}>
+            {pick.text}
+          </p>
+          <p className="mt-1" style={{ color: C.dim, fontSize: "0.9rem" }}>
+            {pick.sub} <strong style={{ color: C.ink }}>{result.correct}/{result.total} em {deckName}.</strong>
+          </p>
+        </motion.div>
 
-        {/* Stat cards */}
+        {/* Stat cards — glass */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           {[
-            { label: "Precisão", value: `${accuracy}%`               },
+            { label: "Precisão", value: `${accuracy}%`                      },
             { label: "XP Ganho", value: `+${result.xpGained}`,
-              sub: mult > 1 ? getMultiplierLabel(mult) : null          },
+              sub: mult > 1 ? getMultiplierLabel(mult) : null                },
             { label: "Acertos",  value: `${result.correct}/${result.total}` },
           ].map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.08 }}
               className="relative p-5 flex flex-col items-center"
-              style={{ backgroundColor: lang.accent, borderRadius: R.xl }}>
+              style={{ ...glass.accent(lang.accent), borderRadius: R.xl }}>
               {s.sub && (
                 <span className="absolute top-2 right-2 text-xs font-black px-1.5 py-0.5 rounded-full"
                   style={{ backgroundColor: "#EF9F27", color: "#fff", fontSize: 9 }}>{s.sub}</span>
               )}
               <div className="font-black text-white" style={{ fontSize: "1.6rem" }}>{s.value}</div>
-              <div className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>{s.label}</div>
+              <div className="text-xs font-bold tracking-widest uppercase mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
             </motion.div>
           ))}
         </div>
 
-        {/* CTAs */}
+        {/* CTAs — glass */}
         <div className="flex flex-col gap-3 mt-auto">
           {nextDeck && (
             <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               whileTap={{ scale: 0.97 }} onClick={() => onNextDeck(nextDeckKey)}
               className="w-full flex items-center justify-between px-7 py-5 font-black"
-              style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.xl, fontSize: "1.1rem" }}>
+              style={{ ...glass.accent(lang.accent), borderRadius: R.xl, color: "#fff", fontSize: "1.1rem" }}>
               <span>Próxima: {getDeckLabel(nextDeckKey, langCode)}</span>
               <ArrowRight size={22} />
             </motion.button>
@@ -1288,7 +1340,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
             <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
               whileTap={{ scale: 0.97 }} onClick={() => onNextLang(nextLangCode, DECK_KEYS[0])}
               className="w-full flex items-center justify-between px-7 py-5 font-black"
-              style={{ backgroundColor: C.ink, color: C.cream, borderRadius: R.xl, fontSize: "1.1rem" }}>
+              style={{ ...glass.dark, borderRadius: R.xl, color: C.cream, fontSize: "1.1rem" }}>
               <span>Começar: {nextLang.name}</span>
               <ArrowRight size={22} />
             </motion.button>
@@ -1296,12 +1348,12 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
           <div className="flex gap-3">
             <motion.button whileTap={{ scale: 0.96 }} onClick={onHome}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
-              style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl, color: C.ink }}>
+              style={{ ...glass.card, borderRadius: R.xl, color: C.ink }}>
               <Home size={18} /> {fromFavorites ? "Favoritas" : "Início"}
             </motion.button>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => onRestart()}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
-              style={{ backgroundColor: "#EBEBEB", borderRadius: R.xl, color: C.ink }}>
+              style={{ ...glass.card, borderRadius: R.xl, color: C.ink }}>
               <RotateCcw size={18} /> Repetir
             </motion.button>
           </div>
