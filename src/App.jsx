@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect, Component } from "react";
-import { motion, AnimatePresence, useAnimation, useMotionValue, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useAnimation, useMotionValue } from "framer-motion";
 import {
   Flame, Zap, Check, X, ChevronRight, RotateCcw, BarChart2,
   Home, ChevronLeft, Target, ArrowRight, Bookmark, BookMarked, Sparkles,
@@ -1069,9 +1069,9 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const [buttonsVisible, setButtonsVisible] = useState(false);
 
   const controls = useAnimation();
-  const dragX    = useMotionValue(0);
-  const bleedLeft  = useTransform(dragX, [-120, -20, 0], [0.2, 0, 0]);
-  const bleedRight = useTransform(dragX, [0, 20, 120],  [0, 0, 0.2]);
+  const [dragOffset, setDragOffset] = useState(0);
+  const bleedLeftOpacity  = Math.max(0, Math.min(0.2, -dragOffset / 600));
+  const bleedRightOpacity = Math.max(0, Math.min(0.2,  dragOffset / 600));
 
   const total    = originalCards.length;
   const progress = total > 0 ? Math.min(correct / total, 1) : 0;
@@ -1088,6 +1088,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     setIsFlipped(false);
     setAnswered(false);
     setButtonsVisible(false);
+    setDragOffset(0);
   };
 
   // After flip completes (500ms) reveal buttons
@@ -1112,7 +1113,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     if (!mounted.current) return;
     setFlashColor(null);
     controls.set({ opacity: 1, scale: 1, x: 0 });
-    dragX.set(0); // reset drag position for next card
+    setDragOffset(0);
     if (knew) {
       const newCorrect = correct + 1;
       setCorrect(newCorrect);
@@ -1222,25 +1223,28 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
               )}
             </AnimatePresence>
-            {isFlipped && !answered && (
+            {isFlipped && !answered && dragOffset !== 0 && (
               <>
-                <motion.div className="absolute inset-0 z-20 pointer-events-none"
-                  style={{ backgroundColor: "rgba(220,38,38,1)", opacity: bleedLeft, borderRadius: R.xl }} />
-                <motion.div className="absolute inset-0 z-20 pointer-events-none"
-                  style={{ backgroundColor: accentColor, opacity: bleedRight, borderRadius: R.xl }} />
+                <div className="absolute inset-0 z-20 pointer-events-none"
+                  style={{ backgroundColor: "rgba(220,38,38,1)", opacity: bleedLeftOpacity, borderRadius: R.xl }} />
+                <div className="absolute inset-0 z-20 pointer-events-none"
+                  style={{ backgroundColor: accentColor, opacity: bleedRightOpacity, borderRadius: R.xl }} />
               </>
             )}
-            {/* Entrance wrapper — key triggers fresh slide-in for each new card */}
-            <motion.div key={`${cardLang}-${card.pt}`}
-              initial={{ opacity: 0, x: -28, y: 0 }}
-              animate={{ opacity: 1, x: 0,  y: 0 }}
-              transition={{ opacity: { duration: 0.14 }, x: { type: "spring", stiffness: 380, damping: 32, restDelta: 0.001 } }}
+            {/* Single keyed wrapper — handles entrance, drag, and exit cleanly */}
+            <motion.div
+              key={`${cardLang}-${card.pt}`}
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ opacity: { duration: 0.14 }, x: { type: "spring", stiffness: 400, damping: 34, restDelta: 0.001 } }}
               style={{ height: "100%", willChange: "transform" }}>
-              {/* Exit wrapper — controls drives fade/scale out on answer */}
-              <motion.div animate={controls} style={{ height: "100%", x: dragX }}
+              <motion.div
+                animate={controls}
+                style={{ height: "100%" }}
                 drag={isFlipped && !answered ? "x" : false}
-                dragConstraints={{ left: -120, right: 120 }}
-                dragElastic={0.15}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.25}
+                onDrag={(_, info) => setDragOffset(info.offset.x)}
                 onDragEnd={handleDragEnd}
                 whileDrag={{ cursor: "grabbing" }}>
                 <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
