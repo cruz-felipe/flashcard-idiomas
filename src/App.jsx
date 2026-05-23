@@ -415,7 +415,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
           {[
             { label: "Estudadas", value: totalStudied,  suffix: ""  },
             { label: "Precisão",  value: overallAcc,    suffix: "%" },
-            { label: "Molejo",    value: streak,        suffix: ""  },
+            { label: "Streak",    value: streak,        suffix: ""  },
           ].map(({ label, value, suffix }, i) => (
             <div key={i} className="p-5 flex flex-col items-center" style={{ ...glass.card, borderRadius: R.xl }}>
               <div className="font-black mb-1" style={{ fontSize: "1.75rem", color: C.ink }}>
@@ -456,36 +456,6 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
           </div>
         </div>
 
-        {/* Completed decks */}
-        {Object.keys(stats.completedDecks || {}).length > 0 && (
-          <div className="p-6" style={{ ...glass.card, borderRadius: R.xl }}>
-            <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Categorias concluídas</div>
-            <div className="space-y-3">
-              {Object.entries(stats.completedDecks || {}).map(([key, langs]) => {
-                const DeckIcon = DECKS[key]?.icon || BookOpen;
-                return (
-                  <div key={key} className="flex items-center gap-3">
-                    <DeckIcon size={16} strokeWidth={1.5} style={{ color: C.dim, flexShrink: 0 }} />
-                    <span className="text-sm font-bold flex-1" style={{ color: C.ink }}>{DECKS[key]?.label}</span>
-                    <div className="flex gap-1.5 flex-wrap justify-end">
-                      {langs.map(lc => {
-                        const lm = LANG_META[lc];
-                        if (!lm) return null;
-                        return (
-                          <button key={lc} onClick={() => onStudyDeck(lc, key)}
-                            className="text-xs font-black px-2.5 py-1"
-                            style={{ backgroundColor: lm.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 2px 8px ${lm.accent}55` }}>
-                            {lm.name.split(" ")[0]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </motion.div>
   );
@@ -535,8 +505,34 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
   const xpInLevel    = getXPInLevel(displayXP);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.6) 0%, rgba(250,249,246,0.92) 100%)", backdropFilter: "blur(40px)", WebkitBackdropFilter: "blur(40px)" }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: "#0f0f0f" }}>
+      {/* ── Ambient liquid glass background ── */}
+      <div className="absolute inset-0 pointer-events-none" style={{ willChange: "transform", zIndex: 0 }}>
+        {/* Blob 1 — 22s cycle, lazy figure-eight, warm amber */}
+        <motion.div
+          style={{ position: "absolute", top: "10%", left: "15%", width: "65vw", height: "65vw", maxWidth: 520, maxHeight: 520, borderRadius: "50%", background: "radial-gradient(circle, rgba(230,51,41,0.55) 0%, rgba(245,158,11,0.35) 50%, transparent 75%)", filter: "blur(110px)", willChange: "transform" }}
+          animate={{ x: [0, 80, 30, -60, 0], y: [0, -50, 40, -20, 0], scale: [1, 0.96, 1.08, 0.97, 1] }}
+          transition={{ duration: 22, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
+        />
+        {/* Blob 2 — 28s cycle, wide oval, cool blue */}
+        <motion.div
+          style={{ position: "absolute", bottom: "15%", right: "10%", width: "55vw", height: "55vw", maxWidth: 440, maxHeight: 440, borderRadius: "50%", background: "radial-gradient(circle, rgba(27,79,216,0.5) 0%, rgba(99,102,241,0.3) 45%, transparent 75%)", filter: "blur(130px)", willChange: "transform" }}
+          animate={{ x: [0, -70, -30, 60, 0], y: [0, 40, -60, 20, 0], scale: [1, 1.1, 0.95, 1.06, 1] }}
+          transition={{ duration: 28, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
+        />
+        {/* Blob 3 — 34s cycle, irregular diagonal drift, deep green */}
+        <motion.div
+          style={{ position: "absolute", top: "40%", left: "40%", width: "50vw", height: "50vw", maxWidth: 400, maxHeight: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(26,122,74,0.45) 0%, rgba(16,185,129,0.25) 50%, transparent 75%)", filter: "blur(120px)", willChange: "transform" }}
+          animate={{ x: [0, 50, -40, 20, 0], y: [0, 30, 60, -40, 0], scale: [1, 0.93, 1.12, 0.98, 1] }}
+          transition={{ duration: 34, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.25, 0.5, 0.75, 1] }}
+        />
+        {/* Frosted glass pane over blobs */}
+        <div className="absolute inset-0" style={{ backdropFilter: "blur(48px) saturate(140%)", WebkitBackdropFilter: "blur(48px) saturate(140%)", background: "rgba(15,15,15,0.52)" }} />
+      </div>
+
+      {/* Dashboard content */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="relative min-h-screen" style={{ zIndex: 1 }}>
       <NavBar right={
         <button onClick={() => setShowHelp(true)} className="w-9 h-9 flex items-center justify-center rounded-full"
           style={{ ...glass.card }}>
@@ -549,19 +545,19 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         {/* Editorial hero — streak as massive number */}
         <div className="mb-7">
           <motion.div className="font-black leading-none"
-            style={{ fontSize: "5.5rem", color: C.ink, letterSpacing: "-0.03em" }}
+            style={{ fontSize: "5.5rem", color: "#ffffff", letterSpacing: "-0.03em" }}
             animate={streakPop ? { scale: [1, 1.05, 1] } : {}}>
             {streak}
-            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
+            <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.45)" }}>dias</span>
           </motion.div>
           <div className="flex items-center gap-3 mt-3">
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
-              <motion.div className="h-full rounded-full" style={{ backgroundColor: C.ink }}
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
+              <motion.div className="h-full rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.7)" }}
                 animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
                 transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }} />
             </div>
             <button onClick={onOpenStats} className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-black" style={{ color: C.dim }}>Nível {currentLevel}</span>
+              <span className="text-sm font-black" style={{ color: "rgba(255,255,255,0.5)" }}>Nível {currentLevel}</span>
               {getMolejoMultiplier(streak) > 1 && (
                 <span className="text-xs font-black px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "#EF9F27", color: "#fff" }}>
@@ -600,7 +596,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         })()}
 
         {/* Language list */}
-        <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Idiomas</div>
+        <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: "rgba(255,255,255,0.45)" }}>Idiomas</div>
         <div className="space-y-3 mb-6">
           {Object.entries(LANG_META).map(([code, lang], i) => {
             const doneCount = DECK_KEYS.filter(k => stats.completedDecks?.[k]?.includes(code)).length;
@@ -660,7 +656,8 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </button>
         </div>
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -852,17 +849,20 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 
   return (
     <div className="w-full" style={{ perspective: 1400, height: 280 }}>
+      {/* Entrance wrapper — slides in from left once, never re-animates */}
       <motion.div key={card.pt + card.target}
         initial={{ opacity: 0, x: -40 }}
-        animate={{ opacity: 1, x: 0, rotateY: isFlipped ? 180 : 0 }}
-        transition={{
-          opacity:  { duration: 0.18 },
-          x:        { type: "spring", stiffness: 340, damping: 28 },
-          rotateY:  { duration: 0.48, ease: [0.4, 0, 0.2, 1] }
-        }}
-        className="relative w-full cursor-pointer"
-        style={{ transformStyle: "preserve-3d", height: "100%" }}
-        onClick={onClick}>
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ opacity: { duration: 0.18 }, x: { type: "spring", stiffness: 340, damping: 28 } }}
+        className="relative w-full"
+        style={{ height: "100%" }}>
+        {/* Flip wrapper — only handles rotateY, no entrance animation */}
+        <motion.div
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ duration: 0.48, ease: [0.4, 0, 0.2, 1] }}
+          className="relative w-full cursor-pointer"
+          style={{ transformStyle: "preserve-3d", height: "100%" }}
+          onClick={onClick}>
 
         {/* FRONT — glass morphism, massive ink type */}
         <div className="absolute inset-0 flex flex-col justify-between p-7"
@@ -933,12 +933,11 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
           </div>
           <div />
         </div>
+        </motion.div>
       </motion.div>
     </div>
   );
 }
-
-// ─── MASTERED SCREEN ──────────────────────────────────────────────────────────
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
