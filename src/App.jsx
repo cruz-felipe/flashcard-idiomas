@@ -1154,38 +1154,40 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
             ) : null}
           </div>
 
-          {/* Answer buttons — glass treatment */}
+          {/* Answer buttons — single line, no wrapping */}
           <motion.div className="flex gap-3"
             animate={{ opacity: buttonsVisible ? 1 : 0, y: buttonsVisible ? 0 : 8 }}
             transition={{ duration: 0.2 }}
             style={{ pointerEvents: buttonsVisible ? "auto" : "none" }}>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
-              className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
-              style={{ ...glass.card, borderRadius: R.xl, color: "#DC2626" }}>
-              <X size={18} strokeWidth={2.5} />
-              <span style={{ fontSize: "0.9rem" }}>Ainda Aprendendo</span>
+              className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
+              style={{ ...glass.card, borderRadius: R.xl, color: "#DC2626", fontSize: "0.95rem" }}>
+              <X size={16} strokeWidth={2.5} className="shrink-0" /> Aprendendo
             </motion.button>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
-              style={{ ...glass.dark, borderRadius: R.xl, color: C.cream }}>
-              <Check size={18} strokeWidth={2.5} />
-              <span style={{ fontSize: "0.9rem" }}>Eu Conheço!</span>
+              className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
+              style={{ ...glass.dark, borderRadius: R.xl, color: C.cream, fontSize: "0.95rem" }}>
+              <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
             </motion.button>
           </motion.div>
         </div>
 
-        {/* Stats footer */}
-        <div className="flex justify-center gap-10 mt-6 pt-5" style={{ borderTop: `1px solid #E8E5E0` }}>
-          {[
-            { label: "Acertou", val: correct,  color: "#16A34A" },
-            { label: "Errou",   val: incorrect, color: "#DC2626" },
-            { label: "Total",   val: total,     color: C.dim     },
-          ].map(s => (
-            <div key={s.label} className="text-center">
-              <div className="font-black" style={{ fontSize: "1.3rem", color: s.color }}>{s.val}</div>
-              <div className="text-xs font-bold tracking-widest uppercase" style={{ color: C.dim }}>{s.label}</div>
-            </div>
-          ))}
+        {/* Stats footer — glass pill */}
+        <div className="mt-5 pt-4" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+          <div className="flex items-center justify-around px-2 py-3"
+            style={{ ...glass.card, borderRadius: R.xl }}>
+            {[
+              { label: "Acertos",  val: correct,   color: "#16A34A" },
+              { label: "Erros",    val: incorrect,  color: "#DC2626" },
+              { label: "Total",    val: total,      color: C.dim     },
+            ].map((s, i) => (
+              <div key={s.label} className="flex-1 flex flex-col items-center gap-0.5">
+                {i > 0 && <div className="absolute" />}
+                <div className="font-black" style={{ fontSize: "1.4rem", color: s.color, lineHeight: 1 }}>{s.val}</div>
+                <div className="text-xs font-bold tracking-widest uppercase" style={{ color: C.dim, opacity: 0.7 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
