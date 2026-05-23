@@ -7,7 +7,7 @@ import {
   Smile, Globe, Volume2, VolumeX, Search, Award, HelpCircle, RefreshCw,
   BookMarked as BookMarkedIcon, Star, Lock
 } from "lucide-react";
-import { LANG_META, DECKS, DECK_KEYS, VOCAB, getDeckLabel } from "./data.js";
+import { LANG_META, DECKS, DECK_KEYS, VOCAB, getDeckLabel, getLangDeckKeys } from "./data.js";
 
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 function getStorage(k, fb) { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } }
@@ -155,9 +155,9 @@ const BADGES = [
   { id: "polyglot",   label: "Poliglota",           check: (s)      => Object.keys(s.studied || {}).length >= 4 },
   { id: "cards_100",  label: "100 cards",           check: (s)      => (s.totalAttempts || 0) >= 100 },
   { id: "cards_500",  label: "500 cards",           check: (s)      => (s.totalAttempts || 0) >= 500 },
-  { id: "all_it",     label: "Mestre Pizzaiolo",    check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("it")) },
-  { id: "all_es",     label: "Julio Iglesias",      check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("es")) },
-  { id: "all_ru",     label: "Pagode Russo",        check: (s)      => DECK_KEYS.every(k => s.completedDecks?.[k]?.includes("ru")) },
+  { id: "all_it",     label: "Mestre Pizzaiolo",    check: (s)      => getLangDeckKeys("it").every(k => s.completedDecks?.[k]?.includes("it")) },
+  { id: "all_es",     label: "Julio Iglesias",      check: (s)      => getLangDeckKeys("es").every(k => s.completedDecks?.[k]?.includes("es")) },
+  { id: "all_ru",     label: "Pagode Russo",        check: (s)      => getLangDeckKeys("ru").every(k => s.completedDecks?.[k]?.includes("ru")) },
   { id: "sharp",      label: "Afiado",              check: (s)      => (s.totalAttempts || 0) >= 20 && Math.round((s.totalCorrect || 0) / (s.totalAttempts || 1) * 100) >= 90 },
 ];
 class ErrorBoundary extends Component {
@@ -655,8 +655,8 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         {/* Continue card */}
         {lastStudied && LANG_META[lastStudied] && (() => {
           const lang = LANG_META[lastStudied];
-          const firstIncomplete = DECK_KEYS.find(k => !(stats.completedDecks?.[k]?.includes(lastStudied)));
-          const doneCount = DECK_KEYS.filter(k => stats.completedDecks?.[k]?.includes(lastStudied)).length;
+          const firstIncomplete = getLangDeckKeys(lastStudied).find(k => !(stats.completedDecks?.[k]?.includes(lastStudied)));
+          const doneCount = getLangDeckKeys(lastStudied).filter(k => stats.completedDecks?.[k]?.includes(lastStudied)).length;
           return firstIncomplete ? (
             <motion.button whileTap={{ scale: 0.97 }}
               onClick={() => onSelectLang(lastStudied, firstIncomplete)}
@@ -701,7 +701,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           {!ready
             ? Object.keys(LANG_META).map(k => <SkeletonLangTile key={k} />)
             : Object.entries(LANG_META).map(([code, lang], i) => {
-            const doneCount = DECK_KEYS.filter(k => stats.completedDecks?.[k]?.includes(code)).length;
+            const doneCount = getLangDeckKeys(code).filter(k => stats.completedDecks?.[k]?.includes(code)).length;
             const required  = LANG_UNLOCK_LEVEL[code] || 1;
             const locked    = currentLevel < required;
             return (
@@ -718,7 +718,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
                     <div className="text-xs font-medium mt-1" style={{ color: C.dim }}>
                       {locked
                         ? <span className="flex items-center gap-1"><Lock size={10} /> Nível {required}</span>
-                        : `${DECK_KEYS.length} categorias · ${Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras`
+                        : `${getLangDeckKeys(code).length} categorias · ${Object.values(VOCAB[code]).reduce((a, b) => a + b.length, 0)} palavras`
                       }
                     </div>
                   </div>
@@ -834,12 +834,14 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
   const [query, setQuery] = useState("");
   const [ready, setReady] = useState(false);
   useEffect(() => { const t = setTimeout(() => setReady(true), 60); return () => clearTimeout(t); }, []);
-  const filtered  = DECK_KEYS.filter(k => getDeckLabel(k, langCode).toLowerCase().includes(query.toLowerCase()));
-  const doneCount = DECK_KEYS.filter(k => completedDecks[k]?.includes(langCode)).length;
+  const filtered  = getLangDeckKeys(langCode).filter(k => getDeckLabel(k, langCode).toLowerCase().includes(query.toLowerCase()));
+  const doneCount = getLangDeckKeys(langCode).filter(k => completedDecks[k]?.includes(langCode)).length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ backgroundColor: lang.accent }}>
+      className="min-h-screen relative" style={{ backgroundColor: lang.accent }}>
+      {/* Dark mode darkening overlay */}
+      <div className="lf-deck-overlay absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
       <NavBar bg={lang.accent} textColor="rgba(255,255,255,0.5)"
         left={
           <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black"
@@ -855,11 +857,11 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
           </div>
         }
       />
-      <div className="max-w-md mx-auto px-5 pt-2 pb-8">
+      <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8">
         <h1 className="font-black text-white leading-none mb-1"
           style={{ fontSize: "3.5rem", letterSpacing: "-0.02em" }}>{lang.name}</h1>
         <p className="text-sm font-medium mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
-          {doneCount}/{DECK_KEYS.length} concluídas
+          {doneCount}/{getLangDeckKeys(langCode).length} concluídas
         </p>
         <div className="relative mb-6">
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -1121,7 +1123,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     if (isFavDeck)
       return shuffle(Object.values(VOCAB[langCode]).flat().filter(c => favorites[`${langCode}:${c.pt}`]));
     // SRS: sort by difficulty — hard cards (score < 0.5) first, easy last
-    const cards = [...VOCAB[langCode][deckKey]];
+    const cards = VOCAB[langCode][deckKey] ? [...VOCAB[langCode][deckKey]] : [];
     cards.sort((a, b) => {
       const sa = srsData[a.pt]?.score ?? 0.5;
       const sb = srsData[b.pt]?.score ?? 0.5;
@@ -1398,7 +1400,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
-                    style={{ flex:"1.2", background: "rgba(17,17,17,0.88)", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid rgba(255,255,255,0.14)", borderRadius: R.xl, color: "#FAF9F6", fontSize: "0.85rem" }}>
+                    style={{ flex:"1.2", background: "var(--btn-confirm-bg,#111111)", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid var(--btn-confirm-border,rgba(255,255,255,0.14))", borderRadius: R.xl, color: "var(--btn-confirm-text,#FAF9F6)", fontSize: "0.85rem" }}>
                     <Check size={15} strokeWidth={2.5} className="shrink-0" /> Sei!
                   </motion.button>
                 </motion.div>
@@ -1456,7 +1458,8 @@ const RESULT_COPY = {
 function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck, onNextLang, fromFavorites, streak = 0 }) {
   const lang         = LANG_META[langCode] ?? { accent: C.ink };
   const accuracy     = Math.round((result.correct / result.total) * 100);
-  const nextDeckKey  = DECK_KEYS[DECK_KEYS.indexOf(deckKey) + 1] ?? null;
+  const langDeckKeys = getLangDeckKeys(langCode);
+  const nextDeckKey  = langDeckKeys[langDeckKeys.indexOf(deckKey) + 1] ?? null;
   const nextDeck     = (!fromFavorites && nextDeckKey) ? DECKS[nextDeckKey] : null;
   const langKeys     = Object.keys(LANG_META);
   const nextLangCode = (!fromFavorites && !nextDeck) ? (langKeys[langKeys.indexOf(langCode) + 1] ?? null) : null;
@@ -1697,7 +1700,9 @@ export default function App() {
     const earned = BADGES.filter(b => b.check(newStats, newStreak));
     const newOnes = earned.filter(b => !prevBadges.includes(b.id));
     if (newOnes.length > 0) {
-      setStorage("lf_badges", earned.map(b => b.id));
+      // Only ADD new badges — never remove existing ones
+      const allNow = [...new Set([...prevBadges, ...newOnes.map(b => b.id)])];
+      setStorage("lf_badges", allNow);
       setBadgeUnlock(newOnes[0]);
       setTimeout(() => setBadgeUnlock(null), 3000);
     }
@@ -1725,7 +1730,9 @@ export default function App() {
       });
     }
     bumpMolejo();
-    setStats(prev => { checkNewBadges(prev, streak); return prev; });
+    setStats(prev => {
+      return prev; // badge check happens via updateStats after onFinish
+    });
   }, [bumpMolejo, streak, checkNewBadges]);
 
   const handleToggleFav = useCallback((langCode, card) => {
@@ -1750,9 +1757,11 @@ export default function App() {
       if (!existing.includes(langCode))
         next.completedDecks = { ...prev.completedDecks, [deckKey]: [...existing, langCode] };
       setStorage("lf_stats", next);
+      // Check badges with the NEW stats so completedDecks is up to date
+      setTimeout(() => checkNewBadges(next, streak), 50);
       return next;
     });
-  }, []);
+  }, [streak, checkNewBadges]);
 
   const goStudy = useCallback((lang, deck, fromFavs = false, review = false) => {
     setSelectedLang(lang); setSelectedDeck(deck);
@@ -1794,6 +1803,7 @@ export default function App() {
   --glass-card:rgba(255,255,255,0.78);--glass-border:rgba(255,255,255,0.68);--glass-shine:rgba(255,255,255,0.95);
   --glass-nav:rgba(250,249,246,0.88);--glass-pill:rgba(255,255,255,0.55);--glass-shadow-sm:rgba(0,0,0,0.05);
   --progress-track:#E0DDD9;
+  --btn-confirm-bg:#111111;--btn-confirm-text:#FAF9F6;--btn-confirm-border:rgba(255,255,255,0.12);
   --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%);
 }
 .lf-dark{
@@ -1801,6 +1811,7 @@ export default function App() {
   --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
   --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
   --progress-track:rgba(255,255,255,0.12);
+  --btn-confirm-bg:#FFFFFF;--btn-confirm-text:#111111;--btn-confirm-border:rgba(0,0,0,0.12);
   --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
 }
 @media(prefers-color-scheme:dark){:root:not(.lf-light){
@@ -1808,12 +1819,13 @@ export default function App() {
   --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
   --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
   --progress-track:rgba(255,255,255,0.12);
+  --btn-confirm-bg:#FFFFFF;--btn-confirm-text:#111111;--btn-confirm-border:rgba(0,0,0,0.12);
   --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
 }}
 *{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
 html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark;transition:background 0.3s ease}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.35)}.lf-dark .lf-deck-content{position:relative;z-index:1}.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
 ::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
@@ -1825,12 +1837,12 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
           )}
         </AnimatePresence>
         <div style={{ position: "relative", overflow: "hidden" }}>
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="sync" initial={false}>
             <motion.div key={screen}
-              initial={{ opacity: 0, x: 32 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -32 }}
-              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}>
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}>
               {screen === "onboard" && (
                 <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
               )}

@@ -31,6 +31,12 @@ export function getDeckLabel(deckKey, langCode) {
 
 export const DECK_KEYS = Object.keys(DECKS);
 
+// Returns only deck keys that exist for a given language
+export function getLangDeckKeys(langCode) {
+  if (!VOCAB[langCode]) return DECK_KEYS;
+  return DECK_KEYS.filter(k => VOCAB[langCode][k] && VOCAB[langCode][k].length > 0);
+}
+
 export const VOCAB = {
   es: {
     cumprimentos: [
@@ -658,23 +664,6 @@ export const VOCAB = {
       { pt: "Tem Wi-Fi aqui?",         target: "Y a-t-il du Wi-Fi ici?",      phonetic: null, example: "Y a-t-il du Wi-Fi ici? Quel est le code?", tip: "'Y a-t-il' = tem/há (forma invertida formal). 'Le code' = a senha do Wi-Fi." },
       { pt: "A conta, por favor",      target: "L'addition, s'il vous plaît", phonetic: null, example: "Monsieur, l'addition s'il vous plaît!",  tip: "'L'addition' = a conta. Em francês não se diz 'la facture' em restaurante — seria formal demais." },
       { pt: "Posso pagar com cartão?", target: "Puis-je payer par carte?",    phonetic: null, example: "Puis-je payer par carte ou en espèces?", tip: "'En espèces' = em dinheiro vivo. Mercados e pequenos comércios franceses ainda preferem espèces." },
-    ],
-    tech: [
-      { pt: "Interface",        target: "Interface",        phonetic: "an-ter-fas",           example: "L'interface est intuitive.",                   tip: "Cognato — mas pronúncia totalmente diferente do português." },
-      { pt: "Usuário",          target: "Utilisateur",      phonetic: "ew-tee-lee-za-teur",   example: "L'utilisateur navigue facilement.",             tip: "De 'utiliser' (usar) + '-ateur' (quem faz)." },
-      { pt: "Design",           target: "Design",           phonetic: "deh-zyne",             example: "Le design est épuré et moderne.",               tip: "Mesma palavra, mas os franceses pronunciam à francesa." },
-      { pt: "Botão",            target: "Bouton",           phonetic: "boo-ton",              example: "Cliquez sur le bouton vert.",                   tip: "Também significa botão de roupa — mesma palavra." },
-      { pt: "Tela",             target: "Écran",            phonetic: "ay-kran",              example: "L'écran est trop petit.",                       tip: "'Écran' = tela; deu origem à palavra 'ecrã' em português europeu." },
-      { pt: "Senha",            target: "Mot de passe",     phonetic: "moh deh pas",          example: "Entrez votre mot de passe.",                    tip: "Literalmente 'palavra de passagem' — bela lógica." },
-      { pt: "Buscar",           target: "Rechercher",       phonetic: "reh-sher-shay",        example: "Recherchez un fichier.",                        tip: "'Chercher' = procurar; 're-' adiciona a ideia de pesquisa." },
-      { pt: "Download",         target: "Télécharger",      phonetic: "teh-lay-shar-zhay",    example: "Téléchargez l'application gratuitement.",       tip: "Franceses nunca usam 'download' — sempre 'télécharger'." },
-      { pt: "Notificação",      target: "Notification",     phonetic: "no-tee-fee-ka-syon",   example: "Activez les notifications push.",               tip: "Cognato perfeito, pronúncia mais nasal." },
-      { pt: "Configurações",    target: "Paramètres",       phonetic: "pa-ra-met-reh",        example: "Allez dans Paramètres.",                        tip: "'Paramètres' tecnicamente são parâmetros, mas em apps = configurações." },
-      { pt: "Carregar",         target: "Charger",          phonetic: "shar-zhay",            example: "La page est en train de charger.",              tip: "Também: carregar peso, cobrar bateria — mesma raiz." },
-      { pt: "Erro",             target: "Erreur",           phonetic: "eh-reur",              example: "Une erreur est survenue. Réessayez.",           tip: "Cognato quase perfeito — muito usado em mensagens de sistema." },
-      { pt: "Acessibilidade",   target: "Accessibilité",    phonetic: "ak-seh-see-bee-lee-tay", example: "Pensez à l'accessibilité dès le début.",     tip: "Conceito central em UX/design inclusivo." },
-      { pt: "Prototipagem",     target: "Prototypage",      phonetic: "pro-to-tee-pazh",      example: "Le prototypage rapide accélère le processus.", tip: "Franceses usam '-age' onde inglês usa '-ing': prototyping → prototypage." },
-      { pt: "Experiência",      target: "Expérience",       phonetic: "ex-pay-ree-ans",       example: "L'expérience utilisateur est primordiale.",     tip: "UX = expérience utilisateur (EU) em francês." },
     ],
   },
 
