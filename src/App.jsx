@@ -40,14 +40,17 @@ function getMultiplierLabel(m) { return m === 1 ? null : `×${m}`; }
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const R = { card: 24, pill: 999, xl: 32 };
-const C = { cream: "#FAF9F6", ink: "#111111", dim: "#888888" };
+// C now returns CSS variable references — dark mode handled by @media in <style>
+const C = { cream: "var(--cream)", ink: "var(--ink)", dim: "var(--dim)" };
+// Raw hex fallbacks for places that can't use CSS vars (e.g. radial-gradient stops)
+const RAW = { cream: "#FAF9F6", ink: "#111111", dim: "#888888" };
 
 // ─── GLASS STYLES ─────────────────────────────────────────────────────────────
 const glass = {
-  card:   { background: "rgba(255,255,255,0.78)", backdropFilter: "blur(28px) saturate(200%)", WebkitBackdropFilter: "blur(28px) saturate(200%)", border: "1px solid rgba(255,255,255,0.7)", boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.95)" },
-  dark:   { background: "rgba(17,17,17,0.82)",   backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 40px rgba(0,0,0,0.22)" },
-  nav:    { background: "rgba(250,249,246,0.88)", backdropFilter: "blur(20px)",                WebkitBackdropFilter: "blur(20px)",                border: "none", boxShadow: "0 1px 0 rgba(0,0,0,0.05)" },
-  pill:   { background: "rgba(255,255,255,0.55)", backdropFilter: "blur(12px)",                WebkitBackdropFilter: "blur(12px)",                border: "1px solid rgba(255,255,255,0.7)",  boxShadow: "0 2px 8px rgba(0,0,0,0.06)" },
+  card:   { background: "var(--glass-card)",  backdropFilter: "blur(28px) saturate(200%)", WebkitBackdropFilter: "blur(28px) saturate(200%)", border: "1px solid var(--glass-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 var(--glass-shine)" },
+  dark:   { background: "rgba(17,17,17,0.88)", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 8px 40px rgba(0,0,0,0.22)" },
+  nav:    { background: "var(--glass-nav)",    backdropFilter: "blur(20px)",                WebkitBackdropFilter: "blur(20px)",                border: "none", boxShadow: "0 1px 0 var(--glass-shadow-sm)" },
+  pill:   { background: "var(--glass-pill)",   backdropFilter: "blur(16px) saturate(180%)", WebkitBackdropFilter: "blur(16px) saturate(180%)", border: "1px solid var(--glass-border)", boxShadow: "0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 var(--glass-shine)" },
   accent: (color) => ({ background: `${color}EE`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", border: `1px solid ${color}44`, boxShadow: `0 12px 40px ${color}44` }),
 };
 
@@ -462,6 +465,36 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
 }
 
 
+// ─── SKELETON LOADERS ─────────────────────────────────────────────────────────
+function SkeletonLangTile() {
+  return (
+    <div className="w-full" style={{ ...glass.card, borderRadius: R.xl }}>
+      <div className="flex items-center gap-4 px-5 py-4">
+        <div className="sk shrink-0" style={{ width: 52, height: 52, borderRadius: "50%" }} />
+        <div className="flex-1 space-y-2">
+          <div className="sk" style={{ height: 20, width: "45%", borderRadius: 6 }} />
+          <div className="sk" style={{ height: 13, width: "70%", borderRadius: 5 }} />
+        </div>
+        <div className="sk shrink-0" style={{ width: 18, height: 18, borderRadius: 4 }} />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonDeckTile() {
+  return (
+    <div className="w-full" style={{ background: "rgba(255,255,255,0.18)", borderRadius: R.xl }}>
+      <div className="flex items-center gap-4 px-6 py-5">
+        <div className="sk shrink-0" style={{ width: 26, height: 26, borderRadius: 6, opacity: 0.5 }} />
+        <div className="flex-1 space-y-2">
+          <div className="sk" style={{ height: 18, width: "50%", borderRadius: 6, opacity: 0.5 }} />
+          <div className="sk" style={{ height: 12, width: "30%", borderRadius: 5, opacity: 0.4 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── FLAG ICON ────────────────────────────────────────────────────────────────
 const FLAG_ICONS = { es: "/espanha.png", it: "/italia.png", ru: "/russia.png", fr: "/franca.png" };
 function FlagIcon({ langCode, size = 40 }) {
@@ -511,9 +544,13 @@ function GyroBlobs() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, dailyChallenge }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied }) {
   const [showHelp, setShowHelp] = useState(false);
+  const [ready, setReady]       = useState(false);
   const favCount = Object.keys(favorites).length;
+
+  // Delay content render by 1 frame so skeleton shows first
+  useEffect(() => { const t = setTimeout(() => setReady(true), 80); return () => clearTimeout(t); }, []);
 
   const prevMolejo = useRef(streak);
   const [streakPop, setMolejoPop] = useState(false);
@@ -544,7 +581,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
   const xpInLevel    = getXPInLevel(displayXP);
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: C.cream }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'var(--cream)' }}>
       {/* ── Ambient liquid glass background ── */}
       <div className="absolute inset-0 pointer-events-none" style={{ willChange: "transform", zIndex: 0 }}>
         {/* Blob 1 — 22s cycle, warm coral-rose */}
@@ -590,7 +627,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
           </motion.div>
           <div className="flex items-center gap-3 mt-3">
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--progress-track)" }}>
               <motion.div className="h-full rounded-full" style={{ backgroundColor: C.ink }}
                 animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
                 transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }} />
@@ -650,37 +687,12 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </motion.div>
         )}
 
-        {/* Daily challenge */}
-        {dailyChallenge && (() => {
-          const cLang = LANG_META[dailyChallenge.lang];
-          const done = stats.completedDecks?.[dailyChallenge.deck]?.includes(dailyChallenge.lang);
-          return (
-            <motion.button whileTap={{ scale: 0.97 }}
-              onClick={() => onSelectLang(dailyChallenge.lang, dailyChallenge.deck)}
-              className="w-full flex items-center justify-between px-5 py-4 mb-4 text-left"
-              style={{ ...glass.card, borderRadius: R.xl, opacity: done ? 0.6 : 1 }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: cLang.accent, borderRadius: R.card }}>
-                  <Zap size={18} className="text-white" />
-                </div>
-                <div>
-                  <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: C.dim }}>Desafio do dia</div>
-                  <div className="font-black" style={{ fontSize: "1rem", color: C.ink }}>{getDeckLabel(dailyChallenge.deck, dailyChallenge.lang)} — {cLang.name}</div>
-                </div>
-              </div>
-              {done
-                ? <Check size={18} style={{ color: "#16A34A", flexShrink: 0 }} />
-                : <span className="text-xs font-black px-2.5 py-1 shrink-0" style={{ backgroundColor: "#EF9F27", color: "#fff", borderRadius: R.pill }}>+XP bônus</span>
-              }
-            </motion.button>
-          );
-        })()}
-
         {/* Language list */}
         <div className="text-xs font-black tracking-widest uppercase mb-4" style={{ color: C.dim }}>Idiomas</div>
         <div className="space-y-3 mb-6">
-          {Object.entries(LANG_META).map(([code, lang], i) => {
+          {!ready
+            ? Object.keys(LANG_META).map(k => <SkeletonLangTile key={k} />)
+            : Object.entries(LANG_META).map(([code, lang], i) => {
             const doneCount = DECK_KEYS.filter(k => stats.completedDecks?.[k]?.includes(code)).length;
             const required  = LANG_UNLOCK_LEVEL[code] || 1;
             const locked    = currentLevel < required;
@@ -717,8 +729,6 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             );
           })}
         </div>
-
-        {/* Secondary actions */}
         <div className="flex gap-3">
           <button onClick={onOpenFavorites}
             className="flex-1 flex items-center justify-center gap-2 py-4 font-bold text-sm"
@@ -814,6 +824,8 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }) {
   const lang      = LANG_META[langCode];
   const [query, setQuery] = useState("");
+  const [ready, setReady] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setReady(true), 60); return () => clearTimeout(t); }, []);
   const filtered  = DECK_KEYS.filter(k => getDeckLabel(k, langCode).toLowerCase().includes(query.toLowerCase()));
   const doneCount = DECK_KEYS.filter(k => completedDecks[k]?.includes(langCode)).length;
 
@@ -850,7 +862,9 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
           />
         </div>
         <div className="space-y-3">
-          {filtered.map((key, i) => {
+          {!ready
+            ? DECK_KEYS.map(k => <SkeletonDeckTile key={k} />)
+            : filtered.map((key, i) => {
             const deck = DECKS[key];
             const Icon = deck.icon;
             const done = completedDecks[key]?.includes(langCode);
@@ -1262,7 +1276,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-4 pb-8 flex flex-col">
         {/* Progress bar + animated % + 100% success burst */}
         <div className="mb-5 relative">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--progress-track)" }}>
             <motion.div className="h-full rounded-full" style={{ backgroundColor: accentColor }}
               animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.5, ease: [0.34, 1.2, 0.64, 1] }} />
           </div>
@@ -1369,7 +1383,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
                     className="flex-1 flex items-center justify-center gap-2 py-4 font-black whitespace-nowrap"
-                    style={{ background: "linear-gradient(135deg, rgba(30,30,30,0.92), rgba(17,17,17,0.98))", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "0.95rem", boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+                    style={{ background: "rgba(17,17,17,0.88)", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid rgba(255,255,255,0.14)", borderRadius: R.xl, color: "#FAF9F6", fontSize: "0.95rem", boxShadow: "0 4px 16px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
                     <Check size={16} strokeWidth={2.5} className="shrink-0" /> Conheço!
                   </motion.button>
                 </motion.div>
@@ -1538,7 +1552,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
             <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
               whileTap={{ scale: 0.97 }} onClick={() => onNextLang(nextLangCode, DECK_KEYS[0])}
               className="w-full flex items-center justify-between px-7 py-5 font-black"
-              style={{ ...glass.dark, borderRadius: R.xl, color: C.cream, fontSize: "1.1rem" }}>
+              style={{ background: "rgba(17,17,17,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: R.xl, color: C.cream, fontSize: "1.1rem" }}>
               <span>Começar: {nextLang.name}</span>
               <ArrowRight size={22} />
             </motion.button>
@@ -1568,8 +1582,8 @@ function BadgeToast({ badge, onDone }) {
     <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 80 }}
       transition={{ type: "spring", stiffness: 320, damping: 28 }}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-4"
-      style={{ ...glass.dark, borderRadius: R.xl, maxWidth: 320, boxShadow: "0 16px 48px rgba(0,0,0,0.3)" }}>
+      className="fixed z-50 flex items-center gap-3 px-5 py-4"
+      style={{ ...glass.dark, borderRadius: R.xl, maxWidth: 320, boxShadow: "0 16px 48px rgba(0,0,0,0.3)", bottom: 40, left: "50%", transform: "translateX(-50%)", width: "calc(100vw - 3rem)" }}>
       {Illus && <Illus dim={false} />}
       <div>
         <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Conquista desbloqueada!</div>
@@ -1608,6 +1622,7 @@ export default function App() {
   const [selectedLang,   setSelectedLang]   = useState(null);
   const [selectedDeck,   setSelectedDeck]   = useState(null);
   const [result,         setResult]         = useState(null);
+  const pendingResult = useRef(null);
   const [fromFavorites,  setFromFavorites]  = useState(false);
   const [isReview,       setIsReview]       = useState(false);
   const [lastStudied,    setLastStudied]    = useState(() => getStorage("lf_last_studied", null));
@@ -1633,18 +1648,6 @@ export default function App() {
   const [stats, setStats] = useState(() => getStorage("lf_stats", {
     totalCorrect: 0, totalAttempts: 0, completedDecks: {}, studied: {}, perfectSessions: 0
   }));
-  const [dailyChallenge] = useState(() => {
-    const today = new Date().toDateString();
-    const saved = getStorage("lf_daily", null);
-    if (saved?.date === today) return saved;
-    // Pick a random deck + language as today's challenge
-    const langs = ["es", "it"];
-    const lang = langs[new Date().getDate() % langs.length];
-    const deck = DECK_KEYS[new Date().getDate() % DECK_KEYS.length];
-    const challenge = { date: today, lang, deck, completed: false };
-    setStorage("lf_daily", challenge);
-    return challenge;
-  });
 
   const bumpMolejo = useCallback(() => {
     const today = new Date().toDateString();
@@ -1752,13 +1755,27 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased", backgroundColor: C.cream }}>
+      <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-:root{--cream:#FAF9F6;--ink:#111111;--dim:#888888;--surface:rgba(255,255,255,0.78);--surface-border:rgba(255,255,255,0.7);--bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%)}
-@media(prefers-color-scheme:dark){:root{--cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;--surface:rgba(40,38,34,0.85);--surface-border:rgba(255,255,255,0.1);--bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(120,60,50,0.25), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,120,0.2), transparent 50%)}}
+:root{
+  --cream:#FAF9F6;--ink:#111111;--dim:#888888;
+  --glass-card:rgba(255,255,255,0.78);--glass-border:rgba(255,255,255,0.68);--glass-shine:rgba(255,255,255,0.95);
+  --glass-nav:rgba(250,249,246,0.88);--glass-pill:rgba(255,255,255,0.55);--glass-shadow-sm:rgba(0,0,0,0.05);
+  --progress-track:#E0DDD9;
+  --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%);
+}
+@media(prefers-color-scheme:dark){:root{
+  --cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;
+  --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
+  --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
+  --progress-track:rgba(255,255,255,0.12);
+  --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
+}}
 *{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
-body{background:var(--cream);background-image:var(--bg-gradient)}
-::placeholder{color:rgba(255,255,255,0.45)!important}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}.skeleton{background:linear-gradient(90deg,rgba(0,0,0,0.06) 25%,rgba(0,0,0,0.12) 50%,rgba(0,0,0,0.06) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}`}</style>
+html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
             <LevelUpOverlay key="levelup" level={levelUp}
@@ -1781,7 +1798,6 @@ body{background:var(--cream);background-image:var(--bg-gradient)}
               {screen === "dashboard" && (
                 <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
                   lastStudied={lastStudied}
-                  dailyChallenge={dailyChallenge}
                   onSelectLang={handleSelectLangDirect}
                   onOpenFavorites={() => setScreen("favorites")}
                   onOpenStats={() => setScreen("stats")} />
@@ -1818,11 +1834,11 @@ body{background:var(--cream);background-image:var(--bg-gradient)}
                   langCode={selectedLang} deckKey={selectedDeck}
                   favorites={favorites} onToggleFav={handleToggleFav}
                   isReview={isReview} streak={streak}
-                  onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); setResult(res); setScreen("result"); }}
+                  onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); pendingResult.current = res; setResult(res); setScreen("result"); }}
                   onXP={addXP} onBack={backFromStudy} />
               )}
-              {screen === "result" && result && (
-                <ResultScreen key="result" result={result}
+              {screen === "result" && (result || pendingResult.current) && (
+                <ResultScreen key="result" result={result || pendingResult.current}
                   langCode={selectedLang} deckKey={selectedDeck}
                   fromFavorites={fromFavorites} streak={streak}
                   onRestart={() => { setIsReview(true); setStudySessionId(id => id + 1); setScreen("study"); }}
