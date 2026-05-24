@@ -871,79 +871,211 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
   );
 }
 
-// ── WRITE MODE SYNONYMS — only used in escrita answer checking, never displayed ──
-// Keys are normalize(card.pt). Values are all additional accepted PT answers.
+// ── WRITE MODE SYNONYMS — escrita only, never affects flashcard display ──────
+// normalize(card.pt) → all additional accepted PT answers
 const WRITE_PT_SYNONYMS = {
-  // Greetings
-  "ola":              ["oi", "ola", "ei"],
-  "oi":               ["ola", "oi", "ei"],
-  "tchau":            ["ate logo", "ate mais", "ate ja", "tchau", "adeus"],
-  "de nada":          ["nao foi nada", "por nada", "de nada"],
-  "com licenca":      ["licenca", "com sua licenca"],
-  "desculpe":         ["perdao", "me desculpe", "desculpa"],
-  "obrigado":         ["obrigada", "obrigado", "valeu"],
-  "obrigada":         ["obrigado", "obrigada", "valeu"],
-  "boa noite":        ["boas noites", "boa noite"],
-  "bom dia":          ["boa manha", "bom dia"],
-  // ES conjugations — tu form accepts você form and vice versa
-  "tu eres/estas":    ["tu es", "tu estas", "voce e", "voce esta", "e", "esta"],
-  "tu tienes":        ["tu tens", "voce tem", "tens", "tem"],
-  "tu vas":           ["tu vais", "voce vai", "vais", "vai"],
-  "tu quieres":       ["tu queres", "voce quer", "queres", "quer"],
-  "tu haces":         ["tu fazes", "voce faz", "fazes", "faz"],
-  "tu puedes":        ["tu podes", "voce pode", "podes", "pode"],
-  "tu hablas":        ["tu falas", "voce fala", "falas", "fala"],
-  // IT conjugations
-  "tu sei":           ["tu es", "voce e", "es", "e"],
-  "tu hai":           ["tu tens", "voce tem", "tens", "tem"],
-  "tu vai":           ["tu vais", "voce vai", "vais", "vai"],
-  "tu vuoi":          ["tu queres", "voce quer", "queres", "quer"],
-  "tu fai":           ["tu fazes", "voce faz", "fazes", "faz"],
-  "tu puoi":          ["tu podes", "voce pode", "podes", "pode"],
-  "tu parli":         ["tu falas", "voce fala", "falas", "fala"],
-  // FR conjugations
-  "tu es":            ["tu es", "voce e", "es", "e"],
-  "tu as":            ["tu tens", "voce tem", "tens", "tem"],
-  "tu vas":           ["tu vais", "voce vai", "vais", "vai"],
-  "tu veux":          ["tu queres", "voce quer", "queres", "quer"],
-  "tu fais":          ["tu fazes", "voce faz", "fazes", "faz"],
-  "tu peux":          ["tu podes", "voce pode", "podes", "pode"],
-  "tu parles":        ["tu falas", "voce fala", "falas", "fala"],
-  // PT conjugation cards (card.pt is the question shown, user types PT answer)
-  // For "Tu queres" cards — also accept "você quer" and stripped verb
-  "tu queres":        ["tu queres", "voce quer", "queres", "quer"],
-  "tu tens":          ["tu tens", "voce tem", "tens", "tem"],
-  "tu vais":          ["tu vais", "voce vai", "vais", "vai"],
-  "tu es/estas":      ["tu es", "tu estas", "voce e", "voce esta", "e", "esta"],
-  "tu fazes":         ["tu fazes", "voce faz", "fazes", "faz"],
-  "tu podes":         ["tu podes", "voce pode", "podes", "pode"],
-  "tu falas":         ["tu falas", "voce fala", "falas", "fala"],
-  // Nós forms — also accept just the verb without pronoun
-  "nos somos/estamos": ["somos", "estamos", "nos somos", "nos estamos"],
-  "nos temos":         ["temos", "nos temos"],
-  "nos vamos":         ["vamos", "nos vamos"],
-  "nosotros somos/estamos": ["somos", "estamos", "nos somos", "nos estamos"],
-  "nosotros tenemos":  ["temos", "nos temos", "tenemos"],
-  "nosotros vamos":    ["vamos", "nos vamos"],
-  "noi siamo":         ["somos", "estamos", "nos somos"],
-  "noi abbiamo":       ["temos", "nos temos"],
-  "noi andiamo":       ["vamos", "nos vamos"],
-  "nous sommes":       ["somos", "estamos", "nos somos"],
-  "nous avons":        ["temos", "nos temos"],
-  "nous allons":       ["vamos", "nos vamos"],
-  "my -":              ["somos", "nos somos"],
-  // Ele/ela forms
-  "ele/ela e/esta":   ["ele e", "ela e", "ele esta", "ela esta", "e", "esta"],
-  "ele/ela tem":      ["ele tem", "ela tem", "tem"],
-  "ele/ela vai":      ["ele vai", "ela vai", "vai"],
-  "ele/ela quer":     ["ele quer", "ela quer", "quer"],
+
+  // ── GREETINGS ──────────────────────────────────────────────────────────────
+  "ola":                   ["oi","ola","ei","ola tudo bem","oi tudo bem"],
+  "oi":                    ["ola","oi","ei"],
+  "bom dia":               ["boa manha","bom dia"],
+  "boa tarde":             ["boa tarde","boa tarde a todos"],
+  "boa noite":             ["boas noites","boa noite"],
+  "obrigado/obrigada":     ["obrigado","obrigada","valeu","muito obrigado","muito obrigada"],
+  "por favor":             ["por favor","faz favor","se faz favor"],
+  "de nada":               ["nao foi nada","por nada","nao ha de que","de nada"],
+  "com licenca":           ["licenca","com sua licenca","com licenca"],
+  "com licenca!":          ["licenca!","com licenca"],
+  "desculpe":              ["perdao","me desculpe","desculpa","desculpe-me"],
+  "tchau":                 ["ate logo","ate mais","ate ja","adeus","ate breve","tchau tchau"],
+  "tudo bem?":             ["como vai?","como esta?","tudo bom?","como voce esta?","esta bem?"],
+
+  // ── CONJUGATIONS — Tu forms (all accept você equivalents + bare verb) ──────
+  "tu es/estas":           ["es","estas","tu es","tu estas","voce e","voce esta","e","esta"],
+  "tu es":                 ["es","tu es","voce e","e"],
+  "tu tens":               ["tens","tu tens","voce tem","tem"],
+  "tu vais":               ["vais","tu vais","voce vai","vai"],
+  "tu queres":             ["queres","tu queres","voce quer","quer"],
+  "tu fazes":              ["fazes","tu fazes","voce faz","faz"],
+  "tu podes":              ["podes","tu podes","voce pode","pode"],
+  "tu falas":              ["falas","tu falas","voce fala","fala"],
+
+  // ── CONJUGATIONS — Eu forms ────────────────────────────────────────────────
+  "eu sou/estou":          ["sou","estou","eu sou","eu estou"],
+  "eu sou":                ["sou","eu sou"],
+  "eu tenho":              ["tenho","eu tenho"],
+  "eu vou":                ["vou","eu vou"],
+  "eu quero":              ["quero","eu quero"],
+  "eu faco":               ["faco","eu faco","faco"],
+  "eu posso":              ["posso","eu posso"],
+  "eu falo":               ["falo","eu falo"],
+
+  // ── CONJUGATIONS — Ele/ela forms ───────────────────────────────────────────
+  "ele/ela e/esta":        ["e","esta","ele e","ela e","ele esta","ela esta","voce e","voce esta","e/esta"],
+  "ele/ela e":             ["e","ele e","ela e"],
+  "ele/ela tem":           ["tem","ele tem","ela tem"],
+  "ele/ela vai":           ["vai","ele vai","ela vai"],
+
+  // ── CONJUGATIONS — Nós forms ───────────────────────────────────────────────
+  "nos somos/estamos":     ["somos","estamos","nos somos","nos estamos"],
+  "nos somos":             ["somos","nos somos"],
+  "nos temos":             ["temos","nos temos"],
+  "nos vamos":             ["vamos","nos vamos","vamo"],
+
+  // ── NUMBERS ────────────────────────────────────────────────────────────────
+  "um":      ["um","uma","1"],
+  "dois":    ["dois","duas","2"],
+  "tres":    ["tres","3"],
+  "quatro":  ["quatro","4"],
+  "cinco":   ["cinco","5"],
+  "seis":    ["seis","6"],
+  "sete":    ["sete","7"],
+  "oito":    ["oito","8"],
+  "nove":    ["nove","9"],
+  "dez":     ["dez","10"],
+
+  // ── COLORS ─────────────────────────────────────────────────────────────────
+  "vermelho": ["vermelho","vermelha"],
+  "azul":     ["azul"],
+  "amarelo":  ["amarelo","amarela"],
+  "verde":    ["verde"],
+  "branco":   ["branco","branca"],
+  "preto":    ["preto","preta","negro","negra"],
+  "laranja":  ["laranja","cor de laranja"],
+  "rosa":     ["rosa","cor de rosa"],
+  "roxo":     ["roxo","roxa","violeta","purpura"],
+  "cinza":    ["cinza","cinzento","cinzenta","gris"],
+
+  // ── FAMILY ─────────────────────────────────────────────────────────────────
+  "mae":      ["mae","mama","mami"],
+  "pai":      ["pai","papa","paizao"],
+  "filho":    ["filho","filhinho"],
+  "filha":    ["filha","filhinha"],
+  "irmao":    ["irmao","mano"],
+  "irma":     ["irma","mana"],
+  "avo":      ["avo","vovo","avozinha"],
+  "avo":      ["avo","vovo","avozinho"],
+  "tio":      ["tio"],
+  "tia":      ["tia"],
+
+  // ── BODY ───────────────────────────────────────────────────────────────────
+  "cabeca":   ["cabeca","cranio"],
+  "olho":     ["olho","olhos"],
+  "nariz":    ["nariz"],
+  "boca":     ["boca"],
+  "ouvido":   ["ouvido","orelha"],
+  "mao":      ["mao","maos"],
+  "pe":       ["pe","pes"],
+  "coracao":  ["coracao"],
+  "costas":   ["costas","costa"],
+  "perna":    ["perna","pernas"],
+
+  // ── FOOD ───────────────────────────────────────────────────────────────────
+  "pao":      ["pao","pao de forma"],
+  "agua":     ["agua"],
+  "carne":    ["carne","carne vermelha"],
+  "fruta":    ["fruta","frutas"],
+  "leite":    ["leite"],
+  "ovo":      ["ovo","ovos"],
+  "arroz":    ["arroz"],
+  "feijao":   ["feijao","feijoes"],
+  "queijo":   ["queijo","queijos"],
+  "vinho":    ["vinho","vinho tinto","vinho branco"],
+
+  // ── TRAVEL ─────────────────────────────────────────────────────────────────
+  "aeroporto":  ["aeroporto"],
+  "hotel":      ["hotel","pousada","hostel"],
+  "bilhete":    ["bilhete","passagem","ingresso","ticket"],
+  "passaporte": ["passaporte","documento"],
+  "mala":       ["mala","mochila","bagagem"],
+  "trem":       ["trem","comboio"],
+  "onibus":     ["onibus","autocarro","micro","colectivo"],
+  "taxi":       ["taxi","cab","uber"],
+  "mapa":       ["mapa","carta","guia"],
+  "praia":      ["praia"],
+
+  // ── HOME ───────────────────────────────────────────────────────────────────
+  "casa":     ["casa","lar","residencia"],
+  "porta":    ["porta","portao"],
+  "janela":   ["janela"],
+  "mesa":     ["mesa"],
+  "cadeira":  ["cadeira","banco","assento"],
+  "cama":     ["cama","leito"],
+  "cozinha":  ["cozinha"],
+  "banheiro": ["banheiro","casa de banho","wc","toalete","lavabo"],
+  "livro":    ["livro","livros"],
+  "telefone": ["telefone","telemovel","celular","smartphone"],
+
+  // ── ADJECTIVES ─────────────────────────────────────────────────────────────
+  "grande":  ["grande","enorme","grandao"],
+  "pequeno": ["pequeno","pequena","pequenininho"],
+  "bonito":  ["bonito","bonita","lindo","linda","giro","gira"],
+  "feio":    ["feio","feia","horrivel"],
+  "rapido":  ["rapido","rapida","veloz","depressa"],
+  "lento":   ["lento","lenta","devagar","vagaroso"],
+  "quente":  ["quente","calor"],
+  "frio":    ["frio","fria"],
+  "feliz":   ["feliz","contente","alegre"],
+  "triste":  ["triste","chateado","melancolico"],
+
+  // ── VERBS (infinitives) ────────────────────────────────────────────────────
+  "ser/estar": ["ser","estar","ser ou estar"],
+  "ter":       ["ter","possuir"],
+  "ir":        ["ir","andar","ir embora"],
+  "querer":    ["querer","desejar","querer dizer"],
+  "poder":     ["poder","conseguir"],
+  "fazer":     ["fazer","realizar"],
+  "falar":     ["falar","dizer","conversar","bater papo"],
+  "comer":     ["comer","almocar","jantar"],
+  "beber":     ["beber","tomar"],
+  "dormir":    ["dormir","descansar"],
+
+  // ── PHRASES ────────────────────────────────────────────────────────────────
+  "onde fica o metro?":   ["onde e o metro?","onde fica a estacao de metro?","como chegar ao metro?"],
+  "onde fica o banheiro?":["onde e o banheiro?","onde tem banheiro?","onde fica o wc?"],
+  "onde fica o hotel?":   ["onde e o hotel?","como chegar ao hotel?"],
+  "quanto custa?":        ["qual e o preco?","quanto e?","quanto custa isso?"],
+  "quanto custa a passagem?": ["qual e o preco do bilhete?","quanto e a passagem?"],
+  "quanto tempo leva?":   ["quanto tempo demora?","quanto tempo leva?"],
+  "e longe daqui?":       ["fica longe?","e longe?","esta longe daqui?"],
+  "tem mesa pra dois?":   ["tem mesa para dois?","tem lugar para dois?"],
+  "qual e o prato do dia?": ["qual e o prato especial?","o que tem hoje?","qual o cardapio do dia?"],
+  "a conta, por favor":   ["a conta","traz a conta","pode trazer a conta?","faz o favor da conta"],
+  "pode me ajudar?":      ["voce pode me ajudar?","pode ajudar?","preciso de ajuda"],
+  "nao entendo":          ["nao estou entendendo","nao compreendo","nao entendi"],
+  "nao entendo, pode falar mais devagar?": ["pode falar mais devagar?","fala mais devagar por favor","pode falar mais lento?"],
+  "nao entendo, pode repetir?": ["pode repetir?","repete por favor","pode dizer de novo?"],
+  "pode repetir?":        ["pode repetir?","repete","diz de novo"],
+  "tem wi-fi aqui?":      ["tem wifi?","tem wi-fi?","tem internet aqui?"],
+  "tem wifi aqui?":       ["tem wifi?","tem wi-fi?","tem internet aqui?"],
+  "tem algo sem gluten?": ["tem opcao sem gluten?","tem comida sem gluten?"],
+  "qual e a saida?":      ["onde e a saida?","onde fica a saida?"],
+  "pode chamar um taxi pra mim?": ["pode pedir um taxi?","chama um taxi?","voce pode pedir um taxi?"],
+  "que horas fecha?":     ["a que horas fecha?","quando fecha?","qual e o horario de fechamento?"],
+  "aceita cartao?":       ["aceita cartao de credito?","voce aceita cartao?","posso pagar com cartao?"],
+  "posso pagar com cartao?": ["aceita cartao?","posso pagar no cartao?"],
+  "onde compro o bilhete?": ["onde compro passagem?","onde vende bilhete?","onde eu compro o ticket?"],
+  "to perdido, pode me mostrar no mapa?": ["estou perdido","pode me mostrar no mapa?","to perdido"],
+  "estou perdido(a)":     ["estou perdido","me perdi","fiquei perdido"],
+  "preciso de ajuda":     ["preciso de socorro","me ajuda","pode me ajudar?"],
+  "estou com fome":       ["estou faminto","to com fome","estou com muita fome"],
+  "que linha pega pra?":  ["qual linha eu pego?","qual onibus vai para?"],
+  "pode me dar uma agua, por favor?": ["me da uma agua","uma agua por favor","agua por favor"],
+  "qual e o seu nome?":   ["como voce se chama?","como e o seu nome?","seu nome e?"],
+  "me chamo...":          ["meu nome e...","eu me chamo...","pode me chamar de..."],
+  "fala portugues?":      ["voce fala portugues?","sabe portugues?"],
+  "tudo bem?":            ["como vai?","como esta?","tudo bom?"],
+  "que horas sao?":       ["que horas sao?","pode me dizer as horas?","que horas?"],
+  "nao falo frances bem": ["nao falo bem o frances","meu frances e fraco","nao sei muito frances"],
+  "chame a policia!":     ["chama a policia!","policia!","socorro!"],
 };
 
 function getWriteSynonyms(ptStr) {
-  const key = normalize(ptStr);
+  const normalize_simple = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+  const key = normalize_simple(ptStr);
   const direct = WRITE_PT_SYNONYMS[key] || [];
-  // Also check if card.pt contains "Tu " — add stripped verb as valid
-  const stripped = key.replace(/^(tu|voce|ele|ela|nos)\s+/, "").trim();
+  // Also accept bare verb when card starts with pronoun
+  const stripped = key.replace(/^(eu|tu|ele|ela|nos|nos|voce|voces)\s+/, "").trim();
   if (stripped && stripped !== key && stripped.length > 1) {
     return [...new Set([...direct, stripped])];
   }
@@ -1044,9 +1176,9 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
     const strippedUser = stripPronoun(userAns);
     const isOk = allValid.some(v => v === userAns) ||
       // "tu quer" → strip "tu " → "quer" ∈ allValid (because allValid has "quer" via WRITE_PT_SYNONYMS)
-      (strippedUser.length > 1 && allValid.some(v => v === strippedUser)) ||
+      (strippedUser.length >= 1 && allValid.some(v => v === strippedUser)) ||
       // Strip pronouns from both sides and compare verb forms
-      (strippedUser.length > 1 && allValid.some(v => stripPronoun(v) === strippedUser));
+      (strippedUser.length >= 1 && allValid.some(v => stripPronoun(v) === strippedUser));
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
     if (isOk) { correctRef.current += 1; setCorrect(correctRef.current); }
