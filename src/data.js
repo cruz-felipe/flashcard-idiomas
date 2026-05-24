@@ -24,6 +24,8 @@ export const DECKS = {
 
 // Helper: get deck label for current language context
 export function getDeckLabel(deckKey, langCode) {
+  if (deckKey === "__favorites__")     return "Favoritas";
+  if (deckKey === "__favorites_all__") return "Todas as Favoritas";
   const deck = DECKS[deckKey];
   if (!deck) return deckKey;
   return langCode === "en" && deck.labelEN ? deck.labelEN : deck.label;

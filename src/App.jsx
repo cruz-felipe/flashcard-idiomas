@@ -1452,7 +1452,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
   const langKeys     = Object.keys(LANG_META);
   const nextLangCode = (!fromFavorites && !nextDeck) ? (langKeys[langKeys.indexOf(langCode) + 1] ?? null) : null;
   const nextLang     = nextLangCode ? LANG_META[nextLangCode] : null;
-  const deckName     = getDeckLabel(deckKey, langCode) || "categoria";
+  const deckName     = (deckKey === "__favorites__" && !result.fromFavorites) ? "Revisão de erros" : getDeckLabel(deckKey, langCode) || "categoria";
   const tier         = accuracy === 100 ? "perfect" : accuracy >= 80 ? "great" : accuracy >= 60 ? "good" : "keep";
   const pool         = RESULT_COPY[tier];
   const pick         = pool[Math.floor(Math.random() * pool.length)];
