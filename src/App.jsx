@@ -363,7 +363,7 @@ function FlagIcon({ langCode, size = 40 }) {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, lastMode }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, lastMode, lastDeck }) {
   const [showHelp, setShowHelp] = useState(false);
   const [ready, setReady]       = useState(false);
   const favCount = Object.keys(favorites).length;
@@ -471,10 +471,10 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
         {lastStudied && LANG_META[lastStudied] && (() => {
           const lang = LANG_META[lastStudied];
           const allDecks = getLangDeckKeys(lastStudied);
-          const firstIncomplete = allDecks.find(k => !(stats.completedDecks?.[k]?.includes(lastStudied)));
-          const targetDeck = firstIncomplete ?? allDecks[0]; // fall back to first deck when all done
           const doneCount = allDecks.filter(k => stats.completedDecks?.[k]?.includes(lastStudied)).length;
           const allDone = doneCount === allDecks.length;
+          // Show the exact deck the user last studied
+          const targetDeck = (lastDeck && allDecks.includes(lastDeck)) ? lastDeck : (allDecks.find(k => !(stats.completedDecks?.[k]?.includes(lastStudied))) ?? allDecks[0]);
           if (!targetDeck) return null;
           return (
             <motion.button whileTap={{ scale: 0.97 }}
@@ -975,11 +975,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
               className="w-full font-bold text-xl outline-none bg-transparent write-input"
               style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
             />
-            {status !== null && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                {status === "correct" ? <Check size={20} style={{ color: "#16A34A" }} /> : <X size={20} style={{ color: "#DC2626" }} />}
-              </div>
-            )}
+
           </div>
           {status === null && (
             <div style={{ height: 1, backgroundColor: "rgba(0,0,0,0.12)", marginTop: 10 }} />
@@ -1101,7 +1097,7 @@ function AnimatedProgressPct({ value, color }) {
 }
 
 // ─── STUDY SCREEN ─────────────────────────────────────────────────────────────
-function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav, isReview, streak = 0 }) {
+function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onToggleFav, isReview, fromFavorites = false, streak = 0 }) {
   const isFavAll   = deckKey === "__favorites_all__";
   const isFavDeck  = deckKey === "__favorites__" || isFavAll;
   const neutralLang = { name: "Favoritas", accent: C.ink, textPrimary: C.ink, textSecondary: C.dim };
@@ -1675,6 +1671,7 @@ export default function App() {
   const isWriteMode = screen === 'write';
   const [lastStudied,    setLastStudied]    = useState(() => getStorage("lf_last_studied", null));
   const [lastMode,      setLastMode]      = useState(() => getStorage("lf_last_mode", "flash"));
+  const [lastDeck,      setLastDeck]      = useState(() => getStorage("lf_last_deck", null));
   const [levelUp,        setLevelUp]        = useState(null);
   const [badgeUnlock,    setBadgeUnlock]    = useState(null);
 
@@ -1777,7 +1774,7 @@ export default function App() {
   }, [streak, checkNewBadges]);
 
   const goStudy = useCallback((lang, deck, fromFavs = false, review = false) => {
-    if (!fromFavs && lang) { setLastStudied(lang); setStorage("lf_last_studied", lang); setLastMode("flash"); setStorage("lf_last_mode", "flash"); }
+    if (!fromFavs && lang) { setLastStudied(lang); setStorage("lf_last_studied", lang); setLastMode("flash"); setStorage("lf_last_mode", "flash"); setLastDeck(deck); setStorage("lf_last_deck", deck); }
     dispatchNav({ type: "GO_STUDY", lang, deck, fromFavorites: fromFavs, isReview: review });
   }, []);
 
@@ -1827,7 +1824,7 @@ html,body{background:#FAF9F6;min-height:100vh}
               )}
               {screen === "dashboard" && (
                 <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
-                  lastStudied={lastStudied} lastMode={lastMode}
+                  lastStudied={lastStudied} lastMode={lastMode} lastDeck={lastDeck}
                   onSelectLang={handleSelectLangDirect}
                   onOpenFavorites={() => dispatchNav({ type: "GO_FAVORITES" })}
                   onOpenStats={() => dispatchNav({ type: "GO_STATS" })} />
@@ -1850,7 +1847,7 @@ html,body{background:#FAF9F6;min-height:100vh}
                 <DeckSelector key="decks" langCode={selectedLang} streak={streak}
                   completedDecks={stats.completedDecks || {}}
                   onSelectDeck={key => handleSelectDeck(selectedLang, key)}
-                  onSelectWrite={key => { setLastStudied(selectedLang); setStorage("lf_last_studied", selectedLang); setLastMode("write"); setStorage("lf_last_mode", "write"); dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: key }); }}
+                  onSelectWrite={key => { setLastStudied(selectedLang); setStorage("lf_last_studied", selectedLang); setLastMode("write"); setStorage("lf_last_mode", "write"); setLastDeck(key); setStorage("lf_last_deck", key); dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: key }); }}
                   onBack={() => dispatchNav({ type: "GO_DASHBOARD" })} />
               )}
               {screen === "mastered" && (
@@ -1864,7 +1861,7 @@ html,body{background:#FAF9F6;min-height:100vh}
                 <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${studySessionId}`}
                   langCode={selectedLang} deckKey={selectedDeck}
                   favorites={favorites} onToggleFav={handleToggleFav}
-                  isReview={isReview} streak={streak}
+                  isReview={isReview} fromFavorites={fromFavorites} streak={streak}
                   onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); dispatchNav({ type: "GO_RESULT", result: res }); }}
                   onXP={addXP} onBack={backFromStudy} />
               )}
