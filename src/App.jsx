@@ -880,10 +880,14 @@ function normalize(s) { return (s||"").toLowerCase().normalize("NFD").replace(/[
 
 function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) {
   const lang        = LANG_META[langCode] ?? { accent: C.ink, name: langCode };
-  const deckLabel   = getDeckLabel(deckKey, langCode);
+  const deckLabel   = deckKey === "__review__" ? "Revisão de erros" : getDeckLabel(deckKey, langCode);
   const accentColor = lang.accent;
 
   const cards = useMemo(() => {
+    if (deckKey === "__review__") {
+      const reviewCards = getStorage("lf_review_cards", []);
+      return shuffle(reviewCards);
+    }
     if (!VOCAB[langCode]?.[deckKey]) return [];
     return shuffle([...VOCAB[langCode][deckKey]]);
   }, []); // eslint-disable-line
@@ -906,16 +910,25 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const handleSubmit = () => {
     if (!card || status !== null) return;
     const userAns   = normalize(input);
-    const targetAns = normalize(card.target);
-    let isOk = userAns === targetAns ||
-      (userAns.length > 2 && targetAns.split(/[\s\/,]+/).some(w => normalize(w) === userAns));
+    // Build list of all accepted answers from target (split on / , ou)
+    const targetVariants = card.target
+      .split(/\s*[\/,]\s*|\s+ou\s+/i)
+      .map(v => normalize(v.trim()))
+      .filter(Boolean);
+    // Also check other cards in same deck with same PT word (true synonyms)
+    const deckCards = VOCAB[langCode]?.[deckKey] || [];
+    const synonymTargets = deckCards
+      .filter(dc => normalize(dc.pt) === normalize(card.pt) && dc.target !== card.target)
+      .flatMap(dc => dc.target.split(/\s*[\/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
+    const allValid = [...targetVariants, ...synonymTargets];
+    let isOk = allValid.some(v => v === userAns || (userAns.length > 2 && v.startsWith(userAns)));
+    // Exact match takes priority — don't allow too-short prefix matches
+    if (!isOk) isOk = allValid.some(v => v === userAns);
     // Russian: also accept phonetic latin input
     if (!isOk && langCode === "ru") {
       const { latin: targetLatin } = normalizeRu(card.target);
-      const userLatin = normalize(input); // user typed latin
-      isOk = userLatin === targetLatin ||
-        (userLatin.length > 2 && targetLatin.split(/[\s\/,]+/).some(w => w === userLatin)) ||
-        // also check: user typed cyrillic and matches phonetic in data
+      const userLatin = normalize(input);
+      isOk = targetLatin === userLatin ||
         (card.phonetic && normalize(card.phonetic.replace(/[\[\]]/g, "")) === userAns);
     }
     setStatus(isOk ? "correct" : "wrong");
@@ -1102,7 +1115,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const isFavDeck  = deckKey === "__favorites__" || isFavAll;
   const neutralLang = { name: "Favoritas", accent: C.ink, textPrimary: C.ink, textSecondary: C.dim };
   const lang       = LANG_META[langCode] || neutralLang;
-  const deckLabel  = isFavAll ? "Todas as Favoritas" : isFavDeck ? (fromFavorites ? "Favoritas" : "Revisão de erros") : getDeckLabel(deckKey, langCode);
+  const deckLabel  = deckKey === "__review__" ? "Revisão de erros" : isFavAll ? "Todas as Favoritas" : isFavDeck ? (fromFavorites ? "Favoritas" : "Revisão de erros") : getDeckLabel(deckKey, langCode);
 
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -1112,6 +1125,10 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const srsData = useMemo(() => getStorage(srsKey, {}), []); // eslint-disable-line
 
   const originalCards = useMemo(() => {
+    if (deckKey === "__review__") {
+      const reviewCards = getStorage("lf_review_cards", []);
+      return shuffle(reviewCards);
+    }
     if (isFavAll)
       return shuffle(Object.entries(LANG_META).flatMap(([code]) =>
         Object.values(VOCAB[code]).flat()
@@ -1545,12 +1562,18 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
                 })}
               </div>
             </div>
-            <motion.button whileTap={{ scale: 0.98 }} onClick={onReviewErrors}
-              className="w-full flex items-center justify-between px-5 py-3.5 font-black"
-              style={{ backgroundColor: lang.accent, color: "#fff", fontSize: "0.9rem" }}>
-              <span>Estudar os erros agora</span>
-              <RotateCcw size={16} />
-            </motion.button>
+            <div className="flex">
+              <motion.button whileTap={{ scale: 0.98 }} onClick={() => onReviewErrors("flash")}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 font-black"
+                style={{ backgroundColor: lang.accent, color: "#fff", fontSize: "0.85rem" }}>
+                <RotateCcw size={14} /> Flashcards
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.98 }} onClick={() => onReviewErrors("write")}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 font-black"
+                style={{ backgroundColor: lang.accent + "CC", color: "#fff", fontSize: "0.85rem", borderLeft: "1px solid rgba(255,255,255,0.2)" }}>
+                <span>✍</span> Escrita
+              </motion.button>
+            </div>
           </motion.div>
         )}
 
@@ -1879,14 +1902,17 @@ html,body{background:#FAF9F6;min-height:100vh}
                   onHome={homeFromResult}
                   onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
                   onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)}
-                  onReviewErrors={() => {
+                  onReviewErrors={(mode) => {
                     if (!result?.wrongCards?.length) return;
-                    result.wrongCards.forEach(w => {
-                      const lc = w._lang || selectedLang;
-                      const key = `${lc}:${w.pt}`;
-                      setFavorites(prev => { const next = { ...prev, [key]: true }; setStorage("lf_favorites", next); return next; });
-                    });
-                    goStudy(selectedLang, "__favorites__", false); // false = back to decks, not favorites
+                    // Pass wrongCards directly — no favorites involvement
+                    // Store as a temporary review set
+                    const reviewCards = result.wrongCards;
+                    setStorage("lf_review_cards", reviewCards);
+                    if (mode === "write") {
+                      dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: "__review__" });
+                    } else {
+                      dispatchNav({ type: "GO_STUDY", lang: selectedLang, deck: "__review__", fromFavorites: false, isReview: true });
+                    }
                   }} />
               )}
             </div>
