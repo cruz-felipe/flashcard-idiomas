@@ -900,16 +900,21 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const [wrongCards, setWrongCards] = useState([]);
   const inputRef = useRef(null);
 
-  // Enter key advances even when input is disabled (after answering)
+  const statusRef = useRef(null);
+  statusRef.current = status;
+
+  // Enter key: step 1 = verify, step 2 = next. Uses ref to avoid stale closure.
   useEffect(() => {
     const handler = (e) => {
       if (e.key !== "Enter") return;
-      if (status === null) handleSubmit();
+      e.preventDefault();
+      if (statusRef.current === null) handleSubmit();
       else next();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [status, input, idx]); // eslint-disable-line
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]); // re-subscribe only on card change, not on every state update
 
   const card = cards[idx];
   const lang = (card?._lang ? LANG_META[card._lang] : baseLang) ?? baseLang;
@@ -1001,7 +1006,6 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
           <div className="relative">
             <input ref={inputRef} value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
               placeholder="Digite em Português..."
               disabled={status !== null}
               className="w-full font-bold text-xl outline-none bg-transparent write-input"
