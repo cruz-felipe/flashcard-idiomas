@@ -650,6 +650,16 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 }
 
 // ─── DECK SELECTOR ────────────────────────────────────────────────────────────
+function getDeckProgress(langCode, deckKey) {
+  try {
+    const srs = JSON.parse(localStorage.getItem(`lf_srs_${langCode}_${deckKey}`)) || {};
+    const cards = Object.values(srs);
+    if (!cards.length) return 0;
+    const known = cards.filter(d => d.level >= 2).length;
+    return known / cards.length;
+  } catch { return 0; }
+}
+
 function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, completedDecks }) {
   const lang      = LANG_META[langCode];
   const [query, setQuery] = useState("");
@@ -714,7 +724,9 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
             style={{ backgroundColor: "rgba(255,255,255,0.22)", borderRadius: R.pill, color: "#ffffff", border: "1px solid rgba(255,255,255,0.3)", caretColor: "#ffffff" }}
           />
         </div>
-        <div className="space-y-3">
+        <motion.div className="space-y-3"
+          variants={{ visible: { transition: { staggerChildren: 0.045 } } }}
+          initial="hidden" animate="visible">
           {!ready
             ? DECK_KEYS.map(k => <SkeletonDeckTile key={k} />)
             : filtered.map((key, i) => {
@@ -723,8 +735,8 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
             const done = completedDecks[key]?.includes(langCode);
             return (
               <motion.button key={key} onClick={() => handleTile(key)}
-                initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 28 }}
+                variants={{ hidden: { opacity: 0, x: -16 }, visible: { opacity: 1, x: 0 } }}
+                transition={{ type: "spring", stiffness: 300, damping: 28 }}
                 whileTap={{ scale: 0.97 }}
                 className="w-full flex items-center justify-between px-6 py-5 text-left"
                 style={done
@@ -742,11 +754,26 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                       style={{ color: done ? C.dim : "rgba(255,255,255,0.55)" }}>
                       {VOCAB[langCode][key]?.length || 0} cards
                     </div>
+                    {(() => {
+                      const pct = getDeckProgress(langCode, key);
+                      if (pct <= 0) return null;
+                      return (
+                        <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ width: 64, backgroundColor: done ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.2)" }}>
+                          <motion.div className="h-full rounded-full"
+                            style={{ backgroundColor: done ? lang.accent : "rgba(255,255,255,0.8)" }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.round(pct * 100)}%` }}
+                            transition={{ type: "spring", stiffness: 160, damping: 22, delay: i * 0.04 }} />
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 {done
-                  ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                      style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent, borderRadius: R.pill }}>✓ Feito</span>
+                  ? <motion.span className="text-xs font-black px-2.5 py-1 shrink-0"
+                      initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                      style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent, borderRadius: R.pill, display: "inline-block" }}>✓ Feito</motion.span>
                   : mode === "write"
                     ? <span className="text-xs font-black tracking-widest shrink-0"
                         style={{ color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", letterSpacing: "0.08em" }}>ABC</span>
@@ -758,7 +785,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
           {filtered.length === 0 && (
             <p className="text-center py-10 font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>Nenhuma categoria encontrada</p>
           )}
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
@@ -1117,7 +1144,18 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const [incorrect, setIncorrect] = useState(0);
   const [showAns,   setShowAns]   = useState(false);
   const [wrongCards, setWrongCards] = useState([]);
-  const correctRef = useRef(0); // ref mirrors correct — no stale reads in next()
+  const [inputShake, setInputShake] = useState(false);
+  const [ripple, setRipple] = useState(false);
+  const correctRef = useRef(0);
+  const ttsLangMap = { es: "es-ES", it: "it-IT", ru: "ru-RU", fr: "fr-FR" };
+  const playTTS = (text, lc) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = ttsLangMap[lc] || "es-ES";
+    u.rate = 0.82;
+    window.speechSynthesis.speak(u);
+  }; // ref mirrors correct — no stale reads in next()
   const inputRef = useRef(null);
 
   const submitRef = useRef(null);
@@ -1189,8 +1227,10 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       (strippedUser.length >= 1 && allValid.some(v => stripPronoun(v) === strippedUser));
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
-    if (isOk) { correctRef.current += 1; setCorrect(correctRef.current); }
-    else { setIncorrect(n => n + 1); setWrongCards(prev => prev.find(w => w.pt === card.pt) ? prev : [...prev, card]); }
+    if (isOk) { correctRef.current += 1; setCorrect(correctRef.current); setRipple(true); setTimeout(() => setRipple(false), 600); }
+    else { setIncorrect(n => n + 1); setWrongCards(prev => prev.find(w => w.pt === card.pt) ? prev : [...prev, card]); setInputShake(true); setTimeout(() => setInputShake(false), 400); }
+    // Play TTS after answering so user hears the target word
+    setTimeout(() => playTTS(card.target, langCode), 120);
   };
 
   const next = () => {
@@ -1228,7 +1268,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
         <div className="mb-6">
           <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
             <motion.div className="h-full rounded-full" style={{ backgroundColor: accentColor }}
-              animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
+              animate={{ width: `${progress * 100}%` }} transition={{ type: "spring", stiffness: 180, damping: 24 }} />
           </div>
           <div className="flex justify-between mt-2">
             <span className="text-xs font-bold" style={{ color: C.dim }}>{correct} corretas</span>
@@ -1237,6 +1277,15 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
         </div>
 
         {/* Card with input inside */}
+        <div className="mb-4 px-7 pt-7 pb-5" style={{ position: "relative" }}>
+          <AnimatePresence>
+            {ripple && (
+              <motion.div key="ripple" className="absolute inset-0 rounded-3xl pointer-events-none"
+                initial={{ opacity: 0.35, scale: 0.6 }} animate={{ opacity: 0, scale: 1.15 }}
+                exit={{ opacity: 0 }} transition={{ duration: 0.55, ease: "easeOut" }}
+                style={{ backgroundColor: accentColor, borderRadius: R.xl, zIndex: 10 }} />
+            )}
+          </AnimatePresence>
         <div className="mb-4 px-7 pt-7 pb-5"
           style={{ ...glass.card, borderRadius: R.xl,
             border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
@@ -1244,7 +1293,9 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
           <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.target}</p>
           {card.phonetic && <p className="text-sm mb-4" style={{ color: C.dim }}>{card.phonetic}</p>}
           {/* Input embedded — no border, placeholder only */}
-          <div className="relative">
+          <motion.div className="relative"
+            animate={inputShake ? { x: [0, -8, 8, -5, 5, -3, 3, 0] } : { x: 0 }}
+            transition={{ duration: 0.38, ease: "easeInOut" }}>
             <input ref={inputRef} value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Digite em Português..."
@@ -1253,10 +1304,11 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
               style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
             />
 
-          </div>
+          </motion.div>
           {status === null && (
             <div style={{ height: 1, backgroundColor: "rgba(0,0,0,0.12)", marginTop: 10 }} />
           )}
+        </div>
           {showAns && (
             <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
               className="mt-4 px-4 py-3" style={{ backgroundColor: accentColor + "18", borderRadius: R.card }}>
@@ -1424,6 +1476,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   const controls = useAnimation();
   const [dragOffset, setDragOffset] = useState(0);
+  const [dragOffsetY, setDragOffsetY] = useState(0);
   const bleedLeftOpacity  = Math.max(0, Math.min(0.2, -dragOffset / 600));
   const bleedRightOpacity = Math.max(0, Math.min(0.2,  dragOffset / 600));
 
@@ -1505,8 +1558,15 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   const handleDragEnd = (_, info) => {
     if (!isFlipped || answered) return;
-    if (info.offset.x > 80)       handleAnswer(true);
-    else if (info.offset.x < -80) handleAnswer(false);
+    const { x, y } = info.offset;
+    // Swipe right = Sei!, left = Não sei, up = Quase
+    if (Math.abs(x) > Math.abs(y)) {
+      if (x > 80)       handleAnswer(true);
+      else if (x < -80) handleAnswer(false);
+    } else {
+      if (y < -60) handleAnswer("almost");
+    }
+    setDragOffsetY(0);
   };
 
   if (!card) return (
@@ -1606,12 +1666,29 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
               <motion.div
                 animate={controls}
                 style={{ height: "100%" }}
-                drag={isFlipped && !answered ? "x" : false}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.25}
-                onDrag={(_, info) => setDragOffset(info.offset.x)}
+                drag={isFlipped && !answered ? true : false}
+                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                dragElastic={0.22}
+                onDrag={(_, info) => { setDragOffset(info.offset.x); setDragOffsetY(info.offset.y); }}
                 onDragEnd={handleDragEnd}
-                whileDrag={{ cursor: "grabbing" }}>
+                whileDrag={{ cursor: "grabbing", rotateZ: dragOffset * 0.04 }}>
+                {/* Drag intent indicators */}
+                {isFlipped && !answered && (
+                  <>
+                    <motion.div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-start pl-5" style={{ zIndex: 20 }}
+                      animate={{ opacity: dragOffset < -40 ? Math.min(1, (-dragOffset - 40) / 40) : 0 }}>
+                      <span className="font-black text-lg" style={{ color: "#DC2626" }}>Não sei</span>
+                    </motion.div>
+                    <motion.div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-end pr-5" style={{ zIndex: 20 }}
+                      animate={{ opacity: dragOffset > 40 ? Math.min(1, (dragOffset - 40) / 40) : 0 }}>
+                      <span className="font-black text-lg" style={{ color: "#16A34A" }}>Sei!</span>
+                    </motion.div>
+                    <motion.div className="absolute inset-0 rounded-2xl pointer-events-none flex items-start justify-center pt-4" style={{ zIndex: 20 }}
+                      animate={{ opacity: dragOffsetY < -30 ? Math.min(1, (-dragOffsetY - 30) / 30) : 0 }}>
+                      <span className="font-black text-sm" style={{ color: "#D97706" }}>Quase</span>
+                    </motion.div>
+                  </>
+                )}
                 <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
                   lang={cardLangMeta} langCode={cardLang} isFav={isFav}
                   onToggleFav={c => onToggleFav(cardLang, c)}
@@ -1656,17 +1733,17 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
                   transition={{ type: "spring", stiffness: 420, damping: 26 }}>
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
+                  <motion.button whileTap={{ scale: 0.95, filter: "brightness(0.88)" }} onClick={() => handleAnswer(false)}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
                     style={{ flex:"1.2", background: "rgba(255,255,255,0.78)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.3)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.85rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1)" }}>
                     <X size={15} strokeWidth={2.5} className="shrink-0" /> Não sei
                   </motion.button>
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer("almost")}
+                  <motion.button whileTap={{ scale: 0.95, filter: "brightness(0.88)" }} onClick={() => handleAnswer("almost")}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
                     style={{ flex:"1", background: "rgba(255,255,255,0.78)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(245,158,11,0.35)", borderRadius: R.xl, color: "#D97706", fontSize: "0.85rem" }}>
                     <RotateCcw size={14} strokeWidth={2.5} className="shrink-0" /> Quase
                   </motion.button>
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
+                  <motion.button whileTap={{ scale: 0.95, filter: "brightness(0.88)" }} onClick={() => handleAnswer(true)}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
                     style={{ flex:"1.2", background: "#111111", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid rgba(255,255,255,0.14)", borderRadius: R.xl, color: "#FAF9F6", fontSize: "0.85rem" }}>
                     <Check size={15} strokeWidth={2.5} className="shrink-0" /> Sei!
