@@ -363,7 +363,7 @@ function FlagIcon({ langCode, size = 40 }) {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, lastMode }) {
   const [showHelp, setShowHelp] = useState(false);
   const [ready, setReady]       = useState(false);
   const favCount = Object.keys(favorites).length;
@@ -435,7 +435,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
       </div>
       <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
 
-      <div className="max-w-md mx-auto px-5 pt-16 pb-28">
+      <div className="max-w-md mx-auto px-5 pt-16 pb-28" style={{ overflowY: "auto", flex: 1 }}>
         {/* Editorial hero — streak as massive number */}
         <div className="mb-7">
           <div className="font-black leading-none"
@@ -474,7 +474,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           const doneCount = getLangDeckKeys(lastStudied).filter(k => stats.completedDecks?.[k]?.includes(lastStudied)).length;
           return firstIncomplete ? (
             <motion.button whileTap={{ scale: 0.97 }}
-              onClick={() => onSelectLang(lastStudied, firstIncomplete)}
+              onClick={() => onSelectLang(lastStudied, firstIncomplete, lastMode)}
               className="w-full flex items-center justify-between px-6 py-5 mb-6 text-left"
               style={{ ...glass.accent(lang.accent), borderRadius: R.xl }}>
               <div className="flex items-center gap-4">
@@ -657,7 +657,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen relative" style={{ backgroundColor: lang.accent }}>
+      className="relative" style={{ backgroundColor: lang.accent, height: "100dvh", overflow: "hidden" }}>
       <div className="lf-deck-overlay absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
       <NavBar bg={lang.accent} textColor="rgba(255,255,255,0.5)"
         left={
@@ -674,7 +674,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
           </div>
         }
       />
-      <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8">
+      <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8" style={{ overflowY: "auto", flex: 1 }}>
         <h1 className="font-black text-white leading-none mb-1"
           style={{ fontSize: "3.5rem", letterSpacing: "-0.02em" }}>{lang.name}</h1>
         <p className="text-sm font-medium mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
@@ -735,7 +735,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                 </div>
                 {done
                   ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                      style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
+                      style={{ backgroundColor: "rgba(255,255,255,0.3)", color: "#fff", borderRadius: R.pill }}>✓</span>
                   : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                 }
               </motion.button>
@@ -866,9 +866,11 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 }
 
 // ─── WRITE SCREEN (Production mode) ──────────────────────────────────────────
-function normalize(s) {
-  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-}
+// Cyrillic → latin for Russian phonetic input acceptance
+const RU_TRANSLIT = {"а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"yo","ж":"zh","з":"z","и":"i","й":"y","к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sch","ъ":"","ы":"y","ь":"","э":"e","ю":"yu","я":"ya"};
+function cyrillicToLatin(s) { return s.split("").map(ch => RU_TRANSLIT[ch.toLowerCase()] ?? ch).join(""); }
+function normalizeRu(s) { const l = (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); return { cyrillic: l, latin: cyrillicToLatin(l) }; }
+function normalize(s) { return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); }
 
 function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) {
   const lang        = LANG_META[langCode] ?? { accent: C.ink, name: langCode };
@@ -899,8 +901,17 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
     if (!card || status !== null) return;
     const userAns   = normalize(input);
     const targetAns = normalize(card.target);
-    const isOk = userAns === targetAns ||
+    let isOk = userAns === targetAns ||
       (userAns.length > 2 && targetAns.split(/[\s\/,]+/).some(w => normalize(w) === userAns));
+    // Russian: also accept phonetic latin input
+    if (!isOk && langCode === "ru") {
+      const { latin: targetLatin } = normalizeRu(card.target);
+      const userLatin = normalize(input); // user typed latin
+      isOk = userLatin === targetLatin ||
+        (userLatin.length > 2 && targetLatin.split(/[\s\/,]+/).some(w => w === userLatin)) ||
+        // also check: user typed cyrillic and matches phonetic in data
+        (card.phonetic && normalize(card.phonetic.replace(/[\[\]]/g, "")) === userAns);
+    }
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
     if (isOk) setCorrect(n => n + 1); else setIncorrect(n => n + 1);
@@ -923,7 +934,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream, position: "relative" }}>
+      className="flex flex-col" style={{ backgroundColor: C.cream, position: "relative", height: "100dvh", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${accentColor}14 0%, transparent 28%)`, pointerEvents: "none", zIndex: 0 }} />
       <NavBar title={deckLabel}
         left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>}
@@ -942,34 +953,38 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
           </div>
         </div>
 
-        {/* PT word card */}
-        <div className="p-7 mb-4" style={{ ...glass.card, borderRadius: R.xl, minHeight: 160 }}>
+        {/* Card with input inside */}
+        <div className="mb-4 px-7 pt-7 pb-5"
+          style={{ ...glass.card, borderRadius: R.xl,
+            border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
           <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Escreva em {lang.name}</p>
-          <p className="font-black leading-tight" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em" }}>{card.pt}</p>
+          <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em" }}>{card.pt}</p>
+          {/* Input embedded — no border, placeholder only */}
+          <div className="relative">
+            <input ref={inputRef} value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
+              placeholder={`Digite a tradução...`}
+              disabled={status !== null}
+              className="w-full font-bold text-xl outline-none bg-transparent"
+              style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
+            />
+            {status !== null && (
+              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                {status === "correct" ? <Check size={20} style={{ color: "#16A34A" }} /> : <X size={20} style={{ color: "#DC2626" }} />}
+              </div>
+            )}
+          </div>
+          {status === null && (
+            <div style={{ height: 1, backgroundColor: "rgba(0,0,0,0.12)", marginTop: 10 }} />
+          )}
           {showAns && (
             <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-              className="mt-4 px-4 py-3" style={{ backgroundColor: accentColor + "22", borderRadius: R.card }}>
+              className="mt-4 px-4 py-3" style={{ backgroundColor: accentColor + "18", borderRadius: R.card }}>
               <p className="text-xs font-black uppercase tracking-wider mb-1" style={{ color: accentColor }}>Resposta correta</p>
-              <p className="font-black" style={{ fontSize: "1.5rem", color: accentColor }}>{card.target}</p>
+              <p className="font-black" style={{ fontSize: "1.4rem", color: accentColor }}>{card.target}</p>
               {card.phonetic && <p className="text-sm mt-1" style={{ color: C.dim }}>{card.phonetic}</p>}
             </motion.div>
-          )}
-        </div>
-
-        {/* Input */}
-        <div className="relative mb-4">
-          <input ref={inputRef} value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
-            placeholder={`Digite em ${lang.name}...`}
-            disabled={status !== null}
-            className="w-full px-5 py-4 font-bold text-lg outline-none"
-            style={{ ...glass.card, borderRadius: R.xl, color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : "1px solid rgba(255,255,255,0.7)" }}
-          />
-          {status !== null && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              {status === "correct" ? <Check size={22} style={{ color: "#16A34A" }} /> : <X size={22} style={{ color: "#DC2626" }} />}
-            </div>
           )}
         </div>
 
@@ -1016,7 +1031,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="flex flex-col" style={{ backgroundColor: C.cream, height: "100dvh", overflow: "hidden" }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col justify-end px-6 pb-14 max-w-md mx-auto w-full">
         <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -1214,7 +1229,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="flex flex-col" style={{ backgroundColor: C.cream, height: "100dvh", overflow: "hidden" }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
         <Bookmark size={48} strokeWidth={1} style={{ color: "#DEDBD7" }} />
@@ -1465,7 +1480,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
+      className="flex flex-col" style={{ backgroundColor: C.cream, height: "100dvh", overflow: "hidden" }}>
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-14 pb-14 flex flex-col">
 
         {/* Score hero */}
@@ -1653,6 +1668,7 @@ export default function App() {
   const { screen, lang: selectedLang, deck: selectedDeck, result, fromFavorites, isReview, sessionId: studySessionId } = nav;
   const isWriteMode = screen === 'write';
   const [lastStudied,    setLastStudied]    = useState(() => getStorage("lf_last_studied", null));
+  const [lastMode,      setLastMode]      = useState(() => getStorage("lf_last_mode", "flash"));
   const [levelUp,        setLevelUp]        = useState(null);
   const [badgeUnlock,    setBadgeUnlock]    = useState(null);
 
@@ -1755,22 +1771,22 @@ export default function App() {
   }, [streak, checkNewBadges]);
 
   const goStudy = useCallback((lang, deck, fromFavs = false, review = false) => {
-    if (!fromFavs && lang) { setLastStudied(lang); setStorage("lf_last_studied", lang); }
+    if (!fromFavs && lang) { setLastStudied(lang); setStorage("lf_last_studied", lang); setLastMode("flash"); setStorage("lf_last_mode", "flash"); }
     dispatchNav({ type: "GO_STUDY", lang, deck, fromFavorites: fromFavs, isReview: review });
   }, []);
 
   const handleSelectDeck = useCallback((langCode, deckKey) => {
     const isFav = deckKey.startsWith("__");
-    const isDone = !isFav && stats.completedDecks?.[deckKey]?.includes(langCode);
-    if (isDone) { dispatchNav({ type: "GO_MASTERED", lang: langCode, deck: deckKey }); }
-    else goStudy(langCode, deckKey, false, false);
-  }, [stats.completedDecks, goStudy]);
+    if (isFav) { goStudy(langCode, deckKey, true, false); return; }
+    goStudy(langCode, deckKey, false, false);
+  }, [goStudy]);
 
-  const handleSelectLangDirect = useCallback((code, deckKey) => {
+  const handleSelectLangDirect = useCallback((code, deckKey, mode) => {
     const required = LANG_UNLOCK_LEVEL[code] || 1;
     if (getLevel(xp) < required) return;
-    if (deckKey) handleSelectDeck(code, deckKey);
-    else dispatchNav({ type: "GO_DECKS", lang: code });
+    if (deckKey && mode === 'write') { setLastMode('write'); setStorage('lf_last_mode', 'write'); dispatchNav({ type: 'GO_WRITE', lang: code, deck: deckKey }); }
+    else if (deckKey) handleSelectDeck(code, deckKey);
+    else dispatchNav({ type: 'GO_DECKS', lang: code });
   }, [handleSelectDeck, xp]);
 
   const handleStudyFromStats = useCallback((langCode, deckKey) => goStudy(langCode, deckKey, false, true), [goStudy]);
@@ -1805,7 +1821,7 @@ html,body{background:#FAF9F6;min-height:100vh}
               )}
               {screen === "dashboard" && (
                 <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
-                  lastStudied={lastStudied}
+                  lastStudied={lastStudied} lastMode={lastMode}
                   onSelectLang={handleSelectLangDirect}
                   onOpenFavorites={() => dispatchNav({ type: "GO_FAVORITES" })}
                   onOpenStats={() => dispatchNav({ type: "GO_STATS" })} />
@@ -1828,7 +1844,7 @@ html,body{background:#FAF9F6;min-height:100vh}
                 <DeckSelector key="decks" langCode={selectedLang} streak={streak}
                   completedDecks={stats.completedDecks || {}}
                   onSelectDeck={key => handleSelectDeck(selectedLang, key)}
-                  onSelectWrite={key => dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: key })}
+                  onSelectWrite={key => { setLastStudied(selectedLang); setStorage("lf_last_studied", selectedLang); setLastMode("write"); setStorage("lf_last_mode", "write"); dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: key }); }}
                   onBack={() => dispatchNav({ type: "GO_DASHBOARD" })} />
               )}
               {screen === "mastered" && (
