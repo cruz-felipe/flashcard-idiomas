@@ -1162,18 +1162,6 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const nextRef   = useRef(null);
   const statusRef = useRef(null);
 
-  // Enter key: step 1 = verify, step 2 = next. All refs — no stale closures.
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      if (statusRef.current === null) submitRef.current?.();
-      else nextRef.current?.();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []); // mount once — refs always point to latest functions
-
   const card = cards[idx];
   const lang = (card?._lang ? LANG_META[card._lang] : baseLang) ?? baseLang;
   const accentColor = lang.accent;
@@ -1277,7 +1265,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
         </div>
 
         {/* Card with input inside */}
-        <div className="mb-4 px-7 pt-7 pb-5" style={{ position: "relative" }}>
+        <div className="mb-4" style={{ position: "relative" }}>
           <AnimatePresence>
             {ripple && (
               <motion.div key="ripple" className="absolute inset-0 rounded-3xl pointer-events-none"
@@ -1304,14 +1292,14 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
             animate={inputShake ? { x: [0, -8, 8, -5, 5, -3, 3, 0] } : { x: 0 }}
             transition={{ duration: 0.38, ease: "easeInOut" }}>
             <input ref={inputRef} value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={e => { if (status === null) setInput(e.target.value); }}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); status === null ? submitRef.current?.() : nextRef.current?.(); } }}
               placeholder="Digite em Português..."
               inputMode="text"
               enterKeyHint={status === null ? "done" : "next"}
-              disabled={status !== null}
+              readOnly={status !== null}
               className="w-full font-bold text-xl outline-none bg-transparent write-input"
-              style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
+              style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: status !== null ? "transparent" : accentColor }}
             />
 
           </motion.div>
@@ -1339,7 +1327,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
           )}
         </AnimatePresence>
 
-        <div className="mt-auto">
+        <div className="mt-4">
           {status === null
             ? <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit}
                 className="w-full py-4 font-black text-lg"
