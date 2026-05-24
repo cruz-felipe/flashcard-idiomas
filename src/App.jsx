@@ -879,9 +879,8 @@ function normalizeRu(s) { const l = (s||"").toLowerCase().normalize("NFD").repla
 function normalize(s) { return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); }
 
 function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) {
-  const lang        = LANG_META[langCode] ?? { accent: C.ink, name: langCode };
+  const baseLang    = LANG_META[langCode] ?? { accent: C.ink, name: langCode };
   const deckLabel   = deckKey === "__review__" ? "Revisão de erros" : getDeckLabel(deckKey, langCode);
-  const accentColor = lang.accent;
 
   const cards = useMemo(() => {
     if (deckKey === "__review__") {
@@ -901,7 +900,20 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const [wrongCards, setWrongCards] = useState([]);
   const inputRef = useRef(null);
 
+  // Enter key advances even when input is disabled (after answering)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key !== "Enter") return;
+      if (status === null) handleSubmit();
+      else next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [status, input, idx]); // eslint-disable-line
+
   const card = cards[idx];
+  const lang = (card?._lang ? LANG_META[card._lang] : baseLang) ?? baseLang;
+  const accentColor = lang.accent;
   const progress = cards.length ? idx / cards.length : 0;
 
   useEffect(() => {
@@ -911,12 +923,31 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const handleSubmit = () => {
     if (!card || status !== null) return;
     const userAns = normalize(input);
-    // User types Portuguese — accept all PT variations (split on / , ou)
+    // Primary: accept all PT variants from this card (split on / , ou)
     const ptVariants = card.pt
-      .split(/\s*[\/,]\s*|\s+ou\s+/i)
+      .split(/\s*[/,]\s*|\s+ou\s+/i)
       .map(v => normalize(v.trim()))
       .filter(Boolean);
-    const isOk = ptVariants.some(v => v === userAns);
+    // All cards in the deck (or review pool)
+    const deckPool = deckKey === "__review__"
+      ? getStorage("lf_review_cards", [])
+      : (VOCAB[langCode]?.[deckKey] || []);
+    // Cards sharing the same target → their PT words are synonyms (Hola → olá, oi)
+    const synonymPt = deckPool
+      .filter(dc => normalize(dc.target) === normalize(card.target) && dc.pt !== card.pt)
+      .flatMap(dc => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
+    // Cards sharing any of this card's PT variants → their PT words expand the valid set
+    // e.g. "Olá" and "Oi" both map to "Hola" — so both are valid answers for either card
+    const sharedTargets = new Set(
+      deckPool
+        .filter(dc => ptVariants.some(pv => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())).includes(pv)))
+        .map(dc => normalize(dc.target))
+    );
+    const extendedPt = deckPool
+      .filter(dc => sharedTargets.has(normalize(dc.target)))
+      .flatMap(dc => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
+    const allValid = [...new Set([...ptVariants, ...synonymPt, ...extendedPt])];
+    const isOk = allValid.some(v => v === userAns);
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
     if (isOk) setCorrect(n => n + 1);
@@ -930,7 +961,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       const xpGained = Math.round(Math.max(10, total * 1.5) * (newCorrect / total));
       const accuracy = Math.round(newCorrect / total * 100);
       onXP(xpGained, accuracy);
-      onFinish({ correct: newCorrect, total, xpGained, deckKey, langCode, accuracy, wrongCards });
+      onFinish({ correct: newCorrect, total, xpGained, deckKey, langCode, accuracy, wrongCards, mode: "write" });
       return;
     }
     setIdx(i => i + 1); setInput(""); setStatus(null); setShowAns(false);
@@ -963,7 +994,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
         <div className="mb-4 px-7 pt-7 pb-5"
           style={{ ...glass.card, borderRadius: R.xl,
             border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
-          <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Traduza para Português</p>
+          <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>{lang.name} → Português</p>
           <p className="font-black leading-tight mb-2" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.target}</p>
           {card.phonetic && <p className="text-sm mb-4" style={{ color: C.dim }}>{card.phonetic}</p>}
           {/* Input embedded — no border, placeholder only */}
@@ -1207,7 +1238,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
         const accuracy = Math.round(newCorrect / totalAns * 100);
         onXP(xpGained, accuracy);
         setShowConfetti(true);
-        setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAns, xpGained, deckKey, langCode, accuracy, wrongCards }); }, 800);
+        setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAns, xpGained, deckKey, langCode, accuracy, wrongCards, mode: "flash" }); }, 800);
         return;
       }
       if (!isFavDeck) updateSrs(srsData, langCode, deckKey, card.pt, 'correct');
@@ -1886,7 +1917,11 @@ html,body{background:#FAF9F6;min-height:100vh}
                   onReviewErrors={() => {
                     if (!result?.wrongCards?.length) return;
                     setStorage("lf_review_cards", result.wrongCards);
-                    dispatchNav({ type: "GO_STUDY", lang: selectedLang, deck: "__review__", fromFavorites: false, isReview: true });
+                    if (result.mode === "write") {
+                      dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: "__review__" });
+                    } else {
+                      dispatchNav({ type: "GO_STUDY", lang: selectedLang, deck: "__review__", fromFavorites: false, isReview: true });
+                    }
                   }} />
               )}
             </div>
