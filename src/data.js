@@ -42,7 +42,7 @@ export function getLangDeckKeys(langCode) {
 export const VOCAB = {
   es: {
     cumprimentos: [
-      { pt: "Olá",               target: "Hola",           phonetic: null, example: "¡Hola, María! ¿Cómo estás?",                tip: "Usado a qualquer hora do dia, informal e universal." },
+      { pt: "Olá/Oi",            target: "Hola",           phonetic: null, example: "¡Hola, María! ¿Cómo estás?",                tip: "Usado a qualquer hora do dia, informal e universal." },
       { pt: "Bom dia",           target: "Buenos días",    phonetic: null, example: "Buenos días, señor García.",                 tip: "Diga até ao meio-dia; após isso use 'buenas tardes'." },
       { pt: "Boa tarde",         target: "Buenas tardes",  phonetic: null, example: "Buenas tardes, ¿en qué puedo ayudarle?",     tip: "Do meio-dia até o anoitecer." },
       { pt: "Boa noite",         target: "Buenas noches",  phonetic: null, example: "Buenas noches, hasta mañana.",               tip: "Serve tanto para cumprimentar quanto para se despedir à noite." },
@@ -51,7 +51,7 @@ export const VOCAB = {
       { pt: "De nada",           target: "De nada",        phonetic: null, example: "—Gracias. —De nada, fue un placer.",         tip: "Também igual! O espanhol e o português compartilham várias expressões." },
       { pt: "Com licença",       target: "Con permiso",    phonetic: null, example: "Con permiso, necesito pasar.",               tip: "'Perdón' é mais usado para pedir desculpas; 'con permiso' é para passar." },
       { pt: "Desculpe",          target: "Lo siento",      phonetic: null, example: "Lo siento mucho, fue mi culpa.",             tip: "Para erros sérios. Para algo leve, use 'perdón' ou 'disculpa'." },
-      { pt: "Tchau",             target: "Adiós",          phonetic: null, example: "Adiós, nos vemos mañana.",                  tip: "'Hasta luego' é mais comum no cotidiano — adiós soa mais definitivo." },
+      { pt: "Tchau/Até logo",    target: "Adiós",          phonetic: null, example: "Adiós, nos vemos mañana.",                  tip: "'Hasta luego' é mais comum no cotidiano — adiós soa mais definitivo." },
     ],
     alimentos: [
       { pt: "Pão",    target: "Pan",      phonetic: null, example: "Quiero pan con mantequilla, por favor.",    tip: "Na Espanha, o 'pan' é servido em quase todas as refeições." },
@@ -223,7 +223,7 @@ export const VOCAB = {
   },
   it: {
     cumprimentos: [
-      { pt: "Olá",               target: "Ciao",            phonetic: null, example: "Ciao, Marco! Come stai?",                  tip: "Serve tanto para 'oi' quanto para 'tchau' — depende do contexto. Muito informal." },
+      { pt: "Olá/Oi",            target: "Ciao",            phonetic: null, example: "Ciao, Marco! Come stai?",                  tip: "Serve tanto para 'oi' quanto para 'tchau' — depende do contexto. Muito informal." },
       { pt: "Bom dia",           target: "Buongiorno",      phonetic: null, example: "Buongiorno, un caffè per favore.",          tip: "Use até por volta das 13h. Literalmente 'bom dia'. Indispensável ao entrar em qualquer estabelecimento." },
       { pt: "Boa tarde",         target: "Buon pomeriggio", phonetic: null, example: "Buon pomeriggio a tutti!",                  tip: "Menos comum na prática — italianos geralmente passam direto para 'buonasera' a partir das 17h." },
       { pt: "Boa noite",         target: "Buonanotte",      phonetic: null, example: "Buonanotte, sogni d'oro!",                  tip: "'Sogni d'oro' = sonhos de ouro. Use 'buonasera' para cumprimentar à noite; 'buonanotte' é para se despedir antes de dormir." },
@@ -232,7 +232,7 @@ export const VOCAB = {
       { pt: "De nada",           target: "Prego",           phonetic: null, example: "—Grazie! —Prego, non c'è problema.",        tip: "'Prego' também significa 'entre' ao abrir uma porta para alguém, e 'reze' em sentido religioso." },
       { pt: "Com licença",       target: "Permesso",        phonetic: null, example: "Permesso, posso entrare?",                  tip: "Diga ao entrar em casa de alguém. 'Scusi' [scoozi] é para pedir passagem ou chamar atenção." },
       { pt: "Desculpe",          target: "Mi dispiace",     phonetic: null, example: "Mi dispiace molto per la perdita.",         tip: "Para situações sérias. Para algo leve: 'scusa' (informal) ou 'scusi' (formal)." },
-      { pt: "Tchau",             target: "Arrivederci",     phonetic: null, example: "Arrivederci, a presto!",                    tip: "Formal. Entre amigos: 'ciao'. 'A presto' = até logo. 'A domani' = até amanhã." },
+      { pt: "Tchau/Até logo",    target: "Arrivederci",     phonetic: null, example: "Arrivederci, a presto!",                    tip: "Formal. Entre amigos: 'ciao'. 'A presto' = até logo. 'A domani' = até amanhã." },
     ],
     alimentos: [
       { pt: "Pão",    target: "Pane",      phonetic: null, example: "Il pane italiano è famoso nel mondo.",       tip: "A ciabatta, a focaccia e o pane di Altamura (Puglia) são pães icônicos. Cada região italiana tem o seu pão próprio." },
@@ -413,7 +413,7 @@ export const VOCAB = {
       { pt: "De nada",           target: "Не за что",      phonetic: "[Nye za chto]",      example: "—Спасибо! —Не за что.",          tip: "Literalmente 'não tem por quê'. 'Пожалуйста' também funciona como 'de nada'." },
       { pt: "Com licença",       target: "Извините",       phonetic: "[Izvinyíte]",        example: "Извините, где метро?",           tip: "Formal. Informal: 'Извини' [Izvini]. Use para chamar atenção ou pedir desculpas levemente." },
       { pt: "Desculpe",          target: "Простите",       phonetic: "[Prostíte]",         example: "Простите, я опоздал.",           tip: "Para pedidos de desculpa genuínos. 'Извините' funciona para situações mais leves." },
-      { pt: "Tchau",             target: "До свидания",    phonetic: "[Do svidánya]",      example: "До свидания, увидимся завтра!",  tip: "Formal. Entre amigos: 'Пока!' [Poka!] = tchau / até mais." },
+      { pt: "Tchau/Até logo",    target: "До свидания",    phonetic: "[Do svidánya]",      example: "До свидания, увидимся завтра!",  tip: "Formal. Entre amigos: 'Пока!' [Poka!] = tchau / até mais." },
     ],
     alimentos: [
       { pt: "Pão",    target: "Хлеб",   phonetic: "[Khleb]",   example: "Чёрный хлеб очень вкусный.", tip: "O pão preto de centeio (чёрный хлеб) é alimento central da cultura russa — servido em quase toda refeição." },
@@ -451,7 +451,7 @@ export const VOCAB = {
       { pt: "Beber",     target: "Пить",     phonetic: "[Pit']",     example: "Хочешь пить чай или кофе?",  tip: "'Пить чай' = tomar chá. O chá (чай) é bebida cultural profundamente enraizada — o samovar é símbolo da Rússia." },
       { pt: "Dormir",    target: "Спать",    phonetic: "[Spat']",    example: "Я хочу спать, иду домой.",   tip: "'Хочу спать' = estou com sono (quero dormir). 'Спи хорошо!' = durma bem — despedida carinhosa comum." },
       { pt: "Eu sou",             target: "Я есть/—",          phonetic: "[Ya yest/—]",        example: "Я — бразилец. (sem verbo no presente)", tip: "Em russo, 'ser' no presente geralmente é omitido: 'Я студент' = Sou estudante." },
-      { pt: "Tu és",              target: "Ты —",              phonetic: "[Ty —]",             example: "Ты устал? (Estás cansado?)",              tip: "Sem verbo 'ser' no presente: 'Ты умный' = Tu és inteligente." },
+      { pt: "Tu és/Você é",      target: "Ты —",              phonetic: "[Ty —]",             example: "Ты устал? (Estás cansado?)",              tip: "Sem verbo 'ser' no presente: 'Ты умный' = Tu és inteligente." },
       { pt: "Ele/ela é",          target: "Он/она —",          phonetic: "[On/Ona —]",         example: "Он врач. Она красивая.",                  tip: "'Он' = ele, 'она' = ela. Verbo omitido no presente." },
       { pt: "Nós somos",          target: "Мы —",              phonetic: "[My —]",             example: "Мы друзья. (Somos amigos.)",              tip: "'Мы' = nós. Sem cópula no presente — traço marcante do russo." },
       { pt: "Eu tenho",           target: "У меня есть",       phonetic: "[U menya yest]",     example: "У меня есть брат.",                       tip: "'Ter' em russo = 'em mim há'. Literalmente 'U menya = junto a mim'." },
@@ -595,7 +595,7 @@ export const VOCAB = {
       { pt: "De nada",           target: "De rien",         phonetic: null, example: "—Merci! —De rien, avec plaisir.",   tip: "'Avec plaisir' = com prazer — alternativa mais calorosa que 'de rien'." },
       { pt: "Com licença",       target: "Excusez-moi",     phonetic: null, example: "Excusez-moi, où est le musée?",     tip: "Sempre comece com 'excusez-moi' ao abordar um desconhecido — é obrigatório na etiqueta francesa." },
       { pt: "Desculpe",          target: "Pardon",          phonetic: null, example: "Pardon, je n'ai pas fait exprès.",  tip: "'Je n'ai pas fait exprès' = não foi de propósito. 'Pardon?' também significa 'como?' quando não ouviu algo." },
-      { pt: "Tchau",             target: "Au revoir",       phonetic: null, example: "Au revoir, à bientôt!",             tip: "'À bientôt' = até logo. 'Salut' também serve de tchau entre amigos." },
+      { pt: "Tchau/Até logo",    target: "Au revoir",       phonetic: null, example: "Au revoir, à bientôt!",             tip: "'À bientôt' = até logo. 'Salut' também serve de tchau entre amigos." },
     ],
     alimentos: [
       { pt: "Pão",    target: "Pain",     phonetic: null, example: "Une baguette, s'il vous plaît.",          tip: "A baguette é patrimônio cultural imaterial da UNESCO desde 2022. Sagrada na França — comprada fresca toda manhã." },

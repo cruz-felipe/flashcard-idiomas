@@ -929,23 +929,16 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
     if (!card || status !== null) return;
     if (!input.trim()) return; // ignore empty
     const userAns = normalize(input);
-    // Primary: expand pronoun alternatives (Ele/ela vai → ["ele vai","ela vai"])
-    // and regular slash/comma splits
+    // Expand all slash/comma variants — each piece is independently valid
+    // "Tu és/estás/Você é/está" → ["tu es","estas","voce e","esta"]
+    // "Ele/ela vai" → handled by stripPronoun matching below
     const expandVariants = (str) => {
-      const variants = [];
-      // Match pattern: Word1/Word2 rest → [Word1 rest, Word2 rest]
-      const pronounMatch = str.match(/^([^/,]+)\/([^/,\s]+)(\s+.+)?$/);
-      if (pronounMatch) {
-        const [, a, b, rest = ""] = pronounMatch;
-        variants.push(normalize(a.trim() + rest));
-        variants.push(normalize(b.trim() + rest));
-      }
-      // Also split normally
-      str.split(/\s*[/,]\s*|\s+ou\s+/i)
+      const results = new Set();
+      str.split(/[/,]|\s+ou\s+/i)
         .map(v => normalize(v.trim()))
         .filter(Boolean)
-        .forEach(v => variants.push(v));
-      return [...new Set(variants)];
+        .forEach(v => results.add(v));
+      return [...results];
     };
     const ptVariants = expandVariants(card.pt);
     // All cards in the deck (or review pool)
