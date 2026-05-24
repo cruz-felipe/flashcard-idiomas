@@ -13,7 +13,7 @@ import { shuffle } from "./lib/utils.js";
 import { XP_PER_LEVEL, LANG_UNLOCK_LEVEL, getLevel, getXPInLevel, getMolejoMultiplier, getMultiplierLabel } from "./lib/xp.js";
 import { R, C, glass } from "./lib/tokens.js";
 import { getSrsData, updateSrs, sortBySrs, SRS_INTERVALS } from "./lib/srs.js";
-import { BadgeIllustrations, BADGES } from "./lib/badges.js";
+import { BadgeIllustrations, BADGES } from "./lib/badges.jsx";
 
 
 class ErrorBoundary extends Component {
