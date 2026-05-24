@@ -1286,10 +1286,17 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
                 style={{ backgroundColor: accentColor, borderRadius: R.xl, zIndex: 10 }} />
             )}
           </AnimatePresence>
-        <div className="mb-4 px-7 pt-7 pb-5"
+        <div className="mb-4 px-5 pt-6 pb-5"
           style={{ ...glass.card, borderRadius: R.xl,
             border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
-          <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>{lang.name} → Português</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black tracking-widest uppercase" style={{ color: C.dim }}>{lang.name} → Português</p>
+            <button onClick={() => playTTS(card.target, langCode)}
+              className="flex items-center justify-center w-8 h-8 rounded-full"
+              style={{ backgroundColor: "rgba(0,0,0,0.06)", border: "none", cursor: "pointer", flexShrink: 0 }}>
+              <Volume2 size={14} style={{ color: C.dim }} />
+            </button>
+          </div>
           <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.target}</p>
           {card.phonetic && <p className="text-sm mb-4" style={{ color: C.dim }}>{card.phonetic}</p>}
           {/* Input embedded — no border, placeholder only */}
@@ -1298,7 +1305,10 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
             transition={{ duration: 0.38, ease: "easeInOut" }}>
             <input ref={inputRef} value={input}
               onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); status === null ? submitRef.current?.() : nextRef.current?.(); } }}
               placeholder="Digite em Português..."
+              inputMode="text"
+              enterKeyHint={status === null ? "done" : "next"}
               disabled={status !== null}
               className="w-full font-bold text-xl outline-none bg-transparent write-input"
               style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
@@ -2232,7 +2242,7 @@ html,body{background:#FAF9F6;min-height:100vh}
                 <ResultScreen key="result" result={result}
                   langCode={selectedLang} deckKey={selectedDeck}
                   fromFavorites={fromFavorites} streak={streak}
-                  onRestart={() => goStudy(selectedLang, selectedDeck, fromFavorites, true)}
+                  onRestart={() => { if (result?.mode === "write") { dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: selectedDeck }); } else { goStudy(selectedLang, selectedDeck, fromFavorites, true); } }}
                   onHome={homeFromResult}
                   onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
                   onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)}
