@@ -871,6 +871,27 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
   );
 }
 
+// ── WRITE MODE SYNONYMS — only used in escrita answer checking, never displayed ──
+// Maps normalize(pt) → array of additional accepted PT answers
+const WRITE_PT_SYNONYMS = {
+  "ola":         ["oi", "ola", "ei"],
+  "oi":          ["ola", "oi", "ei"],
+  "tchau":       ["ate logo", "ate mais", "ate ja", "tchau"],
+  "de nada":     ["nao foi nada", "por nada", "de nada"],
+  "com licenca": ["licenca", "com sua licenca"],
+  "desculpe":    ["perdao", "me desculpe", "desculpa"],
+  "obrigado":    ["obrigada", "obrigado"],
+  "obrigada":    ["obrigado", "obrigada"],
+  "boa noite":   ["boas noites", "boa noite"],
+  "bom dia":     ["boa manha", "bom dia"],
+  "boa tarde":   ["boa tarde"],
+};
+
+function getWriteSynonyms(ptStr) {
+  const normalized = normalize(ptStr);
+  return WRITE_PT_SYNONYMS[normalized] || [];
+}
+
 // ─── WRITE SCREEN (Production mode) ──────────────────────────────────────────
 // Cyrillic → latin for Russian phonetic input acceptance
 const RU_TRANSLIT = {"а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"yo","ж":"zh","з":"z","и":"i","й":"y","к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sch","ъ":"","ы":"y","ь":"","э":"e","ю":"yu","я":"ya"};
@@ -898,6 +919,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const [incorrect, setIncorrect] = useState(0);
   const [showAns,   setShowAns]   = useState(false);
   const [wrongCards, setWrongCards] = useState([]);
+  const correctRef = useRef(0); // ref mirrors correct — no stale reads in next()
   const inputRef = useRef(null);
 
   const submitRef = useRef(null);
@@ -959,7 +981,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
     const extendedPt = deckPool
       .filter(dc => sharedTargets.has(normalize(dc.target)))
       .flatMap(dc => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
-    const allValid = [...new Set([...ptVariants, ...synonymPt, ...extendedPt])];
+    const allValid = [...new Set([...ptVariants, ...synonymPt, ...extendedPt, ...getWriteSynonyms(card.pt)])];
     const isOk = allValid.some(v => v === userAns) ||
       // Accept você/tu as equivalent pronouns (Brazilian Portuguese uses você)
       // Strip the leading pronoun and compare the verb/rest
@@ -970,22 +992,22 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       })();
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
-    if (isOk) setCorrect(n => n + 1);
+    if (isOk) { correctRef.current += 1; setCorrect(correctRef.current); }
     else { setIncorrect(n => n + 1); setWrongCards(prev => prev.find(w => w.pt === card.pt) ? prev : [...prev, card]); }
   };
 
   const next = () => {
-    // Read status from ref (not state) to avoid stale closure
-    const wasCorrect = statusRef.current === "correct";
-    const newCorrect = correct + (wasCorrect ? 1 : 0);
+    // Use correctRef to avoid stale state read
+    const newCorrect = correctRef.current;
     if (idx + 1 >= cards.length) {
       const total    = cards.length;
       const xpGained = Math.round(Math.max(10, total * 1.5) * (newCorrect / total));
-      const accuracy = Math.round(newCorrect / total * 100);
+      const accuracy = Math.min(100, Math.round(newCorrect / total * 100));
       onXP(xpGained, accuracy);
       onFinish({ correct: newCorrect, total, xpGained, deckKey, langCode, accuracy, wrongCards, mode: "write" });
       return;
     }
+    // correctRef is cumulative — don't reset between cards
     setIdx(i => i + 1); setInput(""); setStatus(null); setShowAns(false);
   };
 
@@ -1022,7 +1044,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
           style={{ ...glass.card, borderRadius: R.xl,
             border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
           <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>{lang.name} → Português</p>
-          <p className="font-black leading-tight mb-2" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.target}</p>
+          <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.target}</p>
           {card.phonetic && <p className="text-sm mb-4" style={{ color: C.dim }}>{card.phonetic}</p>}
           {/* Input embedded — no border, placeholder only */}
           <div className="relative">
@@ -1261,7 +1283,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
         // XP scales with deck size and accuracy, minimum 10
         const baseXP = Math.max(10, Math.round(total * 1.5));
         const xpGained = Math.round(baseXP * (newCorrect / totalAns));
-        const accuracy = Math.round(newCorrect / totalAns * 100);
+        const accuracy = Math.min(100, Math.round(newCorrect / totalAns * 100));
         onXP(xpGained, accuracy);
         setShowConfetti(true);
         setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAns, xpGained, deckKey, langCode, accuracy, wrongCards, mode: "flash" }); }, 800);
@@ -1506,7 +1528,7 @@ const RESULT_COPY = {
 
 function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck, onNextLang, onReviewErrors, fromFavorites, streak = 0 }) {
   const lang         = LANG_META[langCode] ?? { accent: C.ink };
-  const accuracy     = Math.round((result.correct / result.total) * 100);
+  const accuracy     = Math.min(100, Math.round((result.correct / result.total) * 100));
   const langDeckKeys = getLangDeckKeys(langCode);
   const nextDeckKey  = langDeckKeys[langDeckKeys.indexOf(deckKey) + 1] ?? null;
   const nextDeck     = (!fromFavorites && nextDeckKey) ? DECKS[nextDeckKey] : null;
