@@ -900,21 +900,21 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const [wrongCards, setWrongCards] = useState([]);
   const inputRef = useRef(null);
 
+  const submitRef = useRef(null);
+  const nextRef   = useRef(null);
   const statusRef = useRef(null);
-  statusRef.current = status;
 
-  // Enter key: step 1 = verify, step 2 = next. Uses ref to avoid stale closure.
+  // Enter key: step 1 = verify, step 2 = next. All refs — no stale closures.
   useEffect(() => {
     const handler = (e) => {
       if (e.key !== "Enter") return;
       e.preventDefault();
-      if (statusRef.current === null) handleSubmit();
-      else next();
+      if (statusRef.current === null) submitRef.current?.();
+      else nextRef.current?.();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx]); // re-subscribe only on card change, not on every state update
+  }, []); // mount once — refs always point to latest functions
 
   const card = cards[idx];
   const lang = (card?._lang ? LANG_META[card._lang] : baseLang) ?? baseLang;
@@ -952,7 +952,12 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       .filter(dc => sharedTargets.has(normalize(dc.target)))
       .flatMap(dc => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
     const allValid = [...new Set([...ptVariants, ...synonymPt, ...extendedPt])];
-    const isOk = allValid.some(v => v === userAns);
+    const isOk = allValid.some(v => v === userAns) ||
+      // Accept "você" where "tu" is valid and vice versa (Brazilian Portuguese)
+      allValid.some(v => {
+        const swapped = v.replace(/\btu\b/g, "voce").replace(/\bvoce\b/g, "tu");
+        return swapped === userAns.replace(/\bvocê\b/g, "voce").replace(/\bvoce\b/g, "voce");
+      });
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
     if (isOk) setCorrect(n => n + 1);
@@ -971,6 +976,11 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
     }
     setIdx(i => i + 1); setInput(""); setStatus(null); setShowAns(false);
   };
+
+  // Update refs after functions are defined — effect closure always calls latest
+  submitRef.current = handleSubmit;
+  nextRef.current   = next;
+  statusRef.current = status;
 
   if (!card) return null;
 
