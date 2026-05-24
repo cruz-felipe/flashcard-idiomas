@@ -491,7 +491,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
                   </div>
                   <div className="font-black text-white" style={{ fontSize: "1.3rem", letterSpacing: "-0.01em" }}>{lang.name}</div>
                   <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    {getDeckLabel(targetDeck, lastStudied)} · {doneCount}/{allDecks.length}
+                    {getDeckLabel(targetDeck, lastStudied)} · {lastMode === "write" ? "Escrita" : "Flashcards"} · {doneCount}/{allDecks.length}
                   </div>
                 </div>
               </div>
@@ -964,7 +964,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
           style={{ ...glass.card, borderRadius: R.xl,
             border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
           <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Escreva em {lang.name}</p>
-          <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em" }}>{card.pt}</p>
+          <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.pt}</p>
           {/* Input embedded — no border, placeholder only */}
           <div className="relative">
             <input ref={inputRef} value={input}
@@ -972,7 +972,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
               onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
               placeholder="Digite a palavra traduzida"
               disabled={status !== null}
-              className="w-full font-bold text-xl outline-none bg-transparent"
+              className="w-full font-bold text-xl outline-none bg-transparent write-input"
               style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
             />
             {status !== null && (
@@ -1106,7 +1106,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   const isFavDeck  = deckKey === "__favorites__" || isFavAll;
   const neutralLang = { name: "Favoritas", accent: C.ink, textPrimary: C.ink, textSecondary: C.dim };
   const lang       = LANG_META[langCode] || neutralLang;
-  const deckLabel  = isFavAll ? "Todas as Favoritas" : isFavDeck ? "Favoritas" : getDeckLabel(deckKey, langCode);
+  const deckLabel  = isFavAll ? "Todas as Favoritas" : isFavDeck ? (fromFavorites ? "Favoritas" : "Revisão de erros") : getDeckLabel(deckKey, langCode);
 
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -1582,7 +1582,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
             <motion.button whileTap={{ scale: 0.96 }} onClick={onHome}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
               style={{ ...glass.card, borderRadius: R.xl, color: C.ink }}>
-              <Home size={18} /> {fromFavorites ? "Favoritas" : "Início"}
+              <Home size={18} /> Início
             </motion.button>
             <motion.button whileTap={{ scale: 0.96 }} onClick={() => onRestart()}
               className="flex-1 flex items-center justify-center gap-2 py-4 font-black"
@@ -1811,7 +1811,7 @@ html,body{background:#FAF9F6;min-height:100vh}
 .lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.38)}
 .lf-dark .badge-locked{opacity:0.55!important;filter:brightness(2.2) grayscale(1)}
 .lf-dark .badge-earned{filter:brightness(1.1)}
-::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
+::placeholder{color:rgba(255,255,255,0.45)!important}.write-input::placeholder{color:rgba(0,0,0,0.3)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
             <LevelUpOverlay key="levelup" level={levelUp}
