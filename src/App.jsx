@@ -74,7 +74,7 @@ function NavBar({ title, subtitle, left, right, bg, textColor }) {
           {title    && <span className="text-xs font-black tracking-widest uppercase" style={{ color: textColor || C.ink, opacity: 0.4 }}>{title}</span>}
           {subtitle && <span className="text-xs font-semibold"                        style={{ color: textColor || C.ink, opacity: 0.35 }}>{subtitle}</span>}
         </div>
-        <div className="w-20 flex justify-end">{right}</div>
+        <div className="flex justify-end" style={{ minWidth: "5rem" }}>{right}</div>
       </div>
     </div>
   );
@@ -653,13 +653,33 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, completedDecks }) {
   const lang      = LANG_META[langCode];
   const [query, setQuery] = useState("");
-  const [mode,  setMode]  = useState("flash"); // "flash" | "write"
+  const [mode,  setMode]  = useState(() => getStorage("lf_deck_mode", "flash"));
   const [ready, setReady] = useState(false);
   useEffect(() => { const t = setTimeout(() => setReady(true), 60); return () => clearTimeout(t); }, []);
   const filtered  = getLangDeckKeys(langCode).filter(k => getDeckLabel(k, langCode).toLowerCase().includes(query.toLowerCase()));
   const doneCount = getLangDeckKeys(langCode).filter(k => completedDecks[k]?.includes(langCode)).length;
 
+  const setModePersist = (m) => { setMode(m); setStorage("lf_deck_mode", m); };
   const handleTile = (key) => mode === "write" ? onSelectWrite(key) : onSelectDeck(key);
+
+  // Compact segmented control for NavBar right slot
+  const ModeToggle = (
+    <div className="flex items-center gap-0" style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: R.pill, padding: "2px" }}>
+      {[["flash", "Flash"], ["write", "AB"]].map(([m, label]) => (
+        <button key={m} onClick={() => setModePersist(m)}
+          className="font-black text-xs px-2.5 py-1"
+          style={{
+            borderRadius: R.pill,
+            backgroundColor: mode === m ? "rgba(255,255,255,0.92)" : "transparent",
+            color: mode === m ? lang.accent : "rgba(255,255,255,0.55)",
+            transition: "all 0.15s ease",
+            letterSpacing: m === "write" ? "0.04em" : undefined,
+          }}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
@@ -672,33 +692,18 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
             <ChevronLeft size={18} /> Início
           </button>
         }
-        right={
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
-            <Flame size={13} className="text-white" />
-            <span className="text-xs font-black text-white">{streak}</span>
-          </div>
-        }
+        right={ModeToggle}
       />
       <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8">
         <h1 className="font-black text-white leading-none mb-1"
           style={{ fontSize: "3.5rem", letterSpacing: "-0.02em" }}>{lang.name}</h1>
-        <p className="text-sm font-medium mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
-          {doneCount}/{getLangDeckKeys(langCode).length} concluídas
-        </p>
-
-        {/* Mode selector pills */}
-        <div className="flex gap-2 mb-5">
-          <button onClick={() => setMode("flash")}
-            className="flex-1 py-2.5 font-black text-sm"
-            style={{ borderRadius: R.pill, backgroundColor: mode === "flash" ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.18)", color: mode === "flash" ? lang.accent : "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.3)", transition: "all 0.18s ease" }}>
-            Flashcards
-          </button>
-          <button onClick={() => setMode("write")}
-            className="flex-1 py-2.5 font-black text-sm"
-            style={{ borderRadius: R.pill, backgroundColor: mode === "write" ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.18)", color: mode === "write" ? lang.accent : "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.3)", transition: "all 0.18s ease" }}>
-            Escrita
-          </button>
+        <div className="flex items-center justify-between mb-5">
+          <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
+            {doneCount}/{getLangDeckKeys(langCode).length} concluídas
+          </p>
+          <p className="text-xs font-black tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.38)" }}>
+            {mode === "write" ? "Modo escrita" : "Modo flashcard"}
+          </p>
         </div>
 
         <div className="relative mb-6">
@@ -742,7 +747,10 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                 {done
                   ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
                       style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent, borderRadius: R.pill }}>✓ Feito</span>
-                  : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+                  : mode === "write"
+                    ? <span className="text-xs font-black tracking-widest shrink-0"
+                        style={{ color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", letterSpacing: "0.08em" }}>AB</span>
+                    : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                 }
               </motion.button>
             );
