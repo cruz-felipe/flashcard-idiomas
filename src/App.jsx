@@ -690,38 +690,38 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
               <motion.div key={key}
                 initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 28 }}
+                className="w-full flex items-center gap-3 px-6 py-5 text-left"
                 style={done
                   ? { ...glass.card, borderRadius: R.xl }
                   : { background: "rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: R.xl }}>
-                {/* Flashcard row */}
-                <button onClick={() => onSelectDeck(key)}
-                  className="w-full flex items-center justify-between px-6 py-4 text-left">
-                  <div className="flex items-center gap-4">
-                    <Icon size={26} strokeWidth={1.5}
-                      style={{ color: done ? lang.accent : "rgba(255,255,255,0.9)", flexShrink: 0 }} />
-                    <div>
-                      <div className="font-black leading-tight"
-                        style={{ fontSize: "1.15rem", color: done ? C.ink : "#fff" }}>
-                        {getDeckLabel(key, langCode)}
-                      </div>
-                      <div className="text-xs font-medium mt-0.5"
-                        style={{ color: done ? C.dim : "rgba(255,255,255,0.55)" }}>
-                        {VOCAB[langCode][key]?.length || 0} cards
-                      </div>
+                {/* Tap whole left area for flashcards */}
+                <button onClick={() => onSelectDeck(key)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
+                  <Icon size={26} strokeWidth={1.5}
+                    style={{ color: done ? lang.accent : "rgba(255,255,255,0.9)", flexShrink: 0 }} />
+                  <div className="min-w-0">
+                    <div className="font-black leading-tight"
+                      style={{ fontSize: "1.15rem", color: done ? C.ink : "#fff" }}>
+                      {getDeckLabel(key, langCode)}
+                    </div>
+                    <div className="text-xs font-medium mt-0.5"
+                      style={{ color: done ? C.dim : "rgba(255,255,255,0.55)" }}>
+                      {VOCAB[langCode][key]?.length || 0} cards
                     </div>
                   </div>
-                  {done
-                    ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                        style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
-                    : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
-                  }
                 </button>
-                {/* Write mode — secondary tap target */}
-                <button onClick={() => onSelectWrite(key)}
-                  className="w-full flex items-center justify-center gap-1.5 py-2.5 font-bold text-xs"
-                  style={{ borderTop: `1px solid ${done ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.12)"}`, color: done ? lang.accent : "rgba(255,255,255,0.6)" }}>
-                  ✍ Praticar escrita
-                </button>
+                {/* ✍ chip + chevron */}
+                {done
+                  ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
+                      style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
+                  : <>
+                      <button onClick={() => onSelectWrite(key)}
+                        className="text-xs font-black px-3 py-1.5 shrink-0"
+                        style={{ backgroundColor: "rgba(255,255,255,0.22)", color: "#fff", borderRadius: R.pill }}>
+                        ✍
+                      </button>
+                      <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+                    </>
+                }
               </motion.div>
             );
           })}
@@ -1621,6 +1621,7 @@ export default function App() {
         result: null,
       };
       case "GO_RESULT":    return { ...state, screen: "result", result: action.result };
+      case "GO_WRITE":     return { screen: "write", lang: action.lang, deck: action.deck, fromFavorites: false, isReview: false, sessionId: state.sessionId + 1, result: null };
       default: return state;
     }
   }, {
