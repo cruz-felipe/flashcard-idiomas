@@ -898,6 +898,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   const [correct,   setCorrect]   = useState(0);
   const [incorrect, setIncorrect] = useState(0);
   const [showAns,   setShowAns]   = useState(false);
+  const [wrongCards, setWrongCards] = useState([]);
   const inputRef = useRef(null);
 
   const card = cards[idx];
@@ -909,31 +910,17 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
 
   const handleSubmit = () => {
     if (!card || status !== null) return;
-    const userAns   = normalize(input);
-    // Build list of all accepted answers from target (split on / , ou)
-    const targetVariants = card.target
+    const userAns = normalize(input);
+    // User types Portuguese — accept all PT variations (split on / , ou)
+    const ptVariants = card.pt
       .split(/\s*[\/,]\s*|\s+ou\s+/i)
       .map(v => normalize(v.trim()))
       .filter(Boolean);
-    // Also check other cards in same deck with same PT word (true synonyms)
-    const deckCards = VOCAB[langCode]?.[deckKey] || [];
-    const synonymTargets = deckCards
-      .filter(dc => normalize(dc.pt) === normalize(card.pt) && dc.target !== card.target)
-      .flatMap(dc => dc.target.split(/\s*[\/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
-    const allValid = [...targetVariants, ...synonymTargets];
-    let isOk = allValid.some(v => v === userAns || (userAns.length > 2 && v.startsWith(userAns)));
-    // Exact match takes priority — don't allow too-short prefix matches
-    if (!isOk) isOk = allValid.some(v => v === userAns);
-    // Russian: also accept phonetic latin input
-    if (!isOk && langCode === "ru") {
-      const { latin: targetLatin } = normalizeRu(card.target);
-      const userLatin = normalize(input);
-      isOk = targetLatin === userLatin ||
-        (card.phonetic && normalize(card.phonetic.replace(/[\[\]]/g, "")) === userAns);
-    }
+    const isOk = ptVariants.some(v => v === userAns);
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
-    if (isOk) setCorrect(n => n + 1); else setIncorrect(n => n + 1);
+    if (isOk) setCorrect(n => n + 1);
+    else { setIncorrect(n => n + 1); setWrongCards(prev => prev.find(w => w.pt === card.pt) ? prev : [...prev, card]); }
   };
 
   const next = () => {
@@ -943,7 +930,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       const xpGained = Math.round(Math.max(10, total * 1.5) * (newCorrect / total));
       const accuracy = Math.round(newCorrect / total * 100);
       onXP(xpGained, accuracy);
-      onFinish({ correct: newCorrect, total, xpGained, deckKey, langCode, accuracy, wrongCards: [] });
+      onFinish({ correct: newCorrect, total, xpGained, deckKey, langCode, accuracy, wrongCards });
       return;
     }
     setIdx(i => i + 1); setInput(""); setStatus(null); setShowAns(false);
@@ -976,14 +963,15 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
         <div className="mb-4 px-7 pt-7 pb-5"
           style={{ ...glass.card, borderRadius: R.xl,
             border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : undefined }}>
-          <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Escreva em {lang.name}</p>
-          <p className="font-black leading-tight mb-6" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.pt}</p>
+          <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Traduza para Português</p>
+          <p className="font-black leading-tight mb-2" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em", wordBreak: "break-word", overflowWrap: "break-word", hyphens: "auto" }}>{card.target}</p>
+          {card.phonetic && <p className="text-sm mb-4" style={{ color: C.dim }}>{card.phonetic}</p>}
           {/* Input embedded — no border, placeholder only */}
           <div className="relative">
             <input ref={inputRef} value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
-              placeholder="Digite a palavra traduzida"
+              placeholder="Digite em Português..."
               disabled={status !== null}
               className="w-full font-bold text-xl outline-none bg-transparent write-input"
               style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
@@ -997,8 +985,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
             <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
               className="mt-4 px-4 py-3" style={{ backgroundColor: accentColor + "18", borderRadius: R.card }}>
               <p className="text-xs font-black uppercase tracking-wider mb-1" style={{ color: accentColor }}>Resposta correta</p>
-              <p className="font-black" style={{ fontSize: "1.4rem", color: accentColor }}>{card.target}</p>
-              {card.phonetic && <p className="text-sm mt-1" style={{ color: C.dim }}>{card.phonetic}</p>}
+              <p className="font-black" style={{ fontSize: "1.4rem", color: accentColor }}>{card.pt}</p>
             </motion.div>
           )}
         </div>
@@ -1469,7 +1456,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
   const langKeys     = Object.keys(LANG_META);
   const nextLangCode = (!fromFavorites && !nextDeck) ? (langKeys[langKeys.indexOf(langCode) + 1] ?? null) : null;
   const nextLang     = nextLangCode ? LANG_META[nextLangCode] : null;
-  const deckName     = (deckKey === "__favorites__" && !result.fromFavorites) ? "Revisão de erros" : getDeckLabel(deckKey, langCode) || "categoria";
+  const deckName     = deckKey === "__review__" ? "Revisão de erros" : (deckKey === "__favorites__" && !result.fromFavorites) ? "Revisão de erros" : getDeckLabel(deckKey, langCode) || "categoria";
   const tier         = accuracy === 100 ? "perfect" : accuracy >= 80 ? "great" : accuracy >= 60 ? "good" : "keep";
   const pool         = RESULT_COPY[tier];
   const pick         = pool[Math.floor(Math.random() * pool.length)];
@@ -1562,18 +1549,12 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
                 })}
               </div>
             </div>
-            <div className="flex">
-              <motion.button whileTap={{ scale: 0.98 }} onClick={() => onReviewErrors("flash")}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 font-black"
-                style={{ backgroundColor: lang.accent, color: "#fff", fontSize: "0.85rem" }}>
-                <RotateCcw size={14} /> Flashcards
-              </motion.button>
-              <motion.button whileTap={{ scale: 0.98 }} onClick={() => onReviewErrors("write")}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 font-black"
-                style={{ backgroundColor: lang.accent + "CC", color: "#fff", fontSize: "0.85rem", borderLeft: "1px solid rgba(255,255,255,0.2)" }}>
-                <span>✍</span> Escrita
-              </motion.button>
-            </div>
+            <motion.button whileTap={{ scale: 0.98 }} onClick={onReviewErrors}
+              className="w-full flex items-center justify-between px-5 py-3.5 font-black"
+              style={{ backgroundColor: lang.accent, color: "#fff", fontSize: "0.9rem" }}>
+              <span>Estudar os erros agora</span>
+              <RotateCcw size={16} />
+            </motion.button>
           </motion.div>
         )}
 
@@ -1902,17 +1883,10 @@ html,body{background:#FAF9F6;min-height:100vh}
                   onHome={homeFromResult}
                   onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
                   onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)}
-                  onReviewErrors={(mode) => {
+                  onReviewErrors={() => {
                     if (!result?.wrongCards?.length) return;
-                    // Pass wrongCards directly — no favorites involvement
-                    // Store as a temporary review set
-                    const reviewCards = result.wrongCards;
-                    setStorage("lf_review_cards", reviewCards);
-                    if (mode === "write") {
-                      dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: "__review__" });
-                    } else {
-                      dispatchNav({ type: "GO_STUDY", lang: selectedLang, deck: "__review__", fromFavorites: false, isReview: true });
-                    }
+                    setStorage("lf_review_cards", result.wrongCards);
+                    dispatchNav({ type: "GO_STUDY", lang: selectedLang, deck: "__review__", fromFavorites: false, isReview: true });
                   }} />
               )}
             </div>
