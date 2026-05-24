@@ -65,7 +65,9 @@ function NavBar({ title, subtitle, left, right, bg, textColor }) {
   const isAccent = bg && bg !== C.cream;
   return (
     <div className="sticky top-0 z-40"
-      style={isAccent ? { backgroundColor: bg } : { ...glass.nav }}>
+      style={isAccent
+        ? { backgroundColor: bg, backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", boxShadow: `0 1px 0 ${bg}44` }
+        : { ...glass.nav }}>
       <div className="max-w-md mx-auto h-14 flex items-center justify-between px-5">
         <div className="w-20 flex justify-start">{left}</div>
         <div className="flex flex-col items-center">
@@ -436,12 +438,17 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
       <div className="max-w-md mx-auto px-5 pt-16 pb-28">
         {/* Editorial hero — streak as massive number */}
         <div className="mb-7">
-          <motion.div className="font-black leading-none"
-            style={{ fontSize: "5.5rem", color: C.ink, letterSpacing: "-0.03em" }}
-            animate={streakPop ? { scale: [1, 1.05, 1] } : {}}>
-            {streak}
+          <div className="font-black leading-none"
+            style={{ fontSize: "5.5rem", color: C.ink, letterSpacing: "-0.03em" }}>
+            <motion.span
+              whileTap={{ scaleX: 1.3, scaleY: 0.7 }}
+              animate={streakPop ? { scale: [1, 1.22, 0.88, 1.05, 1] } : {}}
+              transition={{ type: "spring", stiffness: 600, damping: 14 }}
+              style={{ display: "inline-block", cursor: "pointer", transformOrigin: "center bottom" }}>
+              {streak}
+            </motion.span>
             <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
-          </motion.div>
+          </div>
           <div className="flex items-center gap-3 mt-3">
             <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
               <motion.div className="h-full rounded-full" style={{ backgroundColor: C.ink }}
@@ -694,8 +701,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                 style={done
                   ? { ...glass.card, borderRadius: R.xl }
                   : { background: "rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: R.xl }}>
-                {/* Tap whole left area for flashcards */}
-                <button onClick={() => onSelectDeck(key)} className="flex items-center gap-4 flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
                   <Icon size={26} strokeWidth={1.5}
                     style={{ color: done ? lang.accent : "rgba(255,255,255,0.9)", flexShrink: 0 }} />
                   <div className="min-w-0">
@@ -708,20 +714,26 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                       {VOCAB[langCode][key]?.length || 0} cards
                     </div>
                   </div>
-                </button>
-                {/* ✍ chip + chevron */}
-                {done
-                  ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                      style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
-                  : <>
-                      <button onClick={() => onSelectWrite(key)}
-                        className="text-xs font-black px-3 py-1.5 shrink-0"
-                        style={{ backgroundColor: "rgba(255,255,255,0.22)", color: "#fff", borderRadius: R.pill }}>
-                        ✍
-                      </button>
-                      <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
-                    </>
-                }
+                </div>
+                {/* Two mode pills */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {done
+                    ? <span className="text-xs font-black px-2.5 py-1"
+                        style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
+                    : <>
+                        <button onClick={() => onSelectDeck(key)}
+                          className="text-xs font-black px-3 py-1.5"
+                          style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent, borderRadius: R.pill }}>
+                          Flashcards
+                        </button>
+                        <button onClick={() => onSelectWrite(key)}
+                          className="text-xs font-black px-3 py-1.5"
+                          style={{ backgroundColor: "rgba(255,255,255,0.22)", color: "#fff", borderRadius: R.pill }}>
+                          Escrita
+                        </button>
+                      </>
+                  }
+                </div>
               </motion.div>
             );
           })}
