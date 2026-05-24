@@ -650,7 +650,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
       className="min-h-screen relative" style={{ backgroundColor: lang.accent }}>
       {/* Dark mode darkening overlay */}
       <div className="lf-deck-overlay absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
-      <NavBar bg="transparent" textColor="rgba(255,255,255,0.5)"
+      <NavBar bg={lang.accent} textColor="rgba(255,255,255,0.5)"
         left={
           <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black"
             style={{ color: "rgba(255,255,255,0.75)" }}>
@@ -671,18 +671,6 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
         <p className="text-sm font-medium mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
           {doneCount}/{getLangDeckKeys(langCode).length} concluídas
         </p>
-        {/* Mode toggle */}
-        <div className="flex gap-2 mb-4">
-          <button onClick={() => {}} className="flex-1 py-2.5 font-black text-sm rounded-full"
-            style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent }}>
-            Flashcards
-          </button>
-          <button onClick={() => { if (filtered[0]) onSelectWrite(filtered[0]); }}
-            className="flex-1 py-2.5 font-black text-sm rounded-full"
-            style={{ backgroundColor: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)" }}>
-            ✍ Escrever
-          </button>
-        </div>
         <div className="relative mb-6">
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
             style={{ color: "rgba(255,255,255,0.6)" }} />
@@ -699,34 +687,42 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
             const Icon = deck.icon;
             const done = completedDecks[key]?.includes(langCode);
             return (
-              <motion.button key={key} onClick={() => onSelectDeck(key)}
+              <motion.div key={key}
                 initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 28 }}
-                whileTap={{ scale: 0.97 }}
-                className="w-full flex items-center justify-between px-6 py-5 text-left"
                 style={done
                   ? { ...glass.card, borderRadius: R.xl }
                   : { background: "rgba(255,255,255,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: R.xl }}>
-                <div className="flex items-center gap-4">
-                  <Icon size={26} strokeWidth={1.5}
-                    style={{ color: done ? lang.accent : "rgba(255,255,255,0.9)", flexShrink: 0 }} />
-                  <div>
-                    <div className="font-black leading-tight"
-                      style={{ fontSize: "1.15rem", color: done ? C.ink : "#fff" }}>
-                      {getDeckLabel(key, langCode)}
-                    </div>
-                    <div className="text-xs font-medium mt-0.5"
-                      style={{ color: done ? C.dim : "rgba(255,255,255,0.55)" }}>
-                      {VOCAB[langCode][key]?.length || 0} cards
+                {/* Flashcard row */}
+                <button onClick={() => onSelectDeck(key)}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left">
+                  <div className="flex items-center gap-4">
+                    <Icon size={26} strokeWidth={1.5}
+                      style={{ color: done ? lang.accent : "rgba(255,255,255,0.9)", flexShrink: 0 }} />
+                    <div>
+                      <div className="font-black leading-tight"
+                        style={{ fontSize: "1.15rem", color: done ? C.ink : "#fff" }}>
+                        {getDeckLabel(key, langCode)}
+                      </div>
+                      <div className="text-xs font-medium mt-0.5"
+                        style={{ color: done ? C.dim : "rgba(255,255,255,0.55)" }}>
+                        {VOCAB[langCode][key]?.length || 0} cards
+                      </div>
                     </div>
                   </div>
-                </div>
-                {done
-                  ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                      style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
-                  : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
-                }
-              </motion.button>
+                  {done
+                    ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
+                        style={{ backgroundColor: lang.accent, color: "#fff", borderRadius: R.pill, boxShadow: `0 4px 12px ${lang.accent}55` }}>✓ Feito</span>
+                    : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
+                  }
+                </button>
+                {/* Write mode — secondary tap target */}
+                <button onClick={() => onSelectWrite(key)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 font-bold text-xs"
+                  style={{ borderTop: `1px solid ${done ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.12)"}`, color: done ? lang.accent : "rgba(255,255,255,0.6)" }}>
+                  ✍ Praticar escrita
+                </button>
+              </motion.div>
             );
           })}
           {filtered.length === 0 && (
