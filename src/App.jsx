@@ -1670,23 +1670,6 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                 onDrag={(_, info) => { setDragOffset(info.offset.x); setDragOffsetY(info.offset.y); }}
                 onDragEnd={handleDragEnd}
                 whileDrag={{ cursor: "grabbing", rotateZ: dragOffset * 0.04 }}>
-                {/* Drag intent indicators */}
-                {isFlipped && !answered && (
-                  <>
-                    <motion.div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-start pl-5" style={{ zIndex: 20 }}
-                      animate={{ opacity: dragOffset < -40 ? Math.min(1, (-dragOffset - 40) / 40) : 0 }}>
-                      <span className="font-black text-lg" style={{ color: "#DC2626" }}>Não sei</span>
-                    </motion.div>
-                    <motion.div className="absolute inset-0 rounded-2xl pointer-events-none flex items-center justify-end pr-5" style={{ zIndex: 20 }}
-                      animate={{ opacity: dragOffset > 40 ? Math.min(1, (dragOffset - 40) / 40) : 0 }}>
-                      <span className="font-black text-lg" style={{ color: "#16A34A" }}>Sei!</span>
-                    </motion.div>
-                    <motion.div className="absolute inset-0 rounded-2xl pointer-events-none flex items-start justify-center pt-4" style={{ zIndex: 20 }}
-                      animate={{ opacity: dragOffsetY < -30 ? Math.min(1, (-dragOffsetY - 30) / 30) : 0 }}>
-                      <span className="font-black text-sm" style={{ color: "#D97706" }}>Quase</span>
-                    </motion.div>
-                  </>
-                )}
                 <FlashCard card={card} isFlipped={isFlipped} onClick={handleFlip}
                   lang={cardLangMeta} langCode={cardLang} isFav={isFav}
                   onToggleFav={c => onToggleFav(cardLang, c)}
