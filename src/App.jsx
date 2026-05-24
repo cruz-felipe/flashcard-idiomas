@@ -435,7 +435,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
       </div>
       <AnimatePresence>{showHelp && <HelpModal onClose={() => setShowHelp(false)} />}</AnimatePresence>
 
-      <div className="max-w-md mx-auto px-5 pt-16 pb-28" style={{ overflowY: "auto", flex: 1 }}>
+      <div className="max-w-md mx-auto px-5 pt-16 pb-28">
         {/* Editorial hero — streak as massive number */}
         <div className="mb-7">
           <div className="font-black leading-none"
@@ -467,14 +467,18 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
           </div>
         </div>
 
-        {/* Continue card */}
+        {/* Continue card — always shown when lastStudied exists */}
         {lastStudied && LANG_META[lastStudied] && (() => {
           const lang = LANG_META[lastStudied];
-          const firstIncomplete = getLangDeckKeys(lastStudied).find(k => !(stats.completedDecks?.[k]?.includes(lastStudied)));
-          const doneCount = getLangDeckKeys(lastStudied).filter(k => stats.completedDecks?.[k]?.includes(lastStudied)).length;
-          return firstIncomplete ? (
+          const allDecks = getLangDeckKeys(lastStudied);
+          const firstIncomplete = allDecks.find(k => !(stats.completedDecks?.[k]?.includes(lastStudied)));
+          const targetDeck = firstIncomplete ?? allDecks[0]; // fall back to first deck when all done
+          const doneCount = allDecks.filter(k => stats.completedDecks?.[k]?.includes(lastStudied)).length;
+          const allDone = doneCount === allDecks.length;
+          if (!targetDeck) return null;
+          return (
             <motion.button whileTap={{ scale: 0.97 }}
-              onClick={() => onSelectLang(lastStudied, firstIncomplete, lastMode)}
+              onClick={() => onSelectLang(lastStudied, targetDeck, lastMode)}
               className="w-full flex items-center justify-between px-6 py-5 mb-6 text-left"
               style={{ ...glass.accent(lang.accent), borderRadius: R.xl }}>
               <div className="flex items-center gap-4">
@@ -482,16 +486,18 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
                   <FlagIcon langCode={lastStudied} size={44} />
                 </div>
                 <div>
-                  <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>Continuar</div>
+                  <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>
+                    {allDone ? "Repetir" : "Continuar"}
+                  </div>
                   <div className="font-black text-white" style={{ fontSize: "1.3rem", letterSpacing: "-0.01em" }}>{lang.name}</div>
                   <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    {getDeckLabel(firstIncomplete, lastStudied)} · {doneCount}/{DECK_KEYS.length}
+                    {getDeckLabel(targetDeck, lastStudied)} · {doneCount}/{allDecks.length}
                   </div>
                 </div>
               </div>
               <ArrowRight size={22} className="text-white shrink-0" />
             </motion.button>
-          ) : null;
+          );
         })()}
 
         {/* New user CTA — only when no lastStudied */}
@@ -657,7 +663,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="relative" style={{ backgroundColor: lang.accent, height: "100dvh", overflow: "hidden" }}>
+      className="min-h-screen relative" style={{ backgroundColor: lang.accent }}>
       <div className="lf-deck-overlay absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} />
       <NavBar bg={lang.accent} textColor="rgba(255,255,255,0.5)"
         left={
@@ -674,7 +680,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
           </div>
         }
       />
-      <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8" style={{ overflowY: "auto", flex: 1 }}>
+      <div className="lf-deck-content max-w-md mx-auto px-5 pt-2 pb-8">
         <h1 className="font-black text-white leading-none mb-1"
           style={{ fontSize: "3.5rem", letterSpacing: "-0.02em" }}>{lang.name}</h1>
         <p className="text-sm font-medium mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
@@ -735,7 +741,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                 </div>
                 {done
                   ? <span className="text-xs font-black px-2.5 py-1 shrink-0"
-                      style={{ backgroundColor: "rgba(255,255,255,0.3)", color: "#fff", borderRadius: R.pill }}>✓</span>
+                      style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent, borderRadius: R.pill }}>✓ Feito</span>
                   : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                 }
               </motion.button>
@@ -934,7 +940,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="flex flex-col" style={{ backgroundColor: C.cream, position: "relative", height: "100dvh", overflow: "hidden" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream, position: "relative" }}>
       <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${accentColor}14 0%, transparent 28%)`, pointerEvents: "none", zIndex: 0 }} />
       <NavBar title={deckLabel}
         left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>}
@@ -964,7 +970,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
             <input ref={inputRef} value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
-              placeholder={`Digite a tradução...`}
+              placeholder="Digite a palavra traduzida"
               disabled={status !== null}
               className="w-full font-bold text-xl outline-none bg-transparent"
               style={{ color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: "none", padding: 0, caretColor: accentColor }}
@@ -1031,7 +1037,7 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="flex flex-col" style={{ backgroundColor: C.cream, height: "100dvh", overflow: "hidden" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col justify-end px-6 pb-14 max-w-md mx-auto w-full">
         <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -1229,7 +1235,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="flex flex-col" style={{ backgroundColor: C.cream, height: "100dvh", overflow: "hidden" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
         <Bookmark size={48} strokeWidth={1} style={{ color: "#DEDBD7" }} />
@@ -1480,7 +1486,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="flex flex-col" style={{ backgroundColor: C.cream, height: "100dvh", overflow: "hidden" }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-14 pb-14 flex flex-col">
 
         {/* Score hero */}
@@ -1883,7 +1889,7 @@ html,body{background:#FAF9F6;min-height:100vh}
                       const key = `${lc}:${w.pt}`;
                       setFavorites(prev => { const next = { ...prev, [key]: true }; setStorage("lf_favorites", next); return next; });
                     });
-                    goStudy(selectedLang, "__favorites__", true);
+                    goStudy(selectedLang, "__favorites__", false); // false = back to decks, not favorites
                   }} />
               )}
             </div>
