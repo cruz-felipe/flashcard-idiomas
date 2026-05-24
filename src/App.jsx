@@ -665,7 +665,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
   // Compact segmented control for NavBar right slot
   const ModeToggle = (
     <div className="flex items-center gap-0" style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: R.pill, padding: "2px" }}>
-      {[["flash", "Flash"], ["write", "AB"]].map(([m, label]) => (
+      {[["flash", "Flashcard"], ["write", "ABC"]].map(([m, label]) => (
         <button key={m} onClick={() => setModePersist(m)}
           className="font-black text-xs px-2.5 py-1"
           style={{
@@ -749,7 +749,7 @@ function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, c
                       style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent, borderRadius: R.pill }}>✓ Feito</span>
                   : mode === "write"
                     ? <span className="text-xs font-black tracking-widest shrink-0"
-                        style={{ color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", letterSpacing: "0.08em" }}>AB</span>
+                        style={{ color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", letterSpacing: "0.08em" }}>ABC</span>
                     : <ChevronRight size={18} style={{ color: "rgba(255,255,255,0.5)", flexShrink: 0 }} />
                 }
               </motion.button>
