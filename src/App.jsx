@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect, Component } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, useReducer, Component } from "react";
 import { motion, AnimatePresence, useAnimation, useMotionValue } from "framer-motion";
 import {
   Flame, Zap, Check, X, ChevronRight, RotateCcw, BarChart2,
@@ -8,158 +8,14 @@ import {
   BookMarked as BookMarkedIcon, Star, Lock
 } from "lucide-react";
 import { LANG_META, DECKS, DECK_KEYS, VOCAB, getDeckLabel, getLangDeckKeys } from "./data.js";
-
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
-function getStorage(k, fb) { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } }
-function setStorage(k, v)  { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// ─── LEVEL / XP ───────────────────────────────────────────────────────────────
-const XP_PER_LEVEL = 100;
-function getLevel(xp)     { return Math.floor(xp / XP_PER_LEVEL) + 1; }
-function getXPInLevel(xp) { return xp % XP_PER_LEVEL; }
-
-const LANG_UNLOCK_LEVEL = { es: 1, it: 1, ru: 3, fr: 3 };
-
-function getMolejoMultiplier(streak) {
-  if (streak >= 14) return 3;
-  if (streak >= 7)  return 2;
-  if (streak >= 3)  return 1.5;
-  return 1;
-}
-function getMultiplierLabel(m) { return m === 1 ? null : `×${m}`; }
+import { getStorage, setStorage } from "./lib/storage.js";
+import { shuffle } from "./lib/utils.js";
+import { XP_PER_LEVEL, LANG_UNLOCK_LEVEL, getLevel, getXPInLevel, getMolejoMultiplier, getMultiplierLabel } from "./lib/xp.js";
+import { R, C, glass } from "./lib/tokens.js";
+import { getSrsData, updateSrs, sortBySrs, SRS_INTERVALS } from "./lib/srs.js";
+import { BadgeIllustrations, BADGES } from "./lib/badges.js";
 
 
-// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
-const R = { card: 24, pill: 999, xl: 32 };
-// C now returns CSS variable references — dark mode handled by @media in <style>
-const C = { cream: "var(--cream)", ink: "var(--ink)", dim: "var(--dim)" };
-// Raw hex fallbacks for places that can't use CSS vars (e.g. radial-gradient stops)
-const RAW = { cream: "#FAF9F6", ink: "#111111", dim: "#888888" };
-
-// ─── GLASS STYLES ─────────────────────────────────────────────────────────────
-const glass = {
-  card:   { background: "var(--glass-card)",  backdropFilter: "blur(28px) saturate(200%)", WebkitBackdropFilter: "blur(28px) saturate(200%)", border: "1px solid var(--glass-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 var(--glass-shine)" },
-  dark:   { background: "rgba(17,17,17,0.88)", backdropFilter: "blur(24px) saturate(200%)", WebkitBackdropFilter: "blur(24px) saturate(200%)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 8px 40px rgba(0,0,0,0.22)" },
-  nav:    { background: "var(--glass-nav)",    backdropFilter: "blur(20px)",                WebkitBackdropFilter: "blur(20px)",                border: "none", boxShadow: "0 1px 0 var(--glass-shadow-sm)" },
-  pill:   { background: "var(--glass-pill)",   backdropFilter: "blur(16px) saturate(180%)", WebkitBackdropFilter: "blur(16px) saturate(180%)", border: "1px solid var(--glass-border)", boxShadow: "0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 var(--glass-shine)" },
-  accent: (color) => ({ background: `${color}EE`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", border: `1px solid ${color}44`, boxShadow: `0 12px 40px ${color}44` }),
-};
-
-// ─── BADGE ILLUSTRATIONS ──────────────────────────────────────────────────────
-const BadgeIllustrations = {
-  first_deck: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FFF0B2"} />
-      <path d="M18 8 L20.5 14.5 L27.5 15 L22.5 19.5 L24 26.5 L18 23 L12 26.5 L13.5 19.5 L8.5 15 L15.5 14.5 Z" fill={dim ? "#BDBDBD" : "#F59E0B"} />
-    </svg>
-  ),
-  perfect: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#D1FAE5"} />
-      <circle cx="18" cy="18" r="6" fill={dim ? "#BDBDBD" : "#10B981"} />
-      <circle cx="18" cy="18" r="10" stroke={dim ? "#BDBDBD" : "#10B981"} strokeWidth="2" fill="none" />
-      <path d="M14 18 L17 21 L22 15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  streak_7: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEF3C7"} />
-      <path d="M20 9 C20 9 22 13 20 16 C24 13 26 17 23 20 C25 20 26 22 24 24 C22 26 19 27 18 27 C13 27 10 23.5 10 20 C10 17 12 15 14 15 C12 12 14 9 16 10 C16 13 18 14 18 14 C18 14 18 10 20 9Z" fill={dim ? "#BDBDBD" : "#F59E0B"} />
-    </svg>
-  ),
-  streak_30: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#EDE9FE"} />
-      <path d="M18 9 L19.5 13.5 L24 12 L21 15.5 L25 18 L21 20.5 L24 24 L19.5 22.5 L18 27 L16.5 22.5 L12 24 L15 20.5 L11 18 L15 15.5 L12 12 L16.5 13.5 Z" fill={dim ? "#BDBDBD" : "#8B5CF6"} />
-    </svg>
-  ),
-  polyglot: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#DBEAFE"} />
-      <ellipse cx="18" cy="18" rx="9" ry="5.5" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" fill="none" />
-      <ellipse cx="18" cy="18" rx="9" ry="9" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" fill="none" />
-      <line x1="9" y1="18" x2="27" y2="18" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" />
-      <line x1="18" y1="9" x2="18" y2="27" stroke={dim ? "#BDBDBD" : "#3B82F6"} strokeWidth="1.5" />
-    </svg>
-  ),
-  cards_100: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FCE7F3"} />
-      <rect x="11" y="14" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#EC4899"} opacity="0.4" />
-      <rect x="13" y="12" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#EC4899"} opacity="0.65" />
-      <rect x="15" y="10" width="11" height="9" rx="2.5" fill={dim ? "#BDBDBD" : "#EC4899"} />
-      <path d="M17.5 14.5 L18.5 16.5 L20.5 13 L21.5 17 L23 15.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </svg>
-  ),
-  cards_500: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FFEDD5"} />
-      <rect x="11" y="16" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#F97316"} opacity="0.35" />
-      <rect x="12" y="13" width="14" height="10" rx="2.5" fill={dim ? "#BDBDBD" : "#F97316"} opacity="0.6" />
-      <rect x="13" y="10" width="12" height="9" rx="2.5" fill={dim ? "#BDBDBD" : "#F97316"} />
-      <text x="19" y="17" textAnchor="middle" fill="white" fontSize="5.5" fontWeight="900">500</text>
-    </svg>
-  ),
-  all_it: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEF3C7"} />
-      <path d="M18 9 L27 26 L9 26 Z" fill={dim ? "#BDBDBD" : "#F59E0B"} />
-      <path d="M18 13 L24.5 24 L11.5 24 Z" fill={dim ? "#D0D0D0" : "#FDE68A"} />
-      <circle cx="15.5" cy="21" r="1.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
-      <circle cx="20.5" cy="20" r="1.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
-      <circle cx="18" cy="23.5" r="1" fill={dim ? "#BDBDBD" : "#16A34A"} />
-    </svg>
-  ),
-  all_es: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#FEE2E2"} />
-      <rect x="15.5" y="9" width="5" height="9" rx="2.5" fill={dim ? "#BDBDBD" : "#DC2626"} />
-      <path d="M12 17 C12 21.4 14.7 25 18 25 C21.3 25 24 21.4 24 17" stroke={dim ? "#BDBDBD" : "#DC2626"} strokeWidth="2" fill="none" strokeLinecap="round"/>
-      <line x1="18" y1="25" x2="18" y2="28" stroke={dim ? "#BDBDBD" : "#DC2626"} strokeWidth="2"/>
-      <line x1="15" y1="28" x2="21" y2="28" stroke={dim ? "#BDBDBD" : "#DC2626"} strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  ),
-  all_ru: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#DBEAFE"} />
-      <ellipse cx="18" cy="24" rx="8" ry="3" fill={dim ? "#BDBDBD" : "#1B4FD8"} opacity="0.35"/>
-      <rect x="10" y="15" width="16" height="9" rx="2" fill={dim ? "#BDBDBD" : "#1B4FD8"} />
-      <ellipse cx="18" cy="15" rx="8" ry="3" fill={dim ? "#D0D0D0" : "#3B82F6"} />
-      <line x1="23" y1="11" x2="27" y2="15" stroke={dim ? "#BDBDBD" : "#1E40AF"} strokeWidth="2" strokeLinecap="round"/>
-      <circle cx="23" cy="11" r="2" fill={dim ? "#BDBDBD" : "#93C5FD"} />
-    </svg>
-  ),
-  sharp: ({ dim }) => (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="14" fill={dim ? "#E0E0E0" : "#F0FDF4"} />
-      <path d="M18 10 L19.5 16 L26 18 L19.5 20 L18 26 L16.5 20 L10 18 L16.5 16 Z" fill={dim ? "#BDBDBD" : "#22C55E"} />
-      <path d="M26 10 L27 12.5 L29.5 13.5 L27 14.5 L26 17 L25 14.5 L22.5 13.5 L25 12.5 Z" fill={dim ? "#BDBDBD" : "#86EFAC"} />
-    </svg>
-  ),
-};
-
-const BADGES = [
-  { id: "first_deck", label: "Primeira categoria",  check: (s)      => Object.keys(s.completedDecks || {}).length >= 1 },
-  { id: "perfect",    label: "Sem erros",           check: (s)      => (s.perfectSessions || 0) >= 1 },
-  { id: "streak_7",   label: "7 dias seguidos",     check: (_, str) => str >= 7 },
-  { id: "streak_30",  label: "30 dias seguidos",    check: (_, str) => str >= 30 },
-  { id: "polyglot",   label: "Poliglota",           check: (s)      => Object.keys(s.studied || {}).length >= 4 },
-  { id: "cards_100",  label: "100 cards",           check: (s)      => (s.totalAttempts || 0) >= 100 },
-  { id: "cards_500",  label: "500 cards",           check: (s)      => (s.totalAttempts || 0) >= 500 },
-  { id: "all_it",     label: "Mestre Pizzaiolo",    check: (s)      => getLangDeckKeys("it").every(k => s.completedDecks?.[k]?.includes("it")) },
-  { id: "all_es",     label: "Julio Iglesias",      check: (s)      => getLangDeckKeys("es").every(k => s.completedDecks?.[k]?.includes("es")) },
-  { id: "all_ru",     label: "Pagode Russo",        check: (s)      => getLangDeckKeys("ru").every(k => s.completedDecks?.[k]?.includes("ru")) },
-  { id: "sharp",      label: "Afiado",              check: (s)      => (s.totalAttempts || 0) >= 20 && Math.round((s.totalCorrect || 0) / (s.totalAttempts || 1) * 100) >= 90 },
-];
 class ErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(e) { return { error: e }; }
@@ -236,7 +92,7 @@ function Onboarding({ onDone }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ backgroundColor: 'var(--cream)' }}>
+      style={{ backgroundColor: C.cream }}>
       <button onClick={onDone} className="absolute top-6 right-6 z-10 text-xs font-black tracking-widest uppercase"
         style={{ color: C.dim }}>Pular</button>
       {/* Accent circle — geometric decoration like ref 1 */}
@@ -289,7 +145,7 @@ function HelpModal({ onClose }) {
         transition={{ type: "spring", stiffness: 340, damping: 34 }}
         onClick={e => e.stopPropagation()}
         className="w-full max-w-md pb-10 px-6 pt-7"
-        style={{ background: "var(--glass-nav)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)", borderRadius: `${R.xl}px ${R.xl}px 0 0`, borderTop: "1px solid var(--glass-border)" }}>
+        style={{ background: "rgba(250,249,246,0.96)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)", borderRadius: `${R.xl}px ${R.xl}px 0 0`, borderTop: "1px solid rgba(255,255,255,0.7)" }}>
         <div className="flex items-center justify-between mb-7">
           <h2 className="font-black" style={{ fontSize: "1.75rem", color: C.ink }}>Como funciona</h2>
           <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full"
@@ -406,7 +262,7 @@ function StatsScreen({ stats, xp, streak, onBack, onStudyDeck }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
+      className="min-h-screen" style={{ backgroundColor: C.cream }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20 space-y-4">
 
@@ -504,47 +360,8 @@ function FlagIcon({ langCode, size = 40 }) {
     style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0, display: "block" }} />;
 }
 
-// ─── GYRO BLOBS ───────────────────────────────────────────────────────────────
-function GyroBlobs() {
-  const x1 = useMotionValue(0);
-  const y1 = useMotionValue(0);
-  const x2 = useMotionValue(0);
-  const y2 = useMotionValue(0);
-
-  useEffect(() => {
-    const handleOrientation = (e) => {
-      // gamma = left/right tilt (-90 to 90), beta = front/back tilt (-180 to 180)
-      const gx = Math.max(-30, Math.min(30, e.gamma || 0));
-      const gy = Math.max(-30, Math.min(30, (e.beta  || 0) - 20)); // offset 20° for natural hold
-      // Blob A moves with tilt, Blob B moves in opposite direction (parallax)
-      x1.set(gx  * 2.5);
-      y1.set(gy  * 2.0);
-      x2.set(gx  * -1.5);
-      y2.set(gy  * -1.2);
-    };
-
-    // Request permission on iOS 13+
-    if (typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function") {
-      DeviceOrientationEvent.requestPermission()
-        .then(p => { if (p === "granted") window.addEventListener("deviceorientation", handleOrientation); })
-        .catch(() => {});
-    } else {
-      window.addEventListener("deviceorientation", handleOrientation);
-    }
-    return () => window.removeEventListener("deviceorientation", handleOrientation);
-  }, [x1, y1, x2, y2]);
-
-  return (
-    <>
-      <motion.div style={{ position: "absolute", top: "20%", right: "5%", width: "40vw", height: "40vw", maxWidth: 320, maxHeight: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(180,100,200,0.28) 0%, transparent 70%)", filter: "blur(60px)", willChange: "transform", x: x1, y: y1 }} />
-      <motion.div style={{ position: "absolute", bottom: "25%", left: "5%",  width: "35vw", height: "35vw", maxWidth: 280, maxHeight: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(80,200,160,0.24) 0%, transparent 70%)",  filter: "blur(55px)", willChange: "transform", x: x2, y: y2 }} />
-    </>
-  );
-}
-
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
-function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied, isDark, theme, onToggleTheme }) {
+function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites, onOpenStats, lastStudied }) {
   const [showHelp, setShowHelp] = useState(false);
   const [ready, setReady]       = useState(false);
   const favCount = Object.keys(favorites).length;
@@ -581,7 +398,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
   const xpInLevel    = getXPInLevel(displayXP);
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'var(--cream)' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: C.cream }}>
       {/* ── Ambient liquid glass background ── */}
       <div className="absolute inset-0 pointer-events-none" style={{ willChange: "transform", zIndex: 0 }}>
         {/* Blob 1 — 22s cycle, warm coral-rose */}
@@ -600,7 +417,6 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
 
         />
         {/* Gyroscope overlay — reacts to phone tilt */}
-        <GyroBlobs />
         {/* Very light frosted veil */}
         <div className="absolute inset-0" style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", background: "rgba(250,249,246,0.12)" }} />
       </div>
@@ -609,15 +425,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className="relative min-h-screen" style={{ zIndex: 1 }}>
       {/* Floating help button — no bar, directly on background */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <motion.button whileTap={{ scale: 0.92 }} onClick={onToggleTheme}
-          className="w-10 h-10 flex items-center justify-center rounded-full"
-          style={{ ...glass.card }}>
-          {isDark
-            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:C.dim}}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:C.dim}}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          }
-        </motion.button>
+      <div className="absolute top-4 right-4 z-10">
         <button onClick={() => setShowHelp(true)} className="w-10 h-10 flex items-center justify-center rounded-full"
           style={{ ...glass.card }}>
           <HelpCircle size={18} style={{ color: C.dim }} />
@@ -635,7 +443,7 @@ function Dashboard({ xp, streak, favorites, stats, onSelectLang, onOpenFavorites
             <span className="ml-3 font-semibold" style={{ fontSize: "1.5rem", color: C.dim }}>dias</span>
           </motion.div>
           <div className="flex items-center gap-3 mt-3">
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--progress-track)" }}>
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
               <motion.div className="h-full rounded-full" style={{ backgroundColor: C.ink }}
                 animate={{ width: `${(xpInLevel / XP_PER_LEVEL) * 100}%` }}
                 transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }} />
@@ -770,7 +578,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
+      className="min-h-screen" style={{ backgroundColor: C.cream }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><ChevronLeft size={18} /> Voltar</button>} />
       <div className="max-w-md mx-auto px-5 pt-2 pb-20">
         <h1 className="font-black mb-6" style={{ fontSize: "3rem", color: C.ink, letterSpacing: "-0.02em" }}>Favoritas</h1>
@@ -829,7 +637,7 @@ function FavoritesScreen({ favorites, onStudyFavs, onBack, onClearAll }) {
 }
 
 // ─── DECK SELECTOR ────────────────────────────────────────────────────────────
-function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }) {
+function DeckSelector({ langCode, onSelectDeck, onSelectWrite, onBack, streak, completedDecks }) {
   const lang      = LANG_META[langCode];
   const [query, setQuery] = useState("");
   const [ready, setReady] = useState(false);
@@ -863,6 +671,18 @@ function DeckSelector({ langCode, onSelectDeck, onBack, streak, completedDecks }
         <p className="text-sm font-medium mb-5" style={{ color: "rgba(255,255,255,0.55)" }}>
           {doneCount}/{getLangDeckKeys(langCode).length} concluídas
         </p>
+        {/* Mode toggle */}
+        <div className="flex gap-2 mb-4">
+          <button onClick={() => {}} className="flex-1 py-2.5 font-black text-sm rounded-full"
+            style={{ backgroundColor: "rgba(255,255,255,0.9)", color: lang.accent }}>
+            Flashcards
+          </button>
+          <button onClick={() => { if (filtered[0]) onSelectWrite(filtered[0]); }}
+            className="flex-1 py-2.5 font-black text-sm rounded-full"
+            style={{ backgroundColor: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.85)" }}>
+            ✍ Escrever
+          </button>
+        </div>
         <div className="relative mb-6">
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
             style={{ color: "rgba(255,255,255,0.6)" }} />
@@ -1032,10 +852,159 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
     </div>
   );
 }
+
+// ─── WRITE SCREEN (Production mode) ──────────────────────────────────────────
+function normalize(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) {
+  const lang        = LANG_META[langCode] ?? { accent: C.ink, name: langCode };
+  const deckLabel   = getDeckLabel(deckKey, langCode);
+  const accentColor = lang.accent;
+
+  const cards = useMemo(() => {
+    if (!VOCAB[langCode]?.[deckKey]) return [];
+    return shuffle([...VOCAB[langCode][deckKey]]);
+  }, []); // eslint-disable-line
+
+  const [idx,       setIdx]       = useState(0);
+  const [input,     setInput]     = useState("");
+  const [status,    setStatus]    = useState(null);
+  const [correct,   setCorrect]   = useState(0);
+  const [incorrect, setIncorrect] = useState(0);
+  const [showAns,   setShowAns]   = useState(false);
+  const inputRef = useRef(null);
+
+  const card = cards[idx];
+  const progress = cards.length ? idx / cards.length : 0;
+
+  useEffect(() => {
+    if (status === null && inputRef.current) inputRef.current.focus();
+  }, [idx, status]);
+
+  const handleSubmit = () => {
+    if (!card || status !== null) return;
+    const userAns   = normalize(input);
+    const targetAns = normalize(card.target);
+    const isOk = userAns === targetAns ||
+      (userAns.length > 2 && targetAns.split(/[\s\/,]+/).some(w => normalize(w) === userAns));
+    setStatus(isOk ? "correct" : "wrong");
+    setShowAns(!isOk);
+    if (isOk) setCorrect(n => n + 1); else setIncorrect(n => n + 1);
+  };
+
+  const next = () => {
+    const newCorrect = correct + (status === "correct" ? 1 : 0);
+    if (idx + 1 >= cards.length) {
+      const total    = cards.length;
+      const xpGained = Math.round(Math.max(10, total * 1.5) * (newCorrect / total));
+      const accuracy = Math.round(newCorrect / total * 100);
+      onXP(xpGained, accuracy);
+      onFinish({ correct: newCorrect, total, xpGained, deckKey, langCode, accuracy, wrongCards: [] });
+      return;
+    }
+    setIdx(i => i + 1); setInput(""); setStatus(null); setShowAns(false);
+  };
+
+  if (!card) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream, position: "relative" }}>
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${accentColor}14 0%, transparent 28%)`, pointerEvents: "none", zIndex: 0 }} />
+      <NavBar title={deckLabel}
+        left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>}
+        right={<span className="text-sm font-bold" style={{ color: C.dim }}>{cards.length - idx}</span>}
+      />
+      <div className="flex-1 max-w-md mx-auto w-full px-5 pt-4 pb-8 flex flex-col" style={{ zIndex: 1 }}>
+        {/* Progress */}
+        <div className="mb-6">
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
+            <motion.div className="h-full rounded-full" style={{ backgroundColor: accentColor }}
+              animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.4 }} />
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-xs font-bold" style={{ color: C.dim }}>{correct} corretas</span>
+            <span className="text-xs font-black" style={{ color: accentColor }}>{Math.round(progress * 100)}%</span>
+          </div>
+        </div>
+
+        {/* PT word card */}
+        <div className="p-7 mb-4" style={{ ...glass.card, borderRadius: R.xl, minHeight: 160 }}>
+          <p className="text-xs font-black tracking-widest uppercase mb-3" style={{ color: C.dim }}>Escreva em {lang.name}</p>
+          <p className="font-black leading-tight" style={{ fontSize: "2.5rem", color: C.ink, letterSpacing: "-0.02em" }}>{card.pt}</p>
+          {showAns && (
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+              className="mt-4 px-4 py-3" style={{ backgroundColor: accentColor + "22", borderRadius: R.card }}>
+              <p className="text-xs font-black uppercase tracking-wider mb-1" style={{ color: accentColor }}>Resposta correta</p>
+              <p className="font-black" style={{ fontSize: "1.5rem", color: accentColor }}>{card.target}</p>
+              {card.phonetic && <p className="text-sm mt-1" style={{ color: C.dim }}>{card.phonetic}</p>}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="relative mb-4">
+          <input ref={inputRef} value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") { status === null ? handleSubmit() : next(); } }}
+            placeholder={`Digite em ${lang.name}...`}
+            disabled={status !== null}
+            className="w-full px-5 py-4 font-bold text-lg outline-none"
+            style={{ ...glass.card, borderRadius: R.xl, color: status === "correct" ? "#16A34A" : status === "wrong" ? "#DC2626" : C.ink, border: status === "correct" ? "2px solid #16A34A" : status === "wrong" ? "2px solid #DC2626" : "1px solid rgba(255,255,255,0.7)" }}
+          />
+          {status !== null && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              {status === "correct" ? <Check size={22} style={{ color: "#16A34A" }} /> : <X size={22} style={{ color: "#DC2626" }} />}
+            </div>
+          )}
+        </div>
+
+        {/* Tip after answer */}
+        <AnimatePresence>
+          {status !== null && (card.example || card.tip) && (
+            <motion.div key="tip" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="px-5 py-4 mb-4 space-y-1.5" style={{ ...glass.card, borderRadius: R.xl }}>
+              {card.example && <p className="text-xs font-semibold" style={{ color: C.ink }}><span style={{ color: C.dim }}>ex. </span>{card.example}</p>}
+              {card.tip && <p className="text-xs" style={{ color: C.dim }}>{card.tip}</p>}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="mt-auto">
+          {status === null
+            ? <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit}
+                className="w-full py-4 font-black text-lg"
+                style={{ backgroundColor: accentColor, color: "#fff", borderRadius: R.xl }}>
+                Verificar
+              </motion.button>
+            : <motion.button whileTap={{ scale: 0.97 }} onClick={next}
+                className="w-full py-4 font-black text-lg"
+                style={{ backgroundColor: C.ink, color: C.cream, borderRadius: R.xl }}>
+                {idx + 1 >= cards.length ? "Ver resultado" : "Próxima →"}
+              </motion.button>
+          }
+        </div>
+
+        {/* Stats footer */}
+        <div className="flex justify-center gap-10 mt-5 pt-4" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+          {[{ label: "Corretas", val: correct, color: "#16A34A" }, { label: "Erros", val: incorrect, color: "#DC2626" }, { label: "Total", val: cards.length, color: C.dim }].map(s => (
+            <div key={s.label} className="text-center">
+              <div className="font-black" style={{ fontSize: "1.3rem", color: s.color }}>{s.val}</div>
+              <div className="text-xs font-bold tracking-widest uppercase" style={{ color: C.dim }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function MasteredScreen({ deckLabel, onReview, onBack, lang }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col justify-end px-6 pb-14 max-w-md mx-auto w-full">
         <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -1179,9 +1148,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
     setAnswered(true);
     const isAlmost = knew === "almost";
     const isCorrect = knew === true;
-    // Haptic feedback — triple pulse for "almost"
-    if (navigator.vibrate) navigator.vibrate(isCorrect ? [10] : isAlmost ? [10, 30, 10] : [10, 50, 10]);
-    knew = isCorrect; // normalize for the rest of the logic — "almost" behaves like wrong (recycles)
+    knew = isCorrect; // normalize: "almost" behaves like wrong (recycles)
     // Hide buttons and tip immediately — clean slate before card exits
     setButtonsVisible(false);
     setFlashColor(knew ? "green" : "red");
@@ -1210,21 +1177,13 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
         setTimeout(() => { if (mounted.current) onFinish({ correct: newCorrect, total: totalAns, xpGained, deckKey, langCode, accuracy, wrongCards }); }, 800);
         return;
       }
-      if (!isFavDeck) {
-        const prev = srsData[card.pt] ?? { score: 0.5, attempts: 0 };
-        srsData[card.pt] = { score: Math.min(1, prev.score + 0.15), attempts: prev.attempts + 1 };
-        setStorage(srsKey, srsData);
-      }
+      if (!isFavDeck) updateSrs(srsData, langCode, deckKey, card.pt, 'correct');
       setQueue(newQueue);
       setCurrentIdx(Math.min(currentIdx, newQueue.length - 1));
     } else {
       setIncorrect(inc => inc + 1);
       setWrongCards(prev => prev.find(w => w.pt === card.pt) ? prev : [...prev, { ...card, _lang: cardLang }]);
-      if (!isFavDeck) {
-        const prev = srsData[card.pt] ?? { score: 0.5, attempts: 0 };
-        srsData[card.pt] = { score: Math.max(0, prev.score - 0.2), attempts: prev.attempts + 1 };
-        setStorage(srsKey, srsData);
-      }
+      if (!isFavDeck) updateSrs(srsData, langCode, deckKey, card.pt, isAlmost ? 'almost' : 'wrong');
       const nq = [...queue];
       const [rem] = nq.splice(currentIdx, 1);
       nq.splice(Math.min(currentIdx + 2, nq.length), 0, rem);
@@ -1243,7 +1202,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
 
   if (!card) return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
       <NavBar left={<button onClick={onBack} className="flex items-center gap-1.5 text-sm font-black" style={{ color: C.dim }}><X size={18} /> Sair</button>} />
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
         <Bookmark size={48} strokeWidth={1} style={{ color: "#DEDBD7" }} />
@@ -1265,7 +1224,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       className="min-h-screen flex flex-col"
-      style={{ backgroundColor: 'var(--cream)', position: 'relative' }}>
+      style={{ backgroundColor: C.cream, position: 'relative' }}>
       {/* Adaptive accent tint — top gradient from lang color */}
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${accentColor}14 0%, transparent 28%)`, pointerEvents: 'none', zIndex: 0 }} />
       <Confetti active={showConfetti} accentColor={accentColor} />
@@ -1288,7 +1247,7 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-4 pb-8 flex flex-col">
         {/* Progress bar + animated % + 100% success burst */}
         <div className="mb-5 relative">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--progress-track)" }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E0DDD9" }}>
             <motion.div className="h-full rounded-full" style={{ backgroundColor: accentColor }}
               animate={{ width: `${progress * 100}%` }} transition={{ duration: 0.5, ease: [0.34, 1.2, 0.64, 1] }} />
           </div>
@@ -1390,17 +1349,17 @@ function StudyScreen({ langCode, deckKey, onFinish, onBack, onXP, favorites, onT
                   transition={{ type: "spring", stiffness: 420, damping: 26 }}>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(false)}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
-                    style={{ flex:"1.2", background: "var(--glass-card)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.3)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.85rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1)" }}>
+                    style={{ flex:"1.2", background: "rgba(255,255,255,0.78)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(220,38,38,0.3)", borderRadius: R.xl, color: "#DC2626", fontSize: "0.85rem", boxShadow: "0 4px 20px rgba(220,38,38,0.1)" }}>
                     <X size={15} strokeWidth={2.5} className="shrink-0" /> Não sei
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer("almost")}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
-                    style={{ flex:"1", background: "var(--glass-card)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(245,158,11,0.35)", borderRadius: R.xl, color: "#D97706", fontSize: "0.85rem" }}>
+                    style={{ flex:"1", background: "rgba(255,255,255,0.78)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", border: "1.5px solid rgba(245,158,11,0.35)", borderRadius: R.xl, color: "#D97706", fontSize: "0.85rem" }}>
                     <RotateCcw size={14} strokeWidth={2.5} className="shrink-0" /> Quase
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => handleAnswer(true)}
                     className="flex items-center justify-center gap-1.5 py-4 font-black whitespace-nowrap"
-                    style={{ flex:"1.2", background: "var(--btn-confirm-bg,#111111)", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid var(--btn-confirm-border,rgba(255,255,255,0.14))", borderRadius: R.xl, color: "var(--btn-confirm-text,#FAF9F6)", fontSize: "0.85rem" }}>
+                    style={{ flex:"1.2", background: "#111111", backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", border: "1.5px solid rgba(255,255,255,0.14)", borderRadius: R.xl, color: "#FAF9F6", fontSize: "0.85rem" }}>
                     <Check size={15} strokeWidth={2.5} className="shrink-0" /> Sei!
                   </motion.button>
                 </motion.div>
@@ -1494,7 +1453,7 @@ function ResultScreen({ result, langCode, deckKey, onRestart, onHome, onNextDeck
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--cream)' }}>
+      className="min-h-screen flex flex-col" style={{ backgroundColor: C.cream }}>
       <div className="flex-1 max-w-md mx-auto w-full px-5 pt-14 pb-14 flex flex-col">
 
         {/* Score hero */}
@@ -1647,32 +1606,40 @@ function LevelUpOverlay({ level, accentColor }) {
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [theme, setTheme] = useState(() => getStorage("lf_theme", "system"));
-  // Resolve actual mode: "system" follows OS, "light"/"dark" override
-  const [sysDark, setSysDark] = useState(() => window.matchMedia?.("(prefers-color-scheme:dark)").matches ?? false);
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme:dark)");
-    if (!mq) return;
-    const handler = e => setSysDark(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  const isDark = theme === "dark" || (theme === "system" && sysDark);
+  // ── Navigation state as a single reducer — atomic, no race conditions ────────
+  const [nav, dispatchNav] = useReducer((state, action) => {
+    switch (action.type) {
+      case "GO_ONBOARD":   return { ...state, screen: "onboard",   result: null };
+      case "GO_DASHBOARD": return { ...state, screen: "dashboard", result: null };
+      case "GO_STATS":     return { ...state, screen: "stats",     result: null };
+      case "GO_FAVORITES": return { ...state, screen: "favorites", result: null };
+      case "GO_DECKS":     return { ...state, screen: "decks",     lang: action.lang ?? state.lang };
+      case "GO_MASTERED":  return { ...state, screen: "mastered" };
+      case "GO_STUDY":     return {
+        screen: "study",
+        lang: action.lang,
+        deck: action.deck,
+        fromFavorites: action.fromFavorites ?? false,
+        isReview: action.isReview ?? false,
+        sessionId: state.sessionId + 1,
+        result: null,
+      };
+      case "GO_RESULT":    return { ...state, screen: "result", result: action.result };
+      default: return state;
+    }
+  }, {
+    screen:       getStorage("lf_seen_onboard", false) ? "dashboard" : "onboard",
+    lang:         null,
+    deck:         null,
+    result:       null,
+    fromFavorites:false,
+    isReview:     false,
+    sessionId:    0,
+  });
 
-  useEffect(() => {
-    document.documentElement.classList.remove('lf-dark', 'lf-light');
-    document.documentElement.classList.add(isDark ? 'lf-dark' : 'lf-light');
-  }, [isDark]);
-
-  const [screen,         setScreen]         = useState(() => getStorage("lf_seen_onboard", false) ? "dashboard" : "onboard");
-  const [selectedLang,   setSelectedLang]   = useState(null);
-  const [selectedDeck,   setSelectedDeck]   = useState(null);
-  const [result,         setResult]         = useState(null);
-  const pendingResult = useRef(null);
-  const [fromFavorites,  setFromFavorites]  = useState(false);
-  const [isReview,       setIsReview]       = useState(false);
+  const { screen, lang: selectedLang, deck: selectedDeck, result, fromFavorites, isReview, sessionId: studySessionId } = nav;
+  const isWriteMode = screen === 'write';
   const [lastStudied,    setLastStudied]    = useState(() => getStorage("lf_last_studied", null));
-  const [studySessionId, setStudySessionId] = useState(0);
   const [levelUp,        setLevelUp]        = useState(null);
   const [badgeUnlock,    setBadgeUnlock]    = useState(null);
 
@@ -1775,68 +1742,40 @@ export default function App() {
   }, [streak, checkNewBadges]);
 
   const goStudy = useCallback((lang, deck, fromFavs = false, review = false) => {
-    setSelectedLang(lang); setSelectedDeck(deck);
-    setFromFavorites(fromFavs);
-    setIsReview(review);
-    setStudySessionId(id => id + 1);
     if (!fromFavs && lang) { setLastStudied(lang); setStorage("lf_last_studied", lang); }
-    setScreen("study");
+    dispatchNav({ type: "GO_STUDY", lang, deck, fromFavorites: fromFavs, isReview: review });
   }, []);
 
   const handleSelectDeck = useCallback((langCode, deckKey) => {
     const isFav = deckKey.startsWith("__");
     const isDone = !isFav && stats.completedDecks?.[deckKey]?.includes(langCode);
-    if (isDone) { setSelectedLang(langCode); setSelectedDeck(deckKey); setScreen("mastered"); }
+    if (isDone) { dispatchNav({ type: "GO_MASTERED", lang: langCode, deck: deckKey }); }
     else goStudy(langCode, deckKey, false, false);
   }, [stats.completedDecks, goStudy]);
 
   const handleSelectLangDirect = useCallback((code, deckKey) => {
     const required = LANG_UNLOCK_LEVEL[code] || 1;
     if (getLevel(xp) < required) return;
-    setSelectedLang(code);
     if (deckKey) handleSelectDeck(code, deckKey);
-    else setScreen("decks");
+    else dispatchNav({ type: "GO_DECKS", lang: code });
   }, [handleSelectDeck, xp]);
 
-  const handleStudyFromStats = useCallback((langCode, deckKey) => {
-    goStudy(langCode, deckKey, false, true);
-  }, [goStudy]);
+  const handleStudyFromStats = useCallback((langCode, deckKey) => goStudy(langCode, deckKey, false, true), [goStudy]);
 
-  const backFromStudy  = useCallback(() => setScreen(fromFavorites ? "favorites" : "decks"), [fromFavorites]);
-  const homeFromResult = useCallback(() => setScreen(fromFavorites ? "favorites" : "dashboard"), [fromFavorites]);
+  const backFromStudy  = useCallback(() => dispatchNav({ type: fromFavorites ? "GO_FAVORITES" : "GO_DECKS" }), [fromFavorites]);
+  const homeFromResult = useCallback(() => dispatchNav({ type: fromFavorites ? "GO_FAVORITES" : "GO_DASHBOARD" }), [fromFavorites]);
 
   return (
     <ErrorBoundary>
-      <div className={isDark ? "lf-dark" : "lf-light"} style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
+      <div style={{ fontFamily: "'Inter', sans-serif", WebkitFontSmoothing: "antialiased" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-:root{
-  --cream:#FAF9F6;--ink:#111111;--dim:#888888;
-  --glass-card:rgba(255,255,255,0.78);--glass-border:rgba(255,255,255,0.68);--glass-shine:rgba(255,255,255,0.95);
-  --glass-nav:rgba(250,249,246,0.88);--glass-pill:rgba(255,255,255,0.55);--glass-shadow-sm:rgba(0,0,0,0.05);
-  --progress-track:#E0DDD9;
-  --btn-confirm-bg:#111111;--btn-confirm-text:#FAF9F6;--btn-confirm-border:rgba(255,255,255,0.12);
-  --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(218,208,195,0.3), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(200,210,230,0.15), transparent 50%);
-}
-.lf-dark{
-  --cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;
-  --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
-  --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
-  --progress-track:rgba(255,255,255,0.12);
-  --btn-confirm-bg:#FFFFFF;--btn-confirm-text:#111111;--btn-confirm-border:rgba(0,0,0,0.12);
-  --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
-}
-@media(prefers-color-scheme:dark){:root:not(.lf-light){
-  --cream:#1C1B18;--ink:#F0EDE8;--dim:#9A9690;
-  --glass-card:rgba(38,36,32,0.84);--glass-border:rgba(255,255,255,0.09);--glass-shine:rgba(255,255,255,0.06);
-  --glass-nav:rgba(28,27,24,0.94);--glass-pill:rgba(48,46,42,0.75);--glass-shadow-sm:rgba(0,0,0,0.3);
-  --progress-track:rgba(255,255,255,0.12);
-  --btn-confirm-bg:#FFFFFF;--btn-confirm-text:#111111;--btn-confirm-border:rgba(0,0,0,0.12);
-  --bg-gradient:radial-gradient(ellipse 120% 80% at 40% -5%, rgba(140,60,50,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 80% 100%, rgba(40,60,140,0.18), transparent 50%);
-}}
 *{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
-html,body{background:var(--cream);background-image:var(--bg-gradient);min-height:100vh;color-scheme:light dark;transition:background 0.3s ease}
+html,body{background:#FAF9F6;min-height:100vh}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.38)}.lf-dark .badge-locked{opacity:0.55!important;filter:brightness(2.2) grayscale(1)}.lf-dark .badge-earned{filter:brightness(1.1)}.lf-dark .lf-deck-content{position:relative;z-index:1}.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+.sk{border-radius:10px;background:linear-gradient(90deg,rgba(128,128,128,0.07) 25%,rgba(128,128,128,0.14) 50%,rgba(128,128,128,0.07) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+.lf-dark .lf-deck-overlay{background:rgba(0,0,0,0.38)}
+.lf-dark .badge-locked{opacity:0.55!important;filter:brightness(2.2) grayscale(1)}
+.lf-dark .badge-earned{filter:brightness(1.1)}
 ::placeholder{color:rgba(255,255,255,0.45)!important}`}</style>
         <AnimatePresence>
           {levelUp && (
@@ -1849,19 +1788,18 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
         </AnimatePresence>
         <div>
           {screen === "onboard" && (
-                <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); setScreen("dashboard"); }} />
+                <Onboarding key="onboard" onDone={() => { setStorage("lf_seen_onboard", true); dispatchNav({ type: "GO_DASHBOARD" }); }} />
               )}
               {screen === "dashboard" && (
                 <Dashboard key="dashboard" xp={xp} streak={streak} favorites={favorites} stats={stats}
-                  lastStudied={lastStudied} isDark={isDark} theme={theme}
-                  onToggleTheme={() => { const next = isDark ? "light" : "dark"; setTheme(next); setStorage("lf_theme", next); }}
+                  lastStudied={lastStudied}
                   onSelectLang={handleSelectLangDirect}
-                  onOpenFavorites={() => setScreen("favorites")}
-                  onOpenStats={() => setScreen("stats")} />
+                  onOpenFavorites={() => dispatchNav({ type: "GO_FAVORITES" })}
+                  onOpenStats={() => dispatchNav({ type: "GO_STATS" })} />
               )}
               {screen === "stats" && (
                 <StatsScreen key="stats" stats={stats} xp={xp} streak={streak}
-                  onBack={() => setScreen("dashboard")}
+                  onBack={() => dispatchNav({ type: "GO_DASHBOARD" })}
                   onStudyDeck={handleStudyFromStats} />
               )}
               {screen === "favorites" && (
@@ -1870,49 +1808,48 @@ html,body{background:var(--cream);background-image:var(--bg-gradient);min-height
                     code === "__all__" ? Object.keys(favorites)[0]?.split(":")[0] || "es" : code,
                     deck, true
                   )}
-                  onBack={() => setScreen("dashboard")}
+                  onBack={() => dispatchNav({ type: "GO_DASHBOARD" })}
                   onClearAll={() => { setFavorites({}); setStorage("lf_favorites", {}); }} />
               )}
               {screen === "decks" && (
                 <DeckSelector key="decks" langCode={selectedLang} streak={streak}
                   completedDecks={stats.completedDecks || {}}
                   onSelectDeck={key => handleSelectDeck(selectedLang, key)}
-                  onBack={() => setScreen("dashboard")} />
+                  onSelectWrite={key => dispatchNav({ type: "GO_WRITE", lang: selectedLang, deck: key })}
+                  onBack={() => dispatchNav({ type: "GO_DASHBOARD" })} />
               )}
               {screen === "mastered" && (
                 <MasteredScreen key="mastered"
                   deckLabel={getDeckLabel(selectedDeck, selectedLang)}
                   lang={LANG_META[selectedLang]}
                   onReview={() => goStudy(selectedLang, selectedDeck, false, true)}
-                  onBack={() => setScreen("decks")} />
+                  onBack={() => dispatchNav({ type: "GO_DECKS" })} />
               )}
               {screen === "study" && (
                 <StudyScreen key={`study-${selectedLang}-${selectedDeck}-${studySessionId}`}
                   langCode={selectedLang} deckKey={selectedDeck}
                   favorites={favorites} onToggleFav={handleToggleFav}
                   isReview={isReview} streak={streak}
-                  onFinish={res => {
-                    updateStats(res.correct, res.total, res.deckKey, res.langCode);
-                    pendingResult.current = res;  // sync — always available
-                    setResult(res);               // async state update
-                    // Wait one frame so result state flushes before screen key changes
-                    requestAnimationFrame(() => setScreen("result"));
-                  }}
+                  onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); dispatchNav({ type: "GO_RESULT", result: res }); }}
                   onXP={addXP} onBack={backFromStudy} />
               )}
-              {screen === "result" && (result || pendingResult.current) && (
-                <ResultScreen key="result" result={result || pendingResult.current}
+              {screen === "write" && (
+                <WriteScreen key={`write-${selectedLang}-${selectedDeck}-${studySessionId}`}
+                  langCode={selectedLang} deckKey={selectedDeck}
+                  onFinish={res => { updateStats(res.correct, res.total, res.deckKey, res.langCode); dispatchNav({ type: "GO_RESULT", result: res }); }}
+                  onXP={addXP} onBack={() => dispatchNav({ type: "GO_DECKS" })} />
+              )}
+              {screen === "result" && result && (
+                <ResultScreen key="result" result={result}
                   langCode={selectedLang} deckKey={selectedDeck}
                   fromFavorites={fromFavorites} streak={streak}
-                  onRestart={() => { setIsReview(true); setStudySessionId(id => id + 1); setScreen("study"); }}
+                  onRestart={() => goStudy(selectedLang, selectedDeck, fromFavorites, true)}
                   onHome={homeFromResult}
                   onNextDeck={nextKey => goStudy(selectedLang, nextKey, false)}
                   onNextLang={(nextLang, firstDeck) => goStudy(nextLang, firstDeck, false, false)}
                   onReviewErrors={() => {
-                    const r = result || pendingResult.current;
-                    if (!r?.wrongCards?.length) return;
-                    // Save wrong cards as favorites then open favorites study
-                    r.wrongCards.forEach(w => {
+                    if (!result?.wrongCards?.length) return;
+                    result.wrongCards.forEach(w => {
                       const lc = w._lang || selectedLang;
                       const key = `${lc}:${w.pt}`;
                       setFavorites(prev => { const next = { ...prev, [key]: true }; setStorage("lf_favorites", next); return next; });
