@@ -872,24 +872,82 @@ function FlashCard({ card, isFlipped, onClick, lang, langCode, isFav, onToggleFa
 }
 
 // ── WRITE MODE SYNONYMS — only used in escrita answer checking, never displayed ──
-// Maps normalize(pt) → array of additional accepted PT answers
+// Keys are normalize(card.pt). Values are all additional accepted PT answers.
 const WRITE_PT_SYNONYMS = {
-  "ola":         ["oi", "ola", "ei"],
-  "oi":          ["ola", "oi", "ei"],
-  "tchau":       ["ate logo", "ate mais", "ate ja", "tchau"],
-  "de nada":     ["nao foi nada", "por nada", "de nada"],
-  "com licenca": ["licenca", "com sua licenca"],
-  "desculpe":    ["perdao", "me desculpe", "desculpa"],
-  "obrigado":    ["obrigada", "obrigado"],
-  "obrigada":    ["obrigado", "obrigada"],
-  "boa noite":   ["boas noites", "boa noite"],
-  "bom dia":     ["boa manha", "bom dia"],
-  "boa tarde":   ["boa tarde"],
+  // Greetings
+  "ola":              ["oi", "ola", "ei"],
+  "oi":               ["ola", "oi", "ei"],
+  "tchau":            ["ate logo", "ate mais", "ate ja", "tchau", "adeus"],
+  "de nada":          ["nao foi nada", "por nada", "de nada"],
+  "com licenca":      ["licenca", "com sua licenca"],
+  "desculpe":         ["perdao", "me desculpe", "desculpa"],
+  "obrigado":         ["obrigada", "obrigado", "valeu"],
+  "obrigada":         ["obrigado", "obrigada", "valeu"],
+  "boa noite":        ["boas noites", "boa noite"],
+  "bom dia":          ["boa manha", "bom dia"],
+  // ES conjugations — tu form accepts você form and vice versa
+  "tu eres/estas":    ["tu es", "tu estas", "voce e", "voce esta", "e", "esta"],
+  "tu tienes":        ["tu tens", "voce tem", "tens", "tem"],
+  "tu vas":           ["tu vais", "voce vai", "vais", "vai"],
+  "tu quieres":       ["tu queres", "voce quer", "queres", "quer"],
+  "tu haces":         ["tu fazes", "voce faz", "fazes", "faz"],
+  "tu puedes":        ["tu podes", "voce pode", "podes", "pode"],
+  "tu hablas":        ["tu falas", "voce fala", "falas", "fala"],
+  // IT conjugations
+  "tu sei":           ["tu es", "voce e", "es", "e"],
+  "tu hai":           ["tu tens", "voce tem", "tens", "tem"],
+  "tu vai":           ["tu vais", "voce vai", "vais", "vai"],
+  "tu vuoi":          ["tu queres", "voce quer", "queres", "quer"],
+  "tu fai":           ["tu fazes", "voce faz", "fazes", "faz"],
+  "tu puoi":          ["tu podes", "voce pode", "podes", "pode"],
+  "tu parli":         ["tu falas", "voce fala", "falas", "fala"],
+  // FR conjugations
+  "tu es":            ["tu es", "voce e", "es", "e"],
+  "tu as":            ["tu tens", "voce tem", "tens", "tem"],
+  "tu vas":           ["tu vais", "voce vai", "vais", "vai"],
+  "tu veux":          ["tu queres", "voce quer", "queres", "quer"],
+  "tu fais":          ["tu fazes", "voce faz", "fazes", "faz"],
+  "tu peux":          ["tu podes", "voce pode", "podes", "pode"],
+  "tu parles":        ["tu falas", "voce fala", "falas", "fala"],
+  // PT conjugation cards (card.pt is the question shown, user types PT answer)
+  // For "Tu queres" cards — also accept "você quer" and stripped verb
+  "tu queres":        ["tu queres", "voce quer", "queres", "quer"],
+  "tu tens":          ["tu tens", "voce tem", "tens", "tem"],
+  "tu vais":          ["tu vais", "voce vai", "vais", "vai"],
+  "tu es/estas":      ["tu es", "tu estas", "voce e", "voce esta", "e", "esta"],
+  "tu fazes":         ["tu fazes", "voce faz", "fazes", "faz"],
+  "tu podes":         ["tu podes", "voce pode", "podes", "pode"],
+  "tu falas":         ["tu falas", "voce fala", "falas", "fala"],
+  // Nós forms — also accept just the verb without pronoun
+  "nos somos/estamos": ["somos", "estamos", "nos somos", "nos estamos"],
+  "nos temos":         ["temos", "nos temos"],
+  "nos vamos":         ["vamos", "nos vamos"],
+  "nosotros somos/estamos": ["somos", "estamos", "nos somos", "nos estamos"],
+  "nosotros tenemos":  ["temos", "nos temos", "tenemos"],
+  "nosotros vamos":    ["vamos", "nos vamos"],
+  "noi siamo":         ["somos", "estamos", "nos somos"],
+  "noi abbiamo":       ["temos", "nos temos"],
+  "noi andiamo":       ["vamos", "nos vamos"],
+  "nous sommes":       ["somos", "estamos", "nos somos"],
+  "nous avons":        ["temos", "nos temos"],
+  "nous allons":       ["vamos", "nos vamos"],
+  "my -":              ["somos", "nos somos"],
+  // Ele/ela forms
+  "ele/ela e/esta":   ["ele e", "ela e", "ele esta", "ela esta", "e", "esta"],
+  "ele/ela tem":      ["ele tem", "ela tem", "tem"],
+  "ele/ela vai":      ["ele vai", "ela vai", "vai"],
+  "ele/ela quer":     ["ele quer", "ela quer", "quer"],
 };
 
 function getWriteSynonyms(ptStr) {
-  const normalized = normalize(ptStr);
-  return WRITE_PT_SYNONYMS[normalized] || [];
+  const key = normalize(ptStr);
+  const direct = WRITE_PT_SYNONYMS[key] || [];
+  // Also check if card.pt contains "Tu " — add stripped verb as valid
+  const stripped = key.replace(/^(tu|voce|ele|ela|nos)\s+/, "").trim();
+  if (stripped && stripped !== key && stripped.length > 1) {
+    return [...new Set([...direct, stripped])];
+  }
+  return direct;
 }
 
 // ─── WRITE SCREEN (Production mode) ──────────────────────────────────────────
@@ -982,14 +1040,13 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       .filter(dc => sharedTargets.has(normalize(dc.target)))
       .flatMap(dc => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
     const allValid = [...new Set([...ptVariants, ...synonymPt, ...extendedPt, ...getWriteSynonyms(card.pt)])];
+    const stripPronoun = s => s.replace(/^(tu|voce|você|ele|ela|nos|nós|eu)\s+/i, "").trim();
+    const strippedUser = stripPronoun(userAns);
     const isOk = allValid.some(v => v === userAns) ||
-      // Accept você/tu as equivalent pronouns (Brazilian Portuguese uses você)
-      // Strip the leading pronoun and compare the verb/rest
-      (() => {
-        const stripPronoun = s => s.replace(/^(tu|voce|você|ele|ela|nos|nos)\s+/i, "").trim();
-        const userVerb = stripPronoun(normalize(input));
-        return allValid.some(v => stripPronoun(v) === userVerb && userVerb.length > 1);
-      })();
+      // "tu quer" → strip "tu " → "quer" ∈ allValid (because allValid has "quer" via WRITE_PT_SYNONYMS)
+      (strippedUser.length > 1 && allValid.some(v => v === strippedUser)) ||
+      // Strip pronouns from both sides and compare verb forms
+      (strippedUser.length > 1 && allValid.some(v => stripPronoun(v) === strippedUser));
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
     if (isOk) { correctRef.current += 1; setCorrect(correctRef.current); }
