@@ -927,12 +927,27 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
 
   const handleSubmit = () => {
     if (!card || status !== null) return;
+    if (!input.trim()) return; // ignore empty
     const userAns = normalize(input);
-    // Primary: accept all PT variants from this card (split on / , ou)
-    const ptVariants = card.pt
-      .split(/\s*[/,]\s*|\s+ou\s+/i)
-      .map(v => normalize(v.trim()))
-      .filter(Boolean);
+    // Primary: expand pronoun alternatives (Ele/ela vai → ["ele vai","ela vai"])
+    // and regular slash/comma splits
+    const expandVariants = (str) => {
+      const variants = [];
+      // Match pattern: Word1/Word2 rest → [Word1 rest, Word2 rest]
+      const pronounMatch = str.match(/^([^/,]+)\/([^/,\s]+)(\s+.+)?$/);
+      if (pronounMatch) {
+        const [, a, b, rest = ""] = pronounMatch;
+        variants.push(normalize(a.trim() + rest));
+        variants.push(normalize(b.trim() + rest));
+      }
+      // Also split normally
+      str.split(/\s*[/,]\s*|\s+ou\s+/i)
+        .map(v => normalize(v.trim()))
+        .filter(Boolean)
+        .forEach(v => variants.push(v));
+      return [...new Set(variants)];
+    };
+    const ptVariants = expandVariants(card.pt);
     // All cards in the deck (or review pool)
     const deckPool = deckKey === "__review__"
       ? getStorage("lf_review_cards", [])
@@ -953,11 +968,13 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
       .flatMap(dc => dc.pt.split(/\s*[/,]\s*|\s+ou\s+/i).map(v => normalize(v.trim())));
     const allValid = [...new Set([...ptVariants, ...synonymPt, ...extendedPt])];
     const isOk = allValid.some(v => v === userAns) ||
-      // Accept "você" where "tu" is valid and vice versa (Brazilian Portuguese)
-      allValid.some(v => {
-        const swapped = v.replace(/\btu\b/g, "voce").replace(/\bvoce\b/g, "tu");
-        return swapped === userAns.replace(/\bvocê\b/g, "voce").replace(/\bvoce\b/g, "voce");
-      });
+      // Accept você/tu as equivalent pronouns (Brazilian Portuguese uses você)
+      // Strip the leading pronoun and compare the verb/rest
+      (() => {
+        const stripPronoun = s => s.replace(/^(tu|voce|você|ele|ela|nos|nos)\s+/i, "").trim();
+        const userVerb = stripPronoun(normalize(input));
+        return allValid.some(v => stripPronoun(v) === userVerb && userVerb.length > 1);
+      })();
     setStatus(isOk ? "correct" : "wrong");
     setShowAns(!isOk);
     if (isOk) setCorrect(n => n + 1);
@@ -965,7 +982,9 @@ function WriteScreen({ langCode, deckKey, onFinish, onBack, onXP, streak = 0 }) 
   };
 
   const next = () => {
-    const newCorrect = correct + (status === "correct" ? 1 : 0);
+    // Read status from ref (not state) to avoid stale closure
+    const wasCorrect = statusRef.current === "correct";
+    const newCorrect = correct + (wasCorrect ? 1 : 0);
     if (idx + 1 >= cards.length) {
       const total    = cards.length;
       const xpGained = Math.round(Math.max(10, total * 1.5) * (newCorrect / total));
